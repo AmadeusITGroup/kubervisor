@@ -97,6 +97,7 @@ func (in *BreakerConfigList) DeepCopyObject() runtime.Object {
 func (in *BreakerConfigSpec) DeepCopyInto(out *BreakerConfigSpec) {
 	*out = *in
 	out.Breaker = in.Breaker
+	out.Retry = in.Retry
 	if in.Selector != nil {
 		in, out := &in.Selector, &out.Selector
 		*out = make(map[string]string, len(*in))

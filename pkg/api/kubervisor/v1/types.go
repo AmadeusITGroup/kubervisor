@@ -2,6 +2,7 @@ package v1
 
 import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"time"
 )
 
 // +genclient
@@ -37,7 +38,8 @@ type BreakerConfigList struct {
 
 // BreakerConfigSpec contains BreakerConfig specification
 type BreakerConfigSpec struct {
-	Breaker  BreakerStrategy   `json:"Breaker"`
+	Breaker  BreakerStrategy   `json:"breaker"`
+	Retry    RetryStrategy     `json:"retry"`
 	Selector map[string]string `json:"selector,omitempty"`
 }
 
@@ -63,7 +65,8 @@ const (
 
 // RetryStrategy contains RetryStrategy definition
 type RetryStrategy struct {
-	Mode RetryStrategyMode `json:"mode"`
+	Mode        RetryStrategyMode `json:"mode"`
+	RetryPeriod time.Duration     `json:"retryPeriod"`
 }
 
 // RetryStrategyMode represent the breaker Strategy Mode
