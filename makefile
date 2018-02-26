@@ -1,4 +1,4 @@
-ARTIFACT_OPERATOR=podkubervisor
+ARTIFACT_CONTROLLER=podkubervisor
 
 # 0.0 shouldn't clobber any released builds
 PREFIX=podkubervisor/
@@ -36,10 +36,10 @@ test:
 	./go.test.sh
 
 push: container
-	@cd docker/${ARTIFACT_OPERATOR} && docker push $(PREFIX)$(ARTIFACT_OPERATOR):$(TAG)
+	@cd docker/${ARTIFACT_CONTROLLER} && docker push $(PREFIX)$(ARTIFACT_CONTROLLER):$(TAG)
 
 clean:
-	rm -f ${ARTIFACT_OPERATOR}
+	rm -f ${ARTIFACT_CONTROLLER}
 
 # Install all the build and lint dependencies
 setup:

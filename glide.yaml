@@ -8,3 +8,5 @@ import:
 - package: golang.org/x/tools
   subpackages:
   - imports
+- package: github.com/spf13/pflag
+- package: go.uber.org/zap
