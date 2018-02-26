@@ -1,0 +1,8 @@
+apiVersion: v1
+data:
+  probesfile: |
+    readynessok
+    livenessok
+kind: ConfigMap
+metadata:
+  name: probesfile
