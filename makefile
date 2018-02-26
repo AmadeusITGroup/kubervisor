@@ -1,7 +1,7 @@
-ARTIFACT_OPERATOR=podkubernator
+ARTIFACT_OPERATOR=podkubervisor
 
 # 0.0 shouldn't clobber any released builds
-PREFIX=podkubernator/
+PREFIX=podkubervisor/
 #PREFIX = gcr.io/google_containers/
 
 SOURCES := $(shell find $(SOURCEDIR) ! -name "*_test.go" -name '*.go')
@@ -12,7 +12,7 @@ TAG?=$(shell git tag|tail -1)
 COMMIT=$(shell git rev-parse HEAD)
 BRANCH=$(shell git rev-parse --abbrev-ref HEAD)
 DATE=$(shell date +%Y-%m-%d/%H:%M:%S )
-BUILDINFOPKG=github.com/amadeusitgroup/podkubernetor/pkg/utils
+BUILDINFOPKG=github.com/amadeusitgroup/podkubervisor/pkg/utils
 LDFLAGS = -ldflags "-w -X ${BUILDINFOPKG}.TAG=${TAG} -X ${BUILDINFOPKG}.COMMIT=${COMMIT} -X ${BUILDINFOPKG}.BRANCH=${BRANCH} -X ${BUILDINFOPKG}.BUILDTIME=${DATE} -s"
 
 all: build
