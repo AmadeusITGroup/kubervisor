@@ -1,0 +1,52 @@
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  name: foo
+  labels:
+    app: foo
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: foo
+  template:
+    metadata:
+      labels:
+        app: foo
+    spec:
+      volumes:
+        - name: probes-volume
+          configMap:
+            name: probesfile
+      containers:
+      - name: buysebox
+        imagePullPolicy: IfNotPresent
+        image: k8s.gcr.io/busybox        
+        args:
+        - /bin/sh
+        - -c
+        - sleep 3600
+        volumeMounts:
+          - name: probes-volume
+            mountPath: /probes    
+        livenessProbe:
+         exec:
+           command:
+           - grep
+           - livenessok
+           - /probes/probesfile
+         initialDelaySeconds: 2
+         periodSeconds: 1
+         failureThreshold: 1
+         successThreshold: 1
+        readinessProbe:
+          exec:
+            command:
+            - grep
+            - readynessok
+            - /probes/probesfile
+          initialDelaySeconds: 2
+          periodSeconds: 1
+          failureThreshold: 1
+          successThreshold: 1
+           
