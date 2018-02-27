@@ -1,8 +1,10 @@
 package v1
 
 import (
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"time"
+
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/labels"
 )
 
 // +genclient
@@ -38,9 +40,9 @@ type BreakerConfigList struct {
 
 // BreakerConfigSpec contains BreakerConfig specification
 type BreakerConfigSpec struct {
-	Breaker  BreakerStrategy   `json:"breaker"`
-	Retry    RetryStrategy     `json:"retry"`
-	Selector map[string]string `json:"selector,omitempty"`
+	Breaker  BreakerStrategy `json:"breaker"`
+	Retry    RetryStrategy   `json:"retry"`
+	Selector labels.Selector `json:"selector,omitempty"`
 }
 
 // BreakerConfigStatus contains BreakerConfig status
@@ -50,29 +52,41 @@ type BreakerConfigStatus struct {
 
 // BreakerStrategy contains BreakerStrategy definition
 type BreakerStrategy struct {
-	Mode            BreakerStrategyMode `json:"mode"`
-	OkPromQlRequest string              `json:"okRequest"`
-	KoPromQlRequest string              `json:"koRequest"`
+	EvaluationPeriod      time.Duration `json:"evaluationPeriod,omitempty"`
+	MinPodsAvailableCount *uint         `json:"minPodsAvailableCount,omitempty"`
+	MinPodsAvailableRatio *uint         `json:"minPodsAvailableRatio,omitempty"`
+
+	DiscreteValueOutOfList *DiscreteValueOutOfList `json:"discreteValueOutOfList,omitempty"`
 }
 
-// BreakerStrategyMode represent the breaker Strategy type
-type BreakerStrategyMode string
-
-const (
-	// DefaultBreakerStrategy represent the default breaker strategy
-	DefaultBreakerStrategy BreakerStrategyMode = "default"
-)
+// DiscreteValueOutOfList detect anomaly when the a value is not in the list with a ratio that exceed the tolerance
+// The promQL should return counter that are grouped by:
+// 1-the key of the value to monitor
+// 2-the podname
+type DiscreteValueOutOfList struct {
+	PrometheusService string   `json:"PrometheusService"`
+	PromQL            string   `json:"promQL"`               // example: sum(delta(ms_rpc_count{job=\"kubernetes-pods\",run=\"foo\"}[10s])) by (code,kubernetes_pod_name)
+	Key               string   `json:"key"`                  // Key for the metrics. For the previous example it will be "code"
+	PodNameKey        string   `json:"podNamekey"`           // Key to access the podName
+	GoodValues        []string `json:"goodValues,omitempty"` // Good Values ["200","201"]. If empty means that BadValues should be used to do exclusion instead of inclusion.
+	BadValues         []string `json:"badValues,omitempty"`  // Bad Values ["500","404"].
+	TolerancePercent  uint     `json:"tolerance"`            // % of Bad values tolerated until the pod is considered out of SLA
+}
 
 // RetryStrategy contains RetryStrategy definition
 type RetryStrategy struct {
-	Mode        RetryStrategyMode `json:"mode"`
-	RetryPeriod time.Duration     `json:"retryPeriod"`
+	Mode     RetryStrategyMode `json:"mode"`
+	Period   time.Duration     `json:"period,omitempty"`
+	MaxRetry time.Duration     `json:"maxRetry,omitempty"`
 }
 
 // RetryStrategyMode represent the breaker Strategy Mode
 type RetryStrategyMode string
 
+// RetryStrategyModeDisabled represent the default retry strategy
 const (
-	// DefaultRetryStrategy represent the default retry strategy
-	DefaultRetryStrategy RetryStrategyMode = "default"
+	RetryStrategyModeDisabled      RetryStrategyMode = "disabled"
+	RetryStrategyModePeriodic      RetryStrategyMode = "periodic"
+	RetryStrategyModeRetryAndKill  RetryStrategyMode = "retryAndKill"
+	RetryStrategyModeRetryAndPause RetryStrategyMode = "retryAndPause"
 )
