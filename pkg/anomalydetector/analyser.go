@@ -22,10 +22,12 @@ type podAnalyser interface {
 	doAnalysis() (okkoByPodName, error)
 }
 
+//AnomalyDetector returns the list of pods that do not behave correctly according to the configuration
 type AnomalyDetector interface {
 	GetPodsOutOfBounds() ([]*kapiv1.Pod, error)
 }
 
+//DiscreteValueOutOfListAnalyser anomalyDetector that check the ratio of good/bad value and return the pods that exceed a given threshold for that ratio
 type DiscreteValueOutOfListAnalyser struct {
 	v1.DiscreteValueOutOfList
 	selector    labels.Selector
@@ -34,6 +36,7 @@ type DiscreteValueOutOfListAnalyser struct {
 	logger      *zap.Logger
 }
 
+//GetPodsOutOfBounds implements interface AnomalyDetector
 func (d *DiscreteValueOutOfListAnalyser) GetPodsOutOfBounds() ([]*kapiv1.Pod, error) {
 	result := []*kapiv1.Pod{}
 	countersByPods, err := d.podAnalyser.doAnalysis()

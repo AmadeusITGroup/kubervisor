@@ -3,35 +3,28 @@ package anomalydetector
 import (
 	"fmt"
 
+	"github.com/amadeusitgroup/podkubervisor/pkg/breaker"
 	promClient "github.com/prometheus/client_golang/api"
-	"go.uber.org/zap"
-	"k8s.io/apimachinery/pkg/labels"
-	kv1 "k8s.io/client-go/listers/core/v1"
-
-	"github.com/amadeusitgroup/podkubervisor/pkg/api/kubervisor/v1"
 )
 
-//Config parameters required for the creation of an AnomalyDetector
-type Config struct {
-	BreakerStrategyConfig v1.BreakerStrategy
-	Selector              labels.Selector
-	PodLister             kv1.PodLister
-	Logger                *zap.Logger
-	customFactory         Factory
+//FactoryConfig parameters required for the creation of an AnomalyDetector
+type FactoryConfig struct {
+	breaker.Config
+	customFactory Factory
 }
 
 //Factory functor for AnomalyDetection
-type Factory func(cfg Config) (AnomalyDetector, error)
+type Factory func(cfg FactoryConfig) (AnomalyDetector, error)
 
 var _ Factory = New
 
 //New Factory for AnomalyDetection
-func New(cfg Config) (AnomalyDetector, error) {
+func New(cfg FactoryConfig) (AnomalyDetector, error) {
 
 	switch {
 	case cfg.BreakerStrategyConfig.DiscreteValueOutOfList != nil:
 		{
-			return newDiscreteValueOutOfListAnalyser(cfg)
+			return newDiscreteValueOutOfListAnalyser(cfg.Config)
 		}
 	case cfg.customFactory != nil:
 		return cfg.customFactory(cfg)
@@ -40,7 +33,7 @@ func New(cfg Config) (AnomalyDetector, error) {
 	}
 }
 
-func newDiscreteValueOutOfListAnalyser(cfg Config) (*DiscreteValueOutOfListAnalyser, error) {
+func newDiscreteValueOutOfListAnalyser(cfg breaker.Config) (*DiscreteValueOutOfListAnalyser, error) {
 	a := &DiscreteValueOutOfListAnalyser{DiscreteValueOutOfList: *cfg.BreakerStrategyConfig.DiscreteValueOutOfList, selector: cfg.Selector, podLister: cfg.PodLister, logger: cfg.Logger}
 	switch {
 	case cfg.BreakerStrategyConfig.DiscreteValueOutOfList.PromQL != "":
