@@ -64,13 +64,15 @@ type BreakerStrategy struct {
 // 1-the key of the value to monitor
 // 2-the podname
 type DiscreteValueOutOfList struct {
-	PrometheusService string   `json:"PrometheusService"`
-	PromQL            string   `json:"promQL"`               // example: sum(delta(ms_rpc_count{job=\"kubernetes-pods\",run=\"foo\"}[10s])) by (code,kubernetes_pod_name)
-	Key               string   `json:"key"`                  // Key for the metrics. For the previous example it will be "code"
-	PodNameKey        string   `json:"podNamekey"`           // Key to access the podName
-	GoodValues        []string `json:"goodValues,omitempty"` // Good Values ["200","201"]. If empty means that BadValues should be used to do exclusion instead of inclusion.
-	BadValues         []string `json:"badValues,omitempty"`  // Bad Values ["500","404"].
-	TolerancePercent  uint     `json:"tolerance"`            // % of Bad values tolerated until the pod is considered out of SLA
+	PrometheusService    string   `json:"prometheusService"`
+	PromQL               string   `json:"promQL"`               // example: sum(delta(ms_rpc_count{job=\"kubernetes-pods\",run=\"foo\"}[10s])) by (code,kubernetes_pod_name)
+	Key                  string   `json:"key"`                  // Key for the metrics. For the previous example it will be "code"
+	PodNameKey           string   `json:"podNamekey"`           // Key to access the podName
+	GoodValues           []string `json:"goodValues,omitempty"` // Good Values ["200","201"]. If empty means that BadValues should be used to do exclusion instead of inclusion.
+	BadValues            []string `json:"badValues,omitempty"`  // Bad Values ["500","404"].
+	TolerancePercent     *uint    `json:"tolerance"`            // % of Bad values tolerated until the pod is considered out of SLA
+	MinimumActivityCount *uint    `json:"tolerance"`            // Minimum number of event required to perform analysis on the pod
+
 }
 
 // RetryStrategy contains RetryStrategy definition

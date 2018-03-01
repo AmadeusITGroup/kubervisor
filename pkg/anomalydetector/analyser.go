@@ -1,10 +1,11 @@
-package anomalyDetector
+package anomalydetector
 
 import (
 	"fmt"
 
 	"go.uber.org/zap"
 	kapiv1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/labels"
 	kv1 "k8s.io/client-go/listers/core/v1"
 
 	"github.com/amadeusitgroup/podkubervisor/pkg/api/kubervisor/v1"
@@ -26,7 +27,8 @@ type AnomalyDetector interface {
 }
 
 type DiscreteValueOutOfListAnalyser struct {
-	v1.BreakerConfigSpec
+	v1.DiscreteValueOutOfList
+	selector    labels.Selector
 	podAnalyser podAnalyser
 	podLister   kv1.PodLister
 	logger      *zap.Logger
@@ -40,7 +42,7 @@ func (d *DiscreteValueOutOfListAnalyser) GetPodsOutOfBounds() ([]*kapiv1.Pod, er
 	}
 
 	d.logger.Sugar().Debugf("Number of PODs reporting metrics:%d\n", len(countersByPods))
-	listOfPods, err := d.podLister.List(d.Selector)
+	listOfPods, err := d.podLister.List(d.selector)
 	if err != nil {
 		return nil, fmt.Errorf("can't list pods")
 	}
@@ -51,7 +53,7 @@ func (d *DiscreteValueOutOfListAnalyser) GetPodsOutOfBounds() ([]*kapiv1.Pod, er
 
 	for _, p := range listOfPods {
 		podByName[p.Name] = p
-		if traffic, _, _ := labeling.IsPodTrafficLabelOk(p); !traffic {
+		if traffic, _, _ := labeling.IsPodTrafficLabelOkOrPause(p); !traffic {
 			podWithNoTraffic[p.Name] = p
 		}
 	}
@@ -62,20 +64,14 @@ func (d *DiscreteValueOutOfListAnalyser) GetPodsOutOfBounds() ([]*kapiv1.Pod, er
 			d.logger.Sugar().Infof("the pod %s metrics are ignored now has it is marked out of traffic\n", podName)
 			continue
 		}
-
 		sum := counter.ok + counter.ko
-		if sum != 0 {
-			e := counter.ko * 100 / sum
-			if e > d.Breaker.DiscreteValueOutOfList.TolerancePercent {
-				//fmt.Printf("[%s] POD with above error threshold [ %d > %d ]: %s\n", runLabelValue, int(e), int(errorRatioThreshold), podName)
-				if p, ok := podByName[podName]; !ok {
-					//fmt.Printf("[%s] Pod %s reported by prometheus is not under informer. Must have been deleted.\n", runLabelValue, podName)
-				} else {
-					//aboveThreshold[podName] = p
+		if sum >= *d.MinimumActivityCount {
+			ratio := counter.ko * 100 / sum
+			if ratio > *d.TolerancePercent {
+				if p, ok := podByName[podName]; ok {
+					// Only keeping known pod with ratio superior to Tolerance
 					result = append(result, p)
 				}
-			} else if e > 0 {
-				//fmt.Printf("[%s] POD with error but bellow threshold [ %d < %d ]: %s\n", runLabelValue, int(e), int(errorRatioThreshold), podName)
 			}
 		}
 	}

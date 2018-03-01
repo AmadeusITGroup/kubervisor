@@ -188,6 +188,24 @@ func (in *DiscreteValueOutOfList) DeepCopyInto(out *DiscreteValueOutOfList) {
 		*out = make([]string, len(*in))
 		copy(*out, *in)
 	}
+	if in.TolerancePercent != nil {
+		in, out := &in.TolerancePercent, &out.TolerancePercent
+		if *in == nil {
+			*out = nil
+		} else {
+			*out = new(uint)
+			**out = **in
+		}
+	}
+	if in.MinimumActivityCount != nil {
+		in, out := &in.MinimumActivityCount, &out.MinimumActivityCount
+		if *in == nil {
+			*out = nil
+		} else {
+			*out = new(uint)
+			**out = **in
+		}
+	}
 	return
 }
 

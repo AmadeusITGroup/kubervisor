@@ -1,13 +1,13 @@
-package anomalyDetector
+package anomalydetector
 
 import (
 	"fmt"
 
-	"github.com/amadeusitgroup/podkubervisor/pkg/api/kubervisor/v1"
+	promClient "github.com/prometheus/client_golang/api"
 	"go.uber.org/zap"
 	kv1 "k8s.io/client-go/listers/core/v1"
 
-	promClient "github.com/prometheus/client_golang/api"
+	"github.com/amadeusitgroup/podkubervisor/pkg/api/kubervisor/v1"
 )
 
 //Config parameters required for the creation of an AnomalyDetector
@@ -39,7 +39,7 @@ func New(cfg Config) (AnomalyDetector, error) {
 }
 
 func newDiscreteValueOutOfListAnalyser(cfg Config) (*DiscreteValueOutOfListAnalyser, error) {
-	a := &DiscreteValueOutOfListAnalyser{BreakerConfigSpec: cfg.BreakerConfig, podLister: cfg.PodLister, logger: cfg.Logger}
+	a := &DiscreteValueOutOfListAnalyser{DiscreteValueOutOfList: *cfg.BreakerConfig.Breaker.DiscreteValueOutOfList, selector: cfg.BreakerConfig.Selector, podLister: cfg.PodLister, logger: cfg.Logger}
 	switch {
 	case cfg.BreakerConfig.Breaker.DiscreteValueOutOfList.PromQL != "":
 

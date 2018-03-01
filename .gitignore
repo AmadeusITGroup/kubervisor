@@ -16,3 +16,4 @@
 .DS_Store
 /.vscode
 /bin
+coverage.txt

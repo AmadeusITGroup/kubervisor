@@ -1,16 +1,16 @@
-package anomalyDetector
+package anomalydetector
 
 import (
 	"context"
 	"fmt"
 	"time"
 
-	"go.uber.org/zap"
-
-	"github.com/amadeusitgroup/podkubervisor/pkg/api/kubervisor/v1"
 	promClient "github.com/prometheus/client_golang/api"
 	promApi "github.com/prometheus/client_golang/api/prometheus/v1"
 	"github.com/prometheus/common/model"
+	"go.uber.org/zap"
+
+	"github.com/amadeusitgroup/podkubervisor/pkg/api/kubervisor/v1"
 )
 
 type promDiscreteValueOutOfListAnalyser struct {
