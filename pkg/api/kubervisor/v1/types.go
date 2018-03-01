@@ -86,7 +86,6 @@ type RetryStrategyMode string
 
 // RetryStrategyModeDisabled represent the default retry strategy
 const (
-	RetryStrategyModeDisabled      RetryStrategyMode = "disabled"
 	RetryStrategyModePeriodic      RetryStrategyMode = "periodic"
 	RetryStrategyModeRetryAndKill  RetryStrategyMode = "retryAndKill"
 	RetryStrategyModeRetryAndPause RetryStrategyMode = "retryAndPause"

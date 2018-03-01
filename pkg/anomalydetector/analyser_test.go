@@ -182,6 +182,7 @@ func TestDiscreteValueOutOfListAnalyser_GetPodsOutOfBounds(t *testing.T) {
 		},
 	}
 	for _, tt := range tests {
+		devlogger.Sugar().Infof("Running test %s", tt.name)
 		t.Run(tt.name, func(t *testing.T) {
 			d := &DiscreteValueOutOfListAnalyser{
 				DiscreteValueOutOfList: tt.fields.DiscreteValueOutOfList,
@@ -196,11 +197,16 @@ func TestDiscreteValueOutOfListAnalyser_GetPodsOutOfBounds(t *testing.T) {
 				return
 			}
 
+			if len(got) != len(tt.want) {
+				t.Errorf("Got DiscreteValueOutOfListAnalyser.GetPodsOutOfBounds() = %v,\n want %v", got, tt.want)
+				return
+			}
+
 			sort.SliceStable(got, func(i, j int) bool { return got[i].Name < got[j].Name })
 			sort.SliceStable(got, func(i, j int) bool { return tt.want[i].Name < tt.want[j].Name })
 
 			if !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("DiscreteValueOutOfListAnalyser.GetPodsOutOfBounds() = %v, want %v", got, tt.want)
+				t.Errorf("Got DiscreteValueOutOfListAnalyser.GetPodsOutOfBounds() = %v,\n want %v", got, tt.want)
 			}
 		})
 	}

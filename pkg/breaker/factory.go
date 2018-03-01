@@ -17,5 +17,5 @@ func New(cfg FactoryConfig) (Breaker, error) {
 		return cfg.customFactory(cfg)
 	}
 
-	return nil, nil
+	return &BreakerImpl{}, nil
 }

@@ -2,12 +2,8 @@ package labeling
 
 import (
 	"fmt"
-	"strconv"
-	"time"
 
 	kv1 "k8s.io/api/core/v1"
-
-	"github.com/amadeusitgroup/podkubervisor/pkg/api/kubervisor/v1"
 )
 
 //LabelTraffic are possible values associated to label with key LabelTrafficKey
@@ -22,51 +18,15 @@ const (
 
 //Kubervisor keys for Labels and Annotations
 const (
-	LabelTrafficKey         = "kubervisor/traffic"
-	AnnotationRetryModeKey  = "breaker/policy"
-	AnnotationRetryAtKey    = "breaker/retryAt"
-	AnnotationRetryCountKey = "breaker/retryCount"
+	LabelTrafficKey = "kubervisor/traffic"
 )
 
 //SetTraficLabel create or update the value of the label LabelTrafficKey
 func SetTraficLabel(pod *kv1.Pod, val LabelTraffic) {
+	if pod.Labels == nil {
+		pod.Labels = map[string]string{}
+	}
 	pod.Labels[LabelTrafficKey] = string(val)
-}
-
-//GetRetryStrategyMode read the retry strategy from Pod annotations
-func GetRetryStrategyMode(pod *kv1.Pod) v1.RetryStrategyMode {
-	if pod != nil {
-		if value, ok := pod.Annotations[AnnotationRetryModeKey]; ok {
-			switch value {
-			case string(v1.RetryStrategyModePeriodic):
-				return v1.RetryStrategyModePeriodic
-			case string(v1.RetryStrategyModeRetryAndKill):
-				return v1.RetryStrategyModeRetryAndKill
-			case string(v1.RetryStrategyModeRetryAndPause):
-				return v1.RetryStrategyModeRetryAndPause
-			}
-		}
-	}
-	// default value
-	return v1.RetryStrategyModeDisabled
-}
-
-//GetRetryAt read the next retry time from Pod annotations
-func GetRetryAt(pod *kv1.Pod) (time.Time, error) {
-	retryAt, ok := pod.Annotations[AnnotationRetryAtKey]
-	if !ok {
-		return time.Time{}, fmt.Errorf("No retryAt annotation ")
-	}
-	return time.Parse(time.RFC3339, retryAt)
-}
-
-//GetRetryCount read the retry count from Pod annotations
-func GetRetryCount(pod *kv1.Pod) (int, error) {
-	retryCount, ok := pod.Annotations[AnnotationRetryCountKey]
-	if !ok {
-		return 0, fmt.Errorf("No retryCount annotation ")
-	}
-	return strconv.Atoi(retryCount)
 }
 
 //IsPodTrafficLabelOkOrPause check if the pod is marked to receive traffic or is in pause
@@ -75,5 +35,25 @@ func IsPodTrafficLabelOkOrPause(pod *kv1.Pod) (bool, bool, error) {
 	if !ok {
 		return false, false, fmt.Errorf("No traffic label ")
 	}
-	return trafficLabel == string(LabelTrafficYes), trafficLabel == string(LabelTrafficPause), nil
+	if l, err := ToLabelTraffic(trafficLabel); err != nil {
+		return false, false, err
+	} else {
+		return l == LabelTrafficYes, l == LabelTrafficPause, nil
+	}
+
+}
+
+//ToLabelTraffic check and convert to LabelTraffic
+func ToLabelTraffic(value string) (LabelTraffic, error) {
+	switch value {
+	case string(LabelTrafficYes):
+		return LabelTrafficYes, nil
+	case string(LabelTrafficNo):
+		return LabelTrafficNo, nil
+	case string(LabelTrafficPause):
+		return LabelTrafficPause, nil
+	default:
+		return "", fmt.Errorf("Unknown value %s for LabelTraffic", value)
+	}
+
 }

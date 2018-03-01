@@ -3,13 +3,12 @@ package anomalydetector
 import (
 	"fmt"
 
-	"github.com/amadeusitgroup/podkubervisor/pkg/breaker"
 	promClient "github.com/prometheus/client_golang/api"
 )
 
-//FactoryConfig parameters required for the creation of an AnomalyDetector
+//FactoryConfig parameters extended with factory features
 type FactoryConfig struct {
-	breaker.Config
+	Config
 	customFactory Factory
 }
 
@@ -33,7 +32,7 @@ func New(cfg FactoryConfig) (AnomalyDetector, error) {
 	}
 }
 
-func newDiscreteValueOutOfListAnalyser(cfg breaker.Config) (*DiscreteValueOutOfListAnalyser, error) {
+func newDiscreteValueOutOfListAnalyser(cfg Config) (*DiscreteValueOutOfListAnalyser, error) {
 	a := &DiscreteValueOutOfListAnalyser{DiscreteValueOutOfList: *cfg.BreakerStrategyConfig.DiscreteValueOutOfList, selector: cfg.Selector, podLister: cfg.PodLister, logger: cfg.Logger}
 	switch {
 	case cfg.BreakerStrategyConfig.DiscreteValueOutOfList.PromQL != "":

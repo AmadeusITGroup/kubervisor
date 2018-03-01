@@ -8,7 +8,6 @@ import (
 	kapiv1 "k8s.io/api/core/v1"
 
 	"github.com/amadeusitgroup/podkubervisor/pkg/api/kubervisor/v1"
-	"github.com/amadeusitgroup/podkubervisor/pkg/breaker"
 )
 
 type emptyCustomAnomalyDetectorT struct {
@@ -55,7 +54,7 @@ func TestNew(t *testing.T) {
 			name: "missing Param",
 			args: args{
 				cfg: FactoryConfig{
-					Config: breaker.Config{
+					Config: Config{
 						Logger:    devLogger,
 						PodLister: nil,
 						BreakerStrategyConfig: v1.BreakerStrategy{
@@ -71,7 +70,7 @@ func TestNew(t *testing.T) {
 			name: "PROM: missing Service",
 			args: args{
 				cfg: FactoryConfig{
-					Config: breaker.Config{
+					Config: Config{
 						Logger:    devLogger,
 						PodLister: nil,
 						BreakerStrategyConfig: v1.BreakerStrategy{
@@ -89,7 +88,7 @@ func TestNew(t *testing.T) {
 			name: "PROM: missing good and bad values",
 			args: args{
 				cfg: FactoryConfig{
-					Config: breaker.Config{
+					Config: Config{
 						Logger:    devLogger,
 						PodLister: nil,
 						BreakerStrategyConfig: v1.BreakerStrategy{
@@ -108,7 +107,7 @@ func TestNew(t *testing.T) {
 			name: "PROM: good and bad values at the same time",
 			args: args{
 				cfg: FactoryConfig{
-					Config: breaker.Config{
+					Config: Config{
 						Logger:    devLogger,
 						PodLister: nil,
 						BreakerStrategyConfig: v1.BreakerStrategy{
@@ -129,7 +128,7 @@ func TestNew(t *testing.T) {
 			name: "PROM: good value only",
 			args: args{
 				cfg: FactoryConfig{
-					Config: breaker.Config{
+					Config: Config{
 						Logger:    devLogger,
 						PodLister: nil,
 						BreakerStrategyConfig: v1.BreakerStrategy{
@@ -149,7 +148,7 @@ func TestNew(t *testing.T) {
 			name: "PROM: bad value only",
 			args: args{
 				cfg: FactoryConfig{
-					Config: breaker.Config{
+					Config: Config{
 						Logger:    devLogger,
 						PodLister: nil,
 						BreakerStrategyConfig: v1.BreakerStrategy{
