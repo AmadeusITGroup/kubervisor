@@ -4,7 +4,6 @@ import (
 	"time"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/labels"
 )
 
 // +genclient
@@ -40,9 +39,9 @@ type BreakerConfigList struct {
 
 // BreakerConfigSpec contains BreakerConfig specification
 type BreakerConfigSpec struct {
-	Breaker  BreakerStrategy `json:"breaker"`
-	Retry    RetryStrategy   `json:"retry"`
-	Selector labels.Selector `json:"selector,omitempty"`
+	Breaker BreakerStrategy `json:"breaker"`
+	Retry   RetryStrategy   `json:"retry"`
+	Service string          `json:"service,omitempty"`
 }
 
 // BreakerConfigStatus contains BreakerConfig status

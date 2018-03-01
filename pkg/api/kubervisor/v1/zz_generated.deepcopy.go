@@ -98,11 +98,6 @@ func (in *BreakerConfigSpec) DeepCopyInto(out *BreakerConfigSpec) {
 	*out = *in
 	in.Breaker.DeepCopyInto(&out.Breaker)
 	out.Retry = in.Retry
-	if in.Selector == nil {
-		out.Selector = nil
-	} else {
-		out.Selector = in.Selector.DeepCopySelector()
-	}
 	return
 }
 
