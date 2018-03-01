@@ -56,10 +56,8 @@ func TestNew(t *testing.T) {
 				cfg: Config{
 					Logger:    devLogger,
 					PodLister: nil,
-					BreakerConfig: v1.BreakerConfigSpec{
-						Breaker: v1.BreakerStrategy{
-							DiscreteValueOutOfList: &v1.DiscreteValueOutOfList{},
-						},
+					BreakerStrategyConfig: v1.BreakerStrategy{
+						DiscreteValueOutOfList: &v1.DiscreteValueOutOfList{},
 					},
 				},
 			},
@@ -72,11 +70,9 @@ func TestNew(t *testing.T) {
 				cfg: Config{
 					Logger:    devLogger,
 					PodLister: nil,
-					BreakerConfig: v1.BreakerConfigSpec{
-						Breaker: v1.BreakerStrategy{
-							DiscreteValueOutOfList: &v1.DiscreteValueOutOfList{
-								PromQL: "fake query",
-							},
+					BreakerStrategyConfig: v1.BreakerStrategy{
+						DiscreteValueOutOfList: &v1.DiscreteValueOutOfList{
+							PromQL: "fake query",
 						},
 					},
 				},
@@ -90,12 +86,10 @@ func TestNew(t *testing.T) {
 				cfg: Config{
 					Logger:    devLogger,
 					PodLister: nil,
-					BreakerConfig: v1.BreakerConfigSpec{
-						Breaker: v1.BreakerStrategy{
-							DiscreteValueOutOfList: &v1.DiscreteValueOutOfList{
-								PromQL:            "fake query",
-								PrometheusService: "PrometheusService",
-							},
+					BreakerStrategyConfig: v1.BreakerStrategy{
+						DiscreteValueOutOfList: &v1.DiscreteValueOutOfList{
+							PromQL:            "fake query",
+							PrometheusService: "PrometheusService",
 						},
 					},
 				},
@@ -109,14 +103,12 @@ func TestNew(t *testing.T) {
 				cfg: Config{
 					Logger:    devLogger,
 					PodLister: nil,
-					BreakerConfig: v1.BreakerConfigSpec{
-						Breaker: v1.BreakerStrategy{
-							DiscreteValueOutOfList: &v1.DiscreteValueOutOfList{
-								PromQL:            "fake query",
-								PrometheusService: "PrometheusService",
-								GoodValues:        []string{"1"},
-								BadValues:         []string{"0"},
-							},
+					BreakerStrategyConfig: v1.BreakerStrategy{
+						DiscreteValueOutOfList: &v1.DiscreteValueOutOfList{
+							PromQL:            "fake query",
+							PrometheusService: "PrometheusService",
+							GoodValues:        []string{"1"},
+							BadValues:         []string{"0"},
 						},
 					},
 				},
@@ -130,13 +122,11 @@ func TestNew(t *testing.T) {
 				cfg: Config{
 					Logger:    devLogger,
 					PodLister: nil,
-					BreakerConfig: v1.BreakerConfigSpec{
-						Breaker: v1.BreakerStrategy{
-							DiscreteValueOutOfList: &v1.DiscreteValueOutOfList{
-								PromQL:            "fake query",
-								PrometheusService: "PrometheusService",
-								GoodValues:        []string{"1"},
-							},
+					BreakerStrategyConfig: v1.BreakerStrategy{
+						DiscreteValueOutOfList: &v1.DiscreteValueOutOfList{
+							PromQL:            "fake query",
+							PrometheusService: "PrometheusService",
+							GoodValues:        []string{"1"},
 						},
 					},
 				},
@@ -150,13 +140,11 @@ func TestNew(t *testing.T) {
 				cfg: Config{
 					Logger:    devLogger,
 					PodLister: nil,
-					BreakerConfig: v1.BreakerConfigSpec{
-						Breaker: v1.BreakerStrategy{
-							DiscreteValueOutOfList: &v1.DiscreteValueOutOfList{
-								PromQL:            "fake query",
-								PrometheusService: "PrometheusService",
-								BadValues:         []string{"0"},
-							},
+					BreakerStrategyConfig: v1.BreakerStrategy{
+						DiscreteValueOutOfList: &v1.DiscreteValueOutOfList{
+							PromQL:            "fake query",
+							PrometheusService: "PrometheusService",
+							BadValues:         []string{"0"},
 						},
 					},
 				},

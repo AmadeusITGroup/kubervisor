@@ -5,6 +5,7 @@ import (
 
 	promClient "github.com/prometheus/client_golang/api"
 	"go.uber.org/zap"
+	"k8s.io/apimachinery/pkg/labels"
 	kv1 "k8s.io/client-go/listers/core/v1"
 
 	"github.com/amadeusitgroup/podkubervisor/pkg/api/kubervisor/v1"
@@ -12,10 +13,11 @@ import (
 
 //Config parameters required for the creation of an AnomalyDetector
 type Config struct {
-	BreakerConfig v1.BreakerConfigSpec
-	PodLister     kv1.PodLister
-	Logger        *zap.Logger
-	customFactory Factory
+	BreakerStrategyConfig v1.BreakerStrategy
+	Selector              labels.Selector
+	PodLister             kv1.PodLister
+	Logger                *zap.Logger
+	customFactory         Factory
 }
 
 //Factory functor for AnomalyDetection
@@ -27,7 +29,7 @@ var _ Factory = New
 func New(cfg Config) (AnomalyDetector, error) {
 
 	switch {
-	case cfg.BreakerConfig.Breaker.DiscreteValueOutOfList != nil:
+	case cfg.BreakerStrategyConfig.DiscreteValueOutOfList != nil:
 		{
 			return newDiscreteValueOutOfListAnalyser(cfg)
 		}
@@ -39,22 +41,22 @@ func New(cfg Config) (AnomalyDetector, error) {
 }
 
 func newDiscreteValueOutOfListAnalyser(cfg Config) (*DiscreteValueOutOfListAnalyser, error) {
-	a := &DiscreteValueOutOfListAnalyser{DiscreteValueOutOfList: *cfg.BreakerConfig.Breaker.DiscreteValueOutOfList, selector: cfg.BreakerConfig.Selector, podLister: cfg.PodLister, logger: cfg.Logger}
+	a := &DiscreteValueOutOfListAnalyser{DiscreteValueOutOfList: *cfg.BreakerStrategyConfig.DiscreteValueOutOfList, selector: cfg.Selector, podLister: cfg.PodLister, logger: cfg.Logger}
 	switch {
-	case cfg.BreakerConfig.Breaker.DiscreteValueOutOfList.PromQL != "":
+	case cfg.BreakerStrategyConfig.DiscreteValueOutOfList.PromQL != "":
 
-		podAnalyser := &promDiscreteValueOutOfListAnalyser{config: *cfg.BreakerConfig.Breaker.DiscreteValueOutOfList, logger: cfg.Logger}
-		if cfg.BreakerConfig.Breaker.DiscreteValueOutOfList.PrometheusService == "" {
+		podAnalyser := &promDiscreteValueOutOfListAnalyser{config: *cfg.BreakerStrategyConfig.DiscreteValueOutOfList, logger: cfg.Logger}
+		if cfg.BreakerStrategyConfig.DiscreteValueOutOfList.PrometheusService == "" {
 			return nil, fmt.Errorf("missing Prometheus service")
 		}
 
-		promconfig := promClient.Config{Address: "http://" + cfg.BreakerConfig.Breaker.DiscreteValueOutOfList.PrometheusService}
+		promconfig := promClient.Config{Address: "http://" + cfg.BreakerStrategyConfig.DiscreteValueOutOfList.PrometheusService}
 		var err error
 		if podAnalyser.prometheusClient, err = promClient.NewClient(promconfig); err != nil {
 			return nil, err
 		}
 
-		good, bad := cfg.BreakerConfig.Breaker.DiscreteValueOutOfList.GoodValues, cfg.BreakerConfig.Breaker.DiscreteValueOutOfList.BadValues
+		good, bad := cfg.BreakerStrategyConfig.DiscreteValueOutOfList.GoodValues, cfg.BreakerStrategyConfig.DiscreteValueOutOfList.BadValues
 		if len(good) == 0 && len(bad) == 0 {
 			return nil, fmt.Errorf("no good nor bad value defined")
 		}
