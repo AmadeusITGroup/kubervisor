@@ -42,15 +42,22 @@ func ValidateTestSequence(wg *sync.WaitGroup, t *testing.T, duration time.Durati
 }
 
 type testStep struct {
+	sync.Mutex
 	c        chan struct{}
 	doneOnce bool
+}
+
+func (ts *testStep) getChan() <-chan struct{} {
+	ts.Lock()
+	defer ts.Unlock()
+	return ts.c
 }
 
 //TestStepSequence sequence of test steps
 type TestStepSequence struct {
 	name     string
 	t        *testing.T
-	steps    []testStep
+	steps    []*testStep
 	duration time.Duration
 }
 
@@ -67,6 +74,8 @@ func (es *TestStepSequence) PassOnlyOnce(step int) {
 		es.t.Fatalf("Step out of bound")
 		return
 	}
+	es.steps[step].Lock()
+	defer es.steps[step].Unlock()
 	close(es.steps[step].c)
 	es.steps[step].c = nil
 	es.steps[step].doneOnce = true
@@ -85,6 +94,9 @@ func (es *TestStepSequence) PassAtLeastOnce(step int) {
 		es.t.Fatalf("Step out of bound")
 		return
 	}
+
+	es.steps[step].Lock()
+	defer es.steps[step].Unlock()
 
 	if es.steps[step].doneOnce {
 		return
@@ -111,7 +123,7 @@ func (es *TestStepSequence) ValidateTestSequence(wg *sync.WaitGroup) {
 		}()
 
 		for _, step := range es.steps {
-			<-step.c
+			<-step.getChan()
 		}
 		close(sequenceCompleted)
 	}()
@@ -135,9 +147,9 @@ func (es *TestStepSequence) ValidateTestSequenceNoOrder(wg *sync.WaitGroup) {
 		var wgIn sync.WaitGroup
 		for _, step := range es.steps {
 			wgIn.Add(1)
-			go func(ts testStep) {
+			go func(ts *testStep) {
 				defer wgIn.Done()
-				<-ts.c
+				<-ts.getChan()
 			}(step)
 		}
 		wgIn.Wait()
@@ -149,12 +161,14 @@ func (es *TestStepSequence) ValidateTestSequenceNoOrder(wg *sync.WaitGroup) {
 func NewTestSequence(t *testing.T, registrationName string, count int, duration time.Duration) *TestStepSequence {
 	s := &TestStepSequence{
 		name:     registrationName,
-		steps:    make([]testStep, count),
+		steps:    make([]*testStep, count),
 		t:        t,
 		duration: duration,
 	}
 	for i := range s.steps {
-		s.steps[i].c = make(chan struct{})
+		s.steps[i] = &testStep{
+			c: make(chan struct{}),
+		}
 	}
 
 	if _, ok := MapOfSequences[s.name]; ok {
