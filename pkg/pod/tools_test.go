@@ -4,8 +4,9 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/amadeusitgroup/podkubervisor/pkg/labeling"
 	kapiv1 "k8s.io/api/core/v1"
+
+	"github.com/amadeusitgroup/podkubervisor/pkg/labeling"
 )
 
 func TestPurgeNotReadyPods(t *testing.T) {

@@ -75,9 +75,16 @@ func (b *BreakerImpl) Run(stop <-chan struct{}) error {
 }
 
 func (b *BreakerImpl) computeMinAvailablePods(podUnderSelectorCount int) int {
-	quota := podUnderSelectorCount * int(*b.breakerStrategyConfig.MinPodsAvailableRatio) / 100
-	if quota > int(*b.breakerStrategyConfig.MinPodsAvailableCount) {
+	count, ratio := 0, 0
+	if b.breakerStrategyConfig.MinPodsAvailableRatio != nil {
+		ratio = int(*b.breakerStrategyConfig.MinPodsAvailableRatio)
+	}
+	if b.breakerStrategyConfig.MinPodsAvailableCount != nil {
+		count = int(*b.breakerStrategyConfig.MinPodsAvailableCount)
+	}
+	quota := podUnderSelectorCount * int(ratio) / 100
+	if quota > count {
 		return quota
 	}
-	return int(*b.breakerStrategyConfig.MinPodsAvailableCount)
+	return count
 }

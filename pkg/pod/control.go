@@ -4,10 +4,11 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/amadeusitgroup/podkubervisor/pkg/api/kubervisor/v1"
-	"github.com/amadeusitgroup/podkubervisor/pkg/labeling"
 	kapiv1 "k8s.io/api/core/v1"
 	clientset "k8s.io/client-go/kubernetes"
+
+	"github.com/amadeusitgroup/podkubervisor/pkg/api/kubervisor/v1"
+	"github.com/amadeusitgroup/podkubervisor/pkg/labeling"
 )
 
 //ControlInterface interface to act on pods

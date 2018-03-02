@@ -1,8 +1,9 @@
 package pod
 
 import (
-	"github.com/amadeusitgroup/podkubervisor/pkg/labeling"
 	kapiv1 "k8s.io/api/core/v1"
+
+	"github.com/amadeusitgroup/podkubervisor/pkg/labeling"
 )
 
 //FilterOut remove from the slice pods for which exclude function return true
