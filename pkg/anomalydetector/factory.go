@@ -33,31 +33,44 @@ func New(cfg FactoryConfig) (AnomalyDetector, error) {
 }
 
 func newDiscreteValueOutOfListAnalyser(cfg Config) (*DiscreteValueOutOfListAnalyser, error) {
-	a := &DiscreteValueOutOfListAnalyser{DiscreteValueOutOfList: *cfg.BreakerStrategyConfig.DiscreteValueOutOfList, selector: cfg.Selector, podLister: cfg.PodLister, logger: cfg.Logger}
-	switch {
-	case cfg.BreakerStrategyConfig.DiscreteValueOutOfList.PromQL != "":
+	analyserCfg := *cfg.BreakerStrategyConfig.DiscreteValueOutOfList
 
-		podAnalyser := &promDiscreteValueOutOfListAnalyser{config: *cfg.BreakerStrategyConfig.DiscreteValueOutOfList, logger: cfg.Logger}
-		if cfg.BreakerStrategyConfig.DiscreteValueOutOfList.PrometheusService == "" {
+	good, bad := analyserCfg.GoodValues, analyserCfg.BadValues
+	if len(good) == 0 && len(bad) == 0 {
+		return nil, fmt.Errorf("no good nor bad value defined")
+	}
+	if len(good) != 0 && len(bad) != 0 {
+		return nil, fmt.Errorf("good and bad value defined, only good values will be used to do inclusion")
+	}
+	valueCheckerFunc := func(value string) bool { return ContainsString(good, value) }
+	if len(good) == 0 && len(bad) != 0 {
+		valueCheckerFunc = func(value string) bool { return !ContainsString(bad, value) }
+	}
+
+	if len(analyserCfg.Key) == 0 {
+		return nil, fmt.Errorf("missing metric Key definition")
+	}
+
+	if len(analyserCfg.PodNameKey) == 0 {
+		return nil, fmt.Errorf("missing PodName Key definition")
+	}
+
+	a := &DiscreteValueOutOfListAnalyser{DiscreteValueOutOfList: analyserCfg, selector: cfg.Selector, podLister: cfg.PodLister, logger: cfg.Logger}
+	switch {
+	case analyserCfg.PromQL != "":
+
+		podAnalyser := &promDiscreteValueOutOfListAnalyser{config: analyserCfg, logger: cfg.Logger}
+
+		podAnalyser.valueCheckerFunc = valueCheckerFunc
+
+		if analyserCfg.PrometheusService == "" {
 			return nil, fmt.Errorf("missing Prometheus service")
 		}
 
-		promconfig := promClient.Config{Address: "http://" + cfg.BreakerStrategyConfig.DiscreteValueOutOfList.PrometheusService}
+		promconfig := promClient.Config{Address: "http://" + analyserCfg.PrometheusService}
 		var err error
 		if podAnalyser.prometheusClient, err = promClient.NewClient(promconfig); err != nil {
 			return nil, err
-		}
-
-		good, bad := cfg.BreakerStrategyConfig.DiscreteValueOutOfList.GoodValues, cfg.BreakerStrategyConfig.DiscreteValueOutOfList.BadValues
-		if len(good) == 0 && len(bad) == 0 {
-			return nil, fmt.Errorf("no good nor bad value defined")
-		}
-		if len(good) != 0 && len(bad) != 0 {
-			return nil, fmt.Errorf("good and bad value defined, only good values will be used to do inclusion")
-		}
-		podAnalyser.valueCheckerFunc = func(value string) bool { return ContainsString(good, value) }
-		if len(good) == 0 && len(bad) != 0 {
-			podAnalyser.valueCheckerFunc = func(value string) bool { return !ContainsString(bad, value) }
 		}
 
 		a.podAnalyser = podAnalyser

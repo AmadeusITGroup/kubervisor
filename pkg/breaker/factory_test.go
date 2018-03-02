@@ -2,12 +2,14 @@ package breaker
 
 import (
 	"testing"
+
+	"github.com/amadeusitgroup/podkubervisor/pkg/api/kubervisor/v1"
 )
 
 type emptyCustomBreakerT struct {
 }
 
-func (e *emptyCustomBreakerT) Run(stop <-chan struct{}) error { return nil }
+func (e *emptyCustomBreakerT) Run(stop <-chan struct{}) {}
 
 var emptyCustomBreaker Breaker = &emptyCustomBreakerT{}
 
@@ -23,15 +25,35 @@ func TestNew(t *testing.T) {
 		wantErr   bool
 	}{
 		{
-			name: "error",
+			name: "ok",
 			args: args{
-				cfg: FactoryConfig{},
+				cfg: FactoryConfig{
+					Config: Config{
+						BreakerStrategyConfig: v1.BreakerStrategy{
+							DiscreteValueOutOfList: &v1.DiscreteValueOutOfList{
+								PromQL:            "query",
+								PrometheusService: "Service",
+								GoodValues:        []string{"ok"},
+								Key:               "code",
+								PodNameKey:        "podname",
+							},
+						},
+					},
+				},
 			},
 			wantErr: false,
 			checkFunc: func(b Breaker) bool {
 				_, ok := b.(*BreakerImpl)
 				return ok
 			},
+		},
+		{
+			name: "error",
+			args: args{
+				cfg: FactoryConfig{},
+			},
+			wantErr:   true,
+			checkFunc: nil,
 		},
 		{
 			name: "custom",
@@ -49,6 +71,9 @@ func TestNew(t *testing.T) {
 			got, err := New(tt.args.cfg)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("New() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+			if tt.wantErr {
 				return
 			}
 			if !tt.checkFunc(got) {

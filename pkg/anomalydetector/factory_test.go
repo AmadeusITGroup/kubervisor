@@ -67,7 +67,7 @@ func TestNew(t *testing.T) {
 			want:    nil,
 		},
 		{
-			name: "PROM: missing Service",
+			name: "default case",
 			args: args{
 				cfg: FactoryConfig{
 					Config: Config{
@@ -75,7 +75,9 @@ func TestNew(t *testing.T) {
 						PodLister: nil,
 						BreakerStrategyConfig: v1.BreakerStrategy{
 							DiscreteValueOutOfList: &v1.DiscreteValueOutOfList{
-								PromQL: "fake query",
+								GoodValues: []string{"1"},
+								Key:        "code",
+								PodNameKey: "podname",
 							},
 						},
 					},
@@ -85,7 +87,28 @@ func TestNew(t *testing.T) {
 			want:    nil,
 		},
 		{
-			name: "PROM: missing good and bad values",
+			name: "PROM: missing Service",
+			args: args{
+				cfg: FactoryConfig{
+					Config: Config{
+						Logger:    devLogger,
+						PodLister: nil,
+						BreakerStrategyConfig: v1.BreakerStrategy{
+							DiscreteValueOutOfList: &v1.DiscreteValueOutOfList{
+								PromQL:     "fake query",
+								GoodValues: []string{"1"},
+								Key:        "code",
+								PodNameKey: "podname",
+							},
+						},
+					},
+				},
+			},
+			wantErr: true,
+			want:    nil,
+		},
+		{
+			name: "missing good and bad values",
 			args: args{
 				cfg: FactoryConfig{
 					Config: Config{
@@ -95,6 +118,8 @@ func TestNew(t *testing.T) {
 							DiscreteValueOutOfList: &v1.DiscreteValueOutOfList{
 								PromQL:            "fake query",
 								PrometheusService: "PrometheusService",
+								Key:               "code",
+								PodNameKey:        "podname",
 							},
 						},
 					},
@@ -104,7 +129,49 @@ func TestNew(t *testing.T) {
 			want:    nil,
 		},
 		{
-			name: "PROM: good and bad values at the same time",
+			name: "missing key",
+			args: args{
+				cfg: FactoryConfig{
+					Config: Config{
+						Logger:    devLogger,
+						PodLister: nil,
+						BreakerStrategyConfig: v1.BreakerStrategy{
+							DiscreteValueOutOfList: &v1.DiscreteValueOutOfList{
+								PromQL:            "fake query",
+								PrometheusService: "PrometheusService",
+								GoodValues:        []string{"1"},
+								PodNameKey:        "podname",
+							},
+						},
+					},
+				},
+			},
+			wantErr: true,
+			want:    nil,
+		},
+		{
+			name: "missing podnamekey",
+			args: args{
+				cfg: FactoryConfig{
+					Config: Config{
+						Logger:    devLogger,
+						PodLister: nil,
+						BreakerStrategyConfig: v1.BreakerStrategy{
+							DiscreteValueOutOfList: &v1.DiscreteValueOutOfList{
+								PromQL:            "fake query",
+								PrometheusService: "PrometheusService",
+								GoodValues:        []string{"1"},
+								Key:               "code",
+							},
+						},
+					},
+				},
+			},
+			wantErr: true,
+			want:    nil,
+		},
+		{
+			name: "good and bad values at the same time",
 			args: args{
 				cfg: FactoryConfig{
 					Config: Config{
@@ -116,6 +183,8 @@ func TestNew(t *testing.T) {
 								PrometheusService: "PrometheusService",
 								GoodValues:        []string{"1"},
 								BadValues:         []string{"0"},
+								Key:               "code",
+								PodNameKey:        "podname",
 							},
 						},
 					},
@@ -125,7 +194,7 @@ func TestNew(t *testing.T) {
 			want:    nil,
 		},
 		{
-			name: "PROM: good value only",
+			name: "good value only",
 			args: args{
 				cfg: FactoryConfig{
 					Config: Config{
@@ -136,6 +205,8 @@ func TestNew(t *testing.T) {
 								PromQL:            "fake query",
 								PrometheusService: "PrometheusService",
 								GoodValues:        []string{"1"},
+								Key:               "code",
+								PodNameKey:        "podname",
 							},
 						},
 					},
@@ -145,7 +216,7 @@ func TestNew(t *testing.T) {
 			want:    nil,
 		},
 		{
-			name: "PROM: bad value only",
+			name: "bad value only",
 			args: args{
 				cfg: FactoryConfig{
 					Config: Config{
@@ -156,6 +227,8 @@ func TestNew(t *testing.T) {
 								PromQL:            "fake query",
 								PrometheusService: "PrometheusService",
 								BadValues:         []string{"0"},
+								Key:               "code",
+								PodNameKey:        "podname",
 							},
 						},
 					},

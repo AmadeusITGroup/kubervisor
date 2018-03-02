@@ -10,6 +10,8 @@ import (
 
 	"github.com/amadeusitgroup/podkubervisor/pkg/api/kubervisor/v1"
 	"github.com/amadeusitgroup/podkubervisor/pkg/labeling"
+
+	test "github.com/amadeusitgroup/podkubervisor/test"
 )
 
 func TestControl_UpdateBreakerAnnotationAndLabel(t *testing.T) {
@@ -51,7 +53,7 @@ func TestControl_UpdateBreakerAnnotationAndLabel(t *testing.T) {
 		{
 			name: "update no Label",
 			fields: fields{
-				kubeClient: kfakeclient.NewSimpleClientset(podGen("A", nil, true, true, "")),
+				kubeClient: kfakeclient.NewSimpleClientset(test.PodGen("A", nil, true, true, "")),
 				breakerConfig: v1.BreakerConfig{
 					ObjectMeta: metav1.ObjectMeta{
 						Name: "mytestname",
@@ -59,7 +61,7 @@ func TestControl_UpdateBreakerAnnotationAndLabel(t *testing.T) {
 				},
 			},
 			args: args{
-				inputPod: podGen("A", nil, true, true, ""),
+				inputPod: test.PodGen("A", nil, true, true, ""),
 			},
 			checkFunc: checkFunc1,
 			wantErr:   false,
@@ -67,7 +69,7 @@ func TestControl_UpdateBreakerAnnotationAndLabel(t *testing.T) {
 		{
 			name: "update",
 			fields: fields{
-				kubeClient: kfakeclient.NewSimpleClientset(podGen("A", nil, true, true, labeling.LabelTrafficYes)),
+				kubeClient: kfakeclient.NewSimpleClientset(test.PodGen("A", nil, true, true, labeling.LabelTrafficYes)),
 				breakerConfig: v1.BreakerConfig{
 					ObjectMeta: metav1.ObjectMeta{
 						Name: "mytestname",
@@ -75,7 +77,7 @@ func TestControl_UpdateBreakerAnnotationAndLabel(t *testing.T) {
 				},
 			},
 			args: args{
-				inputPod: podGen("A", nil, true, true, "labeling.LabelTrafficYes"),
+				inputPod: test.PodGen("A", nil, true, true, "labeling.LabelTrafficYes"),
 			},
 			checkFunc: checkFunc1,
 			wantErr:   false,

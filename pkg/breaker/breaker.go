@@ -14,7 +14,7 @@ import (
 
 //Breaker engine that check anomaly and relabel pods
 type Breaker interface {
-	Run(stop <-chan struct{}) error
+	Run(stop <-chan struct{})
 }
 
 //Config configuration required to create a Breaker
@@ -40,7 +40,7 @@ type BreakerImpl struct {
 }
 
 //Run implements Breaker run loop ( to launch as goroutine: go Run())
-func (b *BreakerImpl) Run(stop <-chan struct{}) error {
+func (b *BreakerImpl) Run(stop <-chan struct{}) {
 	ticker := time.NewTicker(b.breakerStrategyConfig.EvaluationPeriod)
 	defer ticker.Stop()
 	for {
@@ -58,18 +58,30 @@ func (b *BreakerImpl) Run(stop <-chan struct{}) error {
 			}
 
 			allPods, _ := b.podLister.List(b.selector)
+			b.logger.Sugar().Infof("All %d", len(allPods))
 			runningPods := pod.KeepRunningPods(allPods)
-			removeCount := len(runningPods) - b.computeMinAvailablePods(len(runningPods))
+			b.logger.Sugar().Infof("runningPods %d", len(runningPods))
+			readyPods := pod.PurgeNotReadyPods(runningPods)
+			b.logger.Sugar().Infof("readyPods %d", len(readyPods))
+			withTraffic := pod.KeepWithTrafficYesPods(readyPods)
+			b.logger.Sugar().Infof("withTraffic %d", len(withTraffic))
+			removeCount := len(withTraffic) - b.computeMinAvailablePods(len(withTraffic))
+			b.logger.Sugar().Infof("RemoveCompute %d", removeCount)
 			if removeCount > len(podsToCut) {
 				removeCount = len(podsToCut)
 			}
+			if removeCount < 0 {
+				removeCount = 0
+			}
+
+			b.logger.Sugar().Infof("RemoveAdjust %d", removeCount)
 
 			for _, p := range podsToCut[:removeCount] {
 				b.podControl.UpdateBreakerAnnotationAndLabel(p)
 			}
 
 		case <-stop:
-			return nil
+			return
 		}
 	}
 }
