@@ -10,6 +10,7 @@ import (
 
 	"github.com/amadeusitgroup/podkubervisor/pkg/api/kubervisor/v1"
 	"github.com/amadeusitgroup/podkubervisor/pkg/labeling"
+	"github.com/amadeusitgroup/podkubervisor/pkg/pod"
 )
 
 type okkoCount struct {
@@ -22,10 +23,22 @@ type podAnalyser interface {
 	doAnalysis() (okkoByPodName, error)
 }
 
+//AnomalyDetector returns the list of pods that do not behave correctly according to the configuration
 type AnomalyDetector interface {
 	GetPodsOutOfBounds() ([]*kapiv1.Pod, error)
 }
 
+//Config parameters required for the creation of an AnomalyDetector
+type Config struct {
+	BreakerStrategyConfig v1.BreakerStrategy
+	Selector              labels.Selector
+	PodLister             kv1.PodLister
+	Logger                *zap.Logger
+}
+
+var _ AnomalyDetector = &DiscreteValueOutOfListAnalyser{}
+
+//DiscreteValueOutOfListAnalyser anomalyDetector that check the ratio of good/bad value and return the pods that exceed a given threshold for that ratio
 type DiscreteValueOutOfListAnalyser struct {
 	v1.DiscreteValueOutOfList
 	selector    labels.Selector
@@ -34,6 +47,7 @@ type DiscreteValueOutOfListAnalyser struct {
 	logger      *zap.Logger
 }
 
+//GetPodsOutOfBounds implements interface AnomalyDetector
 func (d *DiscreteValueOutOfListAnalyser) GetPodsOutOfBounds() ([]*kapiv1.Pod, error) {
 	result := []*kapiv1.Pod{}
 	countersByPods, err := d.podAnalyser.doAnalysis()
@@ -47,7 +61,7 @@ func (d *DiscreteValueOutOfListAnalyser) GetPodsOutOfBounds() ([]*kapiv1.Pod, er
 		return nil, fmt.Errorf("can't list pods")
 	}
 
-	listOfPods = purgeNotReadyPods(listOfPods)
+	listOfPods = pod.PurgeNotReadyPods(listOfPods)
 	podByName := map[string]*kapiv1.Pod{}
 	podWithNoTraffic := map[string]*kapiv1.Pod{}
 
@@ -76,22 +90,4 @@ func (d *DiscreteValueOutOfListAnalyser) GetPodsOutOfBounds() ([]*kapiv1.Pod, er
 		}
 	}
 	return result, nil
-}
-
-func purgeNotReadyPods(pods []*kapiv1.Pod) []*kapiv1.Pod {
-	result := []*kapiv1.Pod{}
-podLoop:
-	for _, p := range pods {
-		if p.Status.Phase == kapiv1.PodRunning {
-			for _, c := range p.Status.Conditions {
-				if c.Type == kapiv1.PodReady {
-					if c.Status != kapiv1.ConditionTrue {
-						continue podLoop
-					}
-				}
-			}
-			result = append(result, p)
-		}
-	}
-	return result
 }

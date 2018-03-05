@@ -4,34 +4,26 @@ import (
 	"fmt"
 
 	promClient "github.com/prometheus/client_golang/api"
-	"go.uber.org/zap"
-	"k8s.io/apimachinery/pkg/labels"
-	kv1 "k8s.io/client-go/listers/core/v1"
-
-	"github.com/amadeusitgroup/podkubervisor/pkg/api/kubervisor/v1"
 )
 
-//Config parameters required for the creation of an AnomalyDetector
-type Config struct {
-	BreakerStrategyConfig v1.BreakerStrategy
-	Selector              labels.Selector
-	PodLister             kv1.PodLister
-	Logger                *zap.Logger
-	customFactory         Factory
+//FactoryConfig parameters extended with factory features
+type FactoryConfig struct {
+	Config
+	customFactory Factory
 }
 
 //Factory functor for AnomalyDetection
-type Factory func(cfg Config) (AnomalyDetector, error)
+type Factory func(cfg FactoryConfig) (AnomalyDetector, error)
 
 var _ Factory = New
 
 //New Factory for AnomalyDetection
-func New(cfg Config) (AnomalyDetector, error) {
+func New(cfg FactoryConfig) (AnomalyDetector, error) {
 
 	switch {
 	case cfg.BreakerStrategyConfig.DiscreteValueOutOfList != nil:
 		{
-			return newDiscreteValueOutOfListAnalyser(cfg)
+			return newDiscreteValueOutOfListAnalyser(cfg.Config)
 		}
 	case cfg.customFactory != nil:
 		return cfg.customFactory(cfg)
@@ -41,31 +33,44 @@ func New(cfg Config) (AnomalyDetector, error) {
 }
 
 func newDiscreteValueOutOfListAnalyser(cfg Config) (*DiscreteValueOutOfListAnalyser, error) {
-	a := &DiscreteValueOutOfListAnalyser{DiscreteValueOutOfList: *cfg.BreakerStrategyConfig.DiscreteValueOutOfList, selector: cfg.Selector, podLister: cfg.PodLister, logger: cfg.Logger}
-	switch {
-	case cfg.BreakerStrategyConfig.DiscreteValueOutOfList.PromQL != "":
+	analyserCfg := *cfg.BreakerStrategyConfig.DiscreteValueOutOfList
 
-		podAnalyser := &promDiscreteValueOutOfListAnalyser{config: *cfg.BreakerStrategyConfig.DiscreteValueOutOfList, logger: cfg.Logger}
-		if cfg.BreakerStrategyConfig.DiscreteValueOutOfList.PrometheusService == "" {
+	good, bad := analyserCfg.GoodValues, analyserCfg.BadValues
+	if len(good) == 0 && len(bad) == 0 {
+		return nil, fmt.Errorf("no good nor bad value defined")
+	}
+	if len(good) != 0 && len(bad) != 0 {
+		return nil, fmt.Errorf("good and bad value defined, only good values will be used to do inclusion")
+	}
+	valueCheckerFunc := func(value string) bool { return ContainsString(good, value) }
+	if len(good) == 0 && len(bad) != 0 {
+		valueCheckerFunc = func(value string) bool { return !ContainsString(bad, value) }
+	}
+
+	if len(analyserCfg.Key) == 0 {
+		return nil, fmt.Errorf("missing metric Key definition")
+	}
+
+	if len(analyserCfg.PodNameKey) == 0 {
+		return nil, fmt.Errorf("missing PodName Key definition")
+	}
+
+	a := &DiscreteValueOutOfListAnalyser{DiscreteValueOutOfList: analyserCfg, selector: cfg.Selector, podLister: cfg.PodLister, logger: cfg.Logger}
+	switch {
+	case analyserCfg.PromQL != "":
+
+		podAnalyser := &promDiscreteValueOutOfListAnalyser{config: analyserCfg, logger: cfg.Logger}
+
+		podAnalyser.valueCheckerFunc = valueCheckerFunc
+
+		if analyserCfg.PrometheusService == "" {
 			return nil, fmt.Errorf("missing Prometheus service")
 		}
 
-		promconfig := promClient.Config{Address: "http://" + cfg.BreakerStrategyConfig.DiscreteValueOutOfList.PrometheusService}
+		promconfig := promClient.Config{Address: "http://" + analyserCfg.PrometheusService}
 		var err error
 		if podAnalyser.prometheusClient, err = promClient.NewClient(promconfig); err != nil {
 			return nil, err
-		}
-
-		good, bad := cfg.BreakerStrategyConfig.DiscreteValueOutOfList.GoodValues, cfg.BreakerStrategyConfig.DiscreteValueOutOfList.BadValues
-		if len(good) == 0 && len(bad) == 0 {
-			return nil, fmt.Errorf("no good nor bad value defined")
-		}
-		if len(good) != 0 && len(bad) != 0 {
-			return nil, fmt.Errorf("good and bad value defined, only good values will be used to do inclusion")
-		}
-		podAnalyser.valueCheckerFunc = func(value string) bool { return ContainsString(good, value) }
-		if len(good) == 0 && len(bad) != 0 {
-			podAnalyser.valueCheckerFunc = func(value string) bool { return !ContainsString(bad, value) }
 		}
 
 		a.podAnalyser = podAnalyser

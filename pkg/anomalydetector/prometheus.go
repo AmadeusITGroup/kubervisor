@@ -36,7 +36,7 @@ func (p *promDiscreteValueOutOfListAnalyser) doAnalysis() (okkoByPodName, error)
 
 	vector, ok := m.(model.Vector)
 	if !ok {
-		return nil, fmt.Errorf("the prometheus query did not return a result in the form of 'model.Vector'", err)
+		return nil, fmt.Errorf("the prometheus query did not return a result in the form of expected type 'model.Vector': %s", err)
 	}
 
 	return p.buildCounters(vector), nil
