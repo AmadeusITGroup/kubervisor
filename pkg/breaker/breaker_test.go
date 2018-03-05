@@ -95,25 +95,17 @@ func TestBreakerImpl_computeMinAvailablePods(t *testing.T) {
 	}
 }
 
-type testPodControl struct {
-	UpdateBreakerAnnotationAndLabelFunc func(p *kapiv1.Pod) (*kapiv1.Pod, error)
-}
-
-func (t *testPodControl) UpdateBreakerAnnotationAndLabel(p *kapiv1.Pod) (*kapiv1.Pod, error) {
-	return t.UpdateBreakerAnnotationAndLabelFunc(p)
-}
-
 func TestBreakerImpl_Run(t *testing.T) {
 
 	testprefix := t.Name()
 	devlogger, _ := zap.NewDevelopment()
 
-	A_running_ready_traffic := test.PodGen("A", map[string]string{"app": "foo"}, true, true, labeling.LabelTrafficYes)
-	B_running_ready_traffic := test.PodGen("B", map[string]string{"app": "foo"}, true, true, labeling.LabelTrafficYes)
-	C_NotRunning_ready_traffic := test.PodGen("C", map[string]string{"app": "foo"}, false, true, labeling.LabelTrafficYes)
-	D_running_Notready_traffic := test.PodGen("D", map[string]string{"app": "foo"}, true, false, labeling.LabelTrafficYes)
-	E_running_ready_NoTraffic := test.PodGen("E", map[string]string{"app": "foo"}, true, false, labeling.LabelTrafficNo)
-	BadApp_running_ready_traffic := test.PodGen("BadApp", map[string]string{"app": "bar"}, true, true, labeling.LabelTrafficYes)
+	ARunningReadyTraffic := test.PodGen("A", map[string]string{"app": "foo"}, true, true, labeling.LabelTrafficYes)
+	BRunningReadyTraffic := test.PodGen("B", map[string]string{"app": "foo"}, true, true, labeling.LabelTrafficYes)
+	CNotRunningReadyTraffic := test.PodGen("C", map[string]string{"app": "foo"}, false, true, labeling.LabelTrafficYes)
+	DRunningNotReadyTraffic := test.PodGen("D", map[string]string{"app": "foo"}, true, false, labeling.LabelTrafficYes)
+	ERunningReadyNoTraffic := test.PodGen("E", map[string]string{"app": "foo"}, true, false, labeling.LabelTrafficNo)
+	BadAppRunningReadyTraffic := test.PodGen("BadApp", map[string]string{"app": "bar"}, true, true, labeling.LabelTrafficYes)
 
 	type fields struct {
 		breakerStrategyConfig v1.BreakerStrategy
@@ -141,19 +133,19 @@ func TestBreakerImpl_Run(t *testing.T) {
 				selector: labels.SelectorFromSet(map[string]string{"app": "foo"}),
 				podLister: test.NewTestPodLister(
 					[]*kapiv1.Pod{
-						A_running_ready_traffic,
-						B_running_ready_traffic,
-						C_NotRunning_ready_traffic,
-						D_running_Notready_traffic,
-						E_running_ready_NoTraffic,
-						BadApp_running_ready_traffic,
+						ARunningReadyTraffic,
+						BRunningReadyTraffic,
+						CNotRunningReadyTraffic,
+						DRunningNotReadyTraffic,
+						ERunningReadyNoTraffic,
+						BadAppRunningReadyTraffic,
 					},
 				),
 				logger:          devlogger,
-				anomalyDetector: &testAnomalyDetector{pods: []*kapiv1.Pod{A_running_ready_traffic}},
-				podControl: &testPodControl{
+				anomalyDetector: &testAnomalyDetector{pods: []*kapiv1.Pod{ARunningReadyTraffic}},
+				podControl: &test.TestPodControl{
 					UpdateBreakerAnnotationAndLabelFunc: func(p *kapiv1.Pod) (*kapiv1.Pod, error) {
-						if p == A_running_ready_traffic {
+						if p == ARunningReadyTraffic {
 							test.GetTestSequence(t, testprefix+"/ok").PassAtLeastOnce(0)
 						} else {
 							t.Fatalf("Bad Pod in test 'ok'")
@@ -178,22 +170,22 @@ func TestBreakerImpl_Run(t *testing.T) {
 				selector: labels.SelectorFromSet(map[string]string{"app": "foo"}),
 				podLister: test.NewTestPodLister(
 					[]*kapiv1.Pod{
-						A_running_ready_traffic,
-						B_running_ready_traffic,
-						C_NotRunning_ready_traffic,
-						D_running_Notready_traffic,
-						E_running_ready_NoTraffic,
-						BadApp_running_ready_traffic,
+						ARunningReadyTraffic,
+						BRunningReadyTraffic,
+						CNotRunningReadyTraffic,
+						DRunningNotReadyTraffic,
+						ERunningReadyNoTraffic,
+						BadAppRunningReadyTraffic,
 					},
 				),
 				logger:          devlogger,
-				anomalyDetector: &testAnomalyDetector{pods: []*kapiv1.Pod{A_running_ready_traffic, B_running_ready_traffic}},
-				podControl: &testPodControl{
+				anomalyDetector: &testAnomalyDetector{pods: []*kapiv1.Pod{ARunningReadyTraffic, BRunningReadyTraffic}},
+				podControl: &test.TestPodControl{
 					UpdateBreakerAnnotationAndLabelFunc: func(p *kapiv1.Pod) (*kapiv1.Pod, error) {
 						switch p {
-						case A_running_ready_traffic:
+						case ARunningReadyTraffic:
 							test.GetTestSequence(t, testprefix+"/cutall").PassAtLeastOnce(0)
-						case B_running_ready_traffic:
+						case BRunningReadyTraffic:
 							test.GetTestSequence(t, testprefix+"/cutall").PassAtLeastOnce(1)
 						default:
 							t.Fatalf("Bad Pod in test 'cutall'")
@@ -218,17 +210,17 @@ func TestBreakerImpl_Run(t *testing.T) {
 				selector: labels.SelectorFromSet(map[string]string{"app": "foo"}),
 				podLister: test.NewTestPodLister(
 					[]*kapiv1.Pod{
-						A_running_ready_traffic,
-						B_running_ready_traffic,
-						C_NotRunning_ready_traffic,
-						D_running_Notready_traffic,
-						E_running_ready_NoTraffic,
-						BadApp_running_ready_traffic,
+						ARunningReadyTraffic,
+						BRunningReadyTraffic,
+						CNotRunningReadyTraffic,
+						DRunningNotReadyTraffic,
+						ERunningReadyNoTraffic,
+						BadAppRunningReadyTraffic,
 					},
 				),
 				logger:          devlogger,
-				anomalyDetector: &testAnomalyDetector{pods: []*kapiv1.Pod{A_running_ready_traffic, B_running_ready_traffic}},
-				podControl: &testPodControl{
+				anomalyDetector: &testAnomalyDetector{pods: []*kapiv1.Pod{ARunningReadyTraffic, BRunningReadyTraffic}},
+				podControl: &test.TestPodControl{
 					UpdateBreakerAnnotationAndLabelFunc: func(p *kapiv1.Pod) (*kapiv1.Pod, error) {
 						t.Fatalf("Test bigCount should not break any pod")
 						return p, nil
@@ -251,20 +243,20 @@ func TestBreakerImpl_Run(t *testing.T) {
 				selector: labels.SelectorFromSet(map[string]string{"app": "foo"}),
 				podLister: test.NewTestPodLister(
 					[]*kapiv1.Pod{
-						A_running_ready_traffic,
-						B_running_ready_traffic,
-						C_NotRunning_ready_traffic,
-						D_running_Notready_traffic,
-						E_running_ready_NoTraffic,
-						BadApp_running_ready_traffic,
+						ARunningReadyTraffic,
+						BRunningReadyTraffic,
+						CNotRunningReadyTraffic,
+						DRunningNotReadyTraffic,
+						ERunningReadyNoTraffic,
+						BadAppRunningReadyTraffic,
 					},
 				),
 				logger:          devlogger,
-				anomalyDetector: &testAnomalyDetector{pods: []*kapiv1.Pod{A_running_ready_traffic}},
-				podControl: &testPodControl{
+				anomalyDetector: &testAnomalyDetector{pods: []*kapiv1.Pod{ARunningReadyTraffic}},
+				podControl: &test.TestPodControl{
 					UpdateBreakerAnnotationAndLabelFunc: func(p *kapiv1.Pod) (*kapiv1.Pod, error) {
 						switch p {
-						case A_running_ready_traffic:
+						case ARunningReadyTraffic:
 							test.GetTestSequence(t, testprefix+"/0quota1cut2running").PassAtLeastOnce(0)
 						default:
 							t.Fatalf("Test '0quota1cut2running' should break pod A")
@@ -289,20 +281,20 @@ func TestBreakerImpl_Run(t *testing.T) {
 				selector: labels.SelectorFromSet(map[string]string{"app": "foo"}),
 				podLister: test.NewTestPodLister(
 					[]*kapiv1.Pod{
-						A_running_ready_traffic,
-						B_running_ready_traffic,
-						C_NotRunning_ready_traffic,
-						D_running_Notready_traffic,
-						E_running_ready_NoTraffic,
-						BadApp_running_ready_traffic,
+						ARunningReadyTraffic,
+						BRunningReadyTraffic,
+						CNotRunningReadyTraffic,
+						DRunningNotReadyTraffic,
+						ERunningReadyNoTraffic,
+						BadAppRunningReadyTraffic,
 					},
 				),
 				logger:          devlogger,
-				anomalyDetector: &testAnomalyDetector{pods: []*kapiv1.Pod{A_running_ready_traffic, B_running_ready_traffic}},
-				podControl: &testPodControl{
+				anomalyDetector: &testAnomalyDetector{pods: []*kapiv1.Pod{ARunningReadyTraffic, BRunningReadyTraffic}},
+				podControl: &test.TestPodControl{
 					UpdateBreakerAnnotationAndLabelFunc: func(p *kapiv1.Pod) (*kapiv1.Pod, error) {
 						switch p {
-						case A_running_ready_traffic:
+						case ARunningReadyTraffic:
 							test.GetTestSequence(t, testprefix+"/only1").PassAtLeastOnce(0)
 						default:
 							t.Fatalf("B pod of test only1 should not be break")
