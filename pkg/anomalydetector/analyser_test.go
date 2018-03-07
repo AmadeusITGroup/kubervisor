@@ -25,7 +25,7 @@ func TestDiscreteValueOutOfListAnalyser_GetPodsOutOfBounds(t *testing.T) {
 		DiscreteValueOutOfList v1.DiscreteValueOutOfList
 		selector               labels.Selector
 		podAnalyser            podAnalyser
-		podLister              kv1.PodLister
+		podLister              kv1.PodNamespaceLister
 		logger                 *zap.Logger
 	}
 	tests := []struct {
@@ -40,7 +40,7 @@ func TestDiscreteValueOutOfListAnalyser_GetPodsOutOfBounds(t *testing.T) {
 				DiscreteValueOutOfList: *v1.DefaultDiscreteValueOutOfList(&v1.DiscreteValueOutOfList{}),
 				selector:               nil,
 				podAnalyser:            &testErrorPodAnalyser{},
-				podLister:              test.NewTestPodLister(nil),
+				podLister:              test.NewTestPodLister(nil, "test-ns"),
 				logger:                 devlogger,
 			},
 			want:    nil,
@@ -52,7 +52,7 @@ func TestDiscreteValueOutOfListAnalyser_GetPodsOutOfBounds(t *testing.T) {
 				DiscreteValueOutOfList: *v1.DefaultDiscreteValueOutOfList(&v1.DiscreteValueOutOfList{}),
 				selector:               labels.Everything(), //labels.SelectorFromSet(map[string]string{}),
 				podAnalyser:            &testPodAnalyser{okkoByPodName: okkoByPodName{}},
-				podLister:              test.NewTestPodLister(nil),
+				podLister:              test.NewTestPodLister(nil, "test-ns"),
 				logger:                 devlogger,
 			},
 			want:    []*kapiv1.Pod{},
@@ -66,10 +66,10 @@ func TestDiscreteValueOutOfListAnalyser_GetPodsOutOfBounds(t *testing.T) {
 				podAnalyser:            &testPodAnalyser{okkoByPodName: okkoByPodName{"A": {10, 0}, "B": {10, 8}, "C": {0, 10}}},
 				podLister: test.NewTestPodLister(
 					[]*kapiv1.Pod{
-						test.PodGen("A", map[string]string{"app": "foo", "phase": "prd"}, true, true, labeling.LabelTrafficYes),
-						test.PodGen("B", map[string]string{"app": "bar", "phase": "prd"}, true, true, labeling.LabelTrafficYes),
-						test.PodGen("C", map[string]string{"app": "bar", "phase": "pdt"}, true, true, labeling.LabelTrafficYes),
-					}),
+						test.PodGen("A", "test-ns", map[string]string{"app": "foo", "phase": "prd"}, true, true, labeling.LabelTrafficYes),
+						test.PodGen("B", "test-ns", map[string]string{"app": "bar", "phase": "prd"}, true, true, labeling.LabelTrafficYes),
+						test.PodGen("C", "test-ns", map[string]string{"app": "bar", "phase": "pdt"}, true, true, labeling.LabelTrafficYes),
+					}, "test-ns"),
 				logger: devlogger,
 			},
 			want:    []*kapiv1.Pod{},
@@ -83,10 +83,10 @@ func TestDiscreteValueOutOfListAnalyser_GetPodsOutOfBounds(t *testing.T) {
 				podAnalyser:            &testPodAnalyser{okkoByPodName: okkoByPodName{"A": {10, 0}, "B": {10, 8}, "C": {0, 10}}},
 				podLister: test.NewTestPodLister(
 					[]*kapiv1.Pod{
-						test.PodGen("A", map[string]string{"app": "foo", "phase": "prd"}, true, true, ""),
-						test.PodGen("B", map[string]string{"app": "bar", "phase": "prd"}, true, true, ""),
-						test.PodGen("C", map[string]string{"app": "bar", "phase": "pdt"}, true, true, ""),
-					}),
+						test.PodGen("A", "test-ns", map[string]string{"app": "foo", "phase": "prd"}, true, true, ""),
+						test.PodGen("B", "test-ns", map[string]string{"app": "bar", "phase": "prd"}, true, true, ""),
+						test.PodGen("C", "test-ns", map[string]string{"app": "bar", "phase": "pdt"}, true, true, ""),
+					}, "test-ns"),
 				logger: devlogger,
 			},
 			want:    []*kapiv1.Pod{},
@@ -100,13 +100,13 @@ func TestDiscreteValueOutOfListAnalyser_GetPodsOutOfBounds(t *testing.T) {
 				podAnalyser:            &testPodAnalyser{okkoByPodName: okkoByPodName{"A": {10, 0}, "B": {10, 8}, "C": {0, 10}}},
 				podLister: test.NewTestPodLister(
 					[]*kapiv1.Pod{
-						test.PodGen("A", map[string]string{"app": "foo", "phase": "prd"}, true, true, labeling.LabelTrafficYes),
-						test.PodGen("B", map[string]string{"app": "bar", "phase": "prd"}, true, true, labeling.LabelTrafficYes),
-						test.PodGen("C", map[string]string{"app": "bar", "phase": "pdt"}, true, true, labeling.LabelTrafficYes),
-					}),
+						test.PodGen("A", "test-ns", map[string]string{"app": "foo", "phase": "prd"}, true, true, labeling.LabelTrafficYes),
+						test.PodGen("B", "test-ns", map[string]string{"app": "bar", "phase": "prd"}, true, true, labeling.LabelTrafficYes),
+						test.PodGen("C", "test-ns", map[string]string{"app": "bar", "phase": "pdt"}, true, true, labeling.LabelTrafficYes),
+					}, "test-ns"),
 				logger: devlogger,
 			},
-			want:    []*kapiv1.Pod{test.PodGen("C", map[string]string{"app": "bar", "phase": "pdt"}, true, true, labeling.LabelTrafficYes)},
+			want:    []*kapiv1.Pod{test.PodGen("C", "test-ns", map[string]string{"app": "bar", "phase": "pdt"}, true, true, labeling.LabelTrafficYes)},
 			wantErr: false,
 		},
 		{
@@ -117,15 +117,15 @@ func TestDiscreteValueOutOfListAnalyser_GetPodsOutOfBounds(t *testing.T) {
 				podAnalyser:            &testPodAnalyser{okkoByPodName: okkoByPodName{"A": {10, 0}, "B": {10, 8}, "C": {0, 10}}},
 				podLister: test.NewTestPodLister(
 					[]*kapiv1.Pod{
-						test.PodGen("A", map[string]string{"app": "foo", "phase": "prd"}, true, true, labeling.LabelTrafficYes),
-						test.PodGen("B", map[string]string{"app": "bar", "phase": "prd"}, true, true, labeling.LabelTrafficYes),
-						test.PodGen("C", map[string]string{"app": "bar", "phase": "pdt"}, true, true, labeling.LabelTrafficYes),
-					}),
+						test.PodGen("A", "test-ns", map[string]string{"app": "foo", "phase": "prd"}, true, true, labeling.LabelTrafficYes),
+						test.PodGen("B", "test-ns", map[string]string{"app": "bar", "phase": "prd"}, true, true, labeling.LabelTrafficYes),
+						test.PodGen("C", "test-ns", map[string]string{"app": "bar", "phase": "pdt"}, true, true, labeling.LabelTrafficYes),
+					}, "test-ns"),
 				logger: devlogger,
 			},
 			want: []*kapiv1.Pod{
-				test.PodGen("B", map[string]string{"app": "bar", "phase": "prd"}, true, true, labeling.LabelTrafficYes),
-				test.PodGen("C", map[string]string{"app": "bar", "phase": "pdt"}, true, true, labeling.LabelTrafficYes)},
+				test.PodGen("B", "test-ns", map[string]string{"app": "bar", "phase": "prd"}, true, true, labeling.LabelTrafficYes),
+				test.PodGen("C", "test-ns", map[string]string{"app": "bar", "phase": "pdt"}, true, true, labeling.LabelTrafficYes)},
 			wantErr: false,
 		},
 		{
@@ -136,13 +136,13 @@ func TestDiscreteValueOutOfListAnalyser_GetPodsOutOfBounds(t *testing.T) {
 				podAnalyser:            &testPodAnalyser{okkoByPodName: okkoByPodName{"A": {10, 0}, "B": {10, 8}, "C": {0, 10}}},
 				podLister: test.NewTestPodLister(
 					[]*kapiv1.Pod{
-						test.PodGen("A", map[string]string{"app": "foo", "phase": "prd"}, true, true, labeling.LabelTrafficYes),
-						test.PodGen("B", map[string]string{"app": "bar", "phase": "prd"}, true, true, labeling.LabelTrafficYes),
-						test.PodGen("C", map[string]string{"app": "bar", "phase": "pdt"}, true, true, labeling.LabelTrafficYes),
-					}),
+						test.PodGen("A", "test-ns", map[string]string{"app": "foo", "phase": "prd"}, true, true, labeling.LabelTrafficYes),
+						test.PodGen("B", "test-ns", map[string]string{"app": "bar", "phase": "prd"}, true, true, labeling.LabelTrafficYes),
+						test.PodGen("C", "test-ns", map[string]string{"app": "bar", "phase": "pdt"}, true, true, labeling.LabelTrafficYes),
+					}, "test-ns"),
 				logger: devlogger,
 			},
-			want:    []*kapiv1.Pod{test.PodGen("B", map[string]string{"app": "bar", "phase": "prd"}, true, true, labeling.LabelTrafficYes)},
+			want:    []*kapiv1.Pod{test.PodGen("B", "test-ns", map[string]string{"app": "bar", "phase": "prd"}, true, true, labeling.LabelTrafficYes)},
 			wantErr: false,
 		},
 		{
@@ -153,14 +153,14 @@ func TestDiscreteValueOutOfListAnalyser_GetPodsOutOfBounds(t *testing.T) {
 				podAnalyser:            &testPodAnalyser{okkoByPodName: okkoByPodName{"A": {10, 0}, "B": {10, 8}, "C": {0, 10}}},
 				podLister: test.NewTestPodLister(
 					[]*kapiv1.Pod{
-						test.PodGen("A", map[string]string{"app": "foo", "phase": "prd"}, true, true, labeling.LabelTrafficYes),
-						test.PodGen("B", map[string]string{"app": "bar", "phase": "prd"}, true, true, labeling.LabelTrafficYes),
-						test.PodGen("C", map[string]string{"app": "bar", "phase": "pdt"}, true, false, labeling.LabelTrafficYes),
-					}),
+						test.PodGen("A", "test-ns", map[string]string{"app": "foo", "phase": "prd"}, true, true, labeling.LabelTrafficYes),
+						test.PodGen("B", "test-ns", map[string]string{"app": "bar", "phase": "prd"}, true, true, labeling.LabelTrafficYes),
+						test.PodGen("C", "test-ns", map[string]string{"app": "bar", "phase": "pdt"}, true, false, labeling.LabelTrafficYes),
+					}, "test-ns"),
 				logger: devlogger,
 			},
 			want: []*kapiv1.Pod{
-				test.PodGen("B", map[string]string{"app": "bar", "phase": "prd"}, true, true, labeling.LabelTrafficYes)},
+				test.PodGen("B", "test-ns", map[string]string{"app": "bar", "phase": "prd"}, true, true, labeling.LabelTrafficYes)},
 			wantErr: false,
 		},
 		{
@@ -171,14 +171,14 @@ func TestDiscreteValueOutOfListAnalyser_GetPodsOutOfBounds(t *testing.T) {
 				podAnalyser:            &testPodAnalyser{okkoByPodName: okkoByPodName{"A": {10, 0}, "B": {10, 8}, "C": {0, 10}}},
 				podLister: test.NewTestPodLister(
 					[]*kapiv1.Pod{
-						test.PodGen("A", map[string]string{"app": "foo", "phase": "prd"}, true, true, labeling.LabelTrafficYes),
-						test.PodGen("B", map[string]string{"app": "bar", "phase": "prd"}, true, true, labeling.LabelTrafficYes),
-						test.PodGen("C", map[string]string{"app": "bar", "phase": "pdt"}, true, false, labeling.LabelTrafficYes),
-					}),
+						test.PodGen("A", "test-ns", map[string]string{"app": "foo", "phase": "prd"}, true, true, labeling.LabelTrafficYes),
+						test.PodGen("B", "test-ns", map[string]string{"app": "bar", "phase": "prd"}, true, true, labeling.LabelTrafficYes),
+						test.PodGen("C", "test-ns", map[string]string{"app": "bar", "phase": "pdt"}, true, false, labeling.LabelTrafficYes),
+					}, "test-ns"),
 				logger: devlogger,
 			},
 			want: []*kapiv1.Pod{
-				test.PodGen("B", map[string]string{"app": "bar", "phase": "prd"}, true, true, labeling.LabelTrafficYes)},
+				test.PodGen("B", "test-ns", map[string]string{"app": "bar", "phase": "prd"}, true, true, labeling.LabelTrafficYes)},
 			wantErr: false,
 		},
 	}

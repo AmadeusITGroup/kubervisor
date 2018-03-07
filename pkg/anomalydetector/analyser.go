@@ -32,7 +32,7 @@ type AnomalyDetector interface {
 type Config struct {
 	BreakerStrategyConfig v1.BreakerStrategy
 	Selector              labels.Selector
-	PodLister             kv1.PodLister
+	PodLister             kv1.PodNamespaceLister
 	Logger                *zap.Logger
 }
 
@@ -43,7 +43,7 @@ type DiscreteValueOutOfListAnalyser struct {
 	v1.DiscreteValueOutOfList
 	selector    labels.Selector
 	podAnalyser podAnalyser
-	podLister   kv1.PodLister
+	podLister   kv1.PodNamespaceLister
 	logger      *zap.Logger
 }
 

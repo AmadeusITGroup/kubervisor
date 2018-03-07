@@ -9,9 +9,13 @@ import (
 )
 
 type emptyCustomActivatorT struct {
+	SimilarConfig bool
 }
 
 func (e *emptyCustomActivatorT) Run(stop <-chan struct{}) {}
+func (e *emptyCustomActivatorT) CompareConfig(specStrategy *v1.ActivatorStrategy, specSelector labels.Selector) bool {
+	return e.SimilarConfig
+}
 
 var emptyCustomActivator Activator = &emptyCustomActivatorT{}
 

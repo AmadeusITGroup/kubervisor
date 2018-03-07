@@ -2,6 +2,7 @@ package activate
 
 import (
 	"fmt"
+	"reflect"
 	"time"
 
 	"go.uber.org/zap"
@@ -18,13 +19,14 @@ import (
 //Activator engine that check anomaly and relabel pods
 type Activator interface {
 	Run(stop <-chan struct{})
+	CompareConfig(specStrategy *v1.ActivatorStrategy, specSelector labels.Selector) bool
 }
 
 //Config configuration required to create a Activator
 type Config struct {
 	ActivatorStrategyConfig v1.ActivatorStrategy
 	Selector                labels.Selector
-	PodLister               kv1.PodLister
+	PodLister               kv1.PodNamespaceLister
 	PodControl              pod.ControlInterface
 	BreakerName             string
 	Logger                  *zap.Logger
@@ -35,8 +37,9 @@ var _ Activator = &ActivatorImpl{}
 //ActivatorImpl implementation of the Activator interface
 type ActivatorImpl struct {
 	activatorStrategyConfig v1.ActivatorStrategy
-	selector                labels.Selector
-	podLister               kv1.PodLister
+	selectorConfig          labels.Selector
+	augmentedSelector       labels.Selector
+	podLister               kv1.PodNamespaceLister
 	podControl              pod.ControlInterface
 	breakerName             string
 	logger                  *zap.Logger
@@ -51,7 +54,7 @@ type strategyApplier interface {
 //Run implements Activator run loop ( to launch as goroutine: go Run())}
 func (b *ActivatorImpl) Run(stop <-chan struct{}) {
 	rqTrafficNo, _ := labels.NewRequirement(labeling.LabelTrafficKey, selection.Equals, []string{string(labeling.LabelTrafficNo)})
-	withTrafficNoSelector := b.selector.Add(*rqTrafficNo)
+	withTrafficNoSelector := b.augmentedSelector.Add(*rqTrafficNo)
 
 	ticker := time.NewTicker(b.evaluationPeriod)
 	defer ticker.Stop()
@@ -73,6 +76,18 @@ func (b *ActivatorImpl) Run(stop <-chan struct{}) {
 			return
 		}
 	}
+}
+
+// CompareConfig used to compare the current config with the possible new spec
+func (b *ActivatorImpl) CompareConfig(specStrategy *v1.ActivatorStrategy, specSelector labels.Selector) bool {
+	if !reflect.DeepEqual(&b.activatorStrategyConfig, specStrategy) {
+		return false
+	}
+	if !reflect.DeepEqual(b.selectorConfig, specSelector) {
+		return false
+	}
+
+	return true
 }
 
 func (b *ActivatorImpl) applyActivatorStrategy(p *kapiv1.Pod) error {
@@ -110,7 +125,7 @@ func (b *ActivatorImpl) applyActivatorStrategy(p *kapiv1.Pod) error {
 	case v1.ActivatorStrategyModeRetryAndPause:
 		if retryCount > int(*b.activatorStrategyConfig.MaxRetryCount) {
 			rqTrafficPause, _ := labels.NewRequirement(labeling.LabelTrafficKey, selection.Equals, []string{string(labeling.LabelTrafficPause)})
-			withTrafficPauseSelector := b.selector.Add(*rqTrafficPause)
+			withTrafficPauseSelector := b.augmentedSelector.Add(*rqTrafficPause)
 			list, err := b.podLister.List(withTrafficPauseSelector)
 			if err != nil {
 				return fmt.Errorf("in activator '%s', can't list paused pods:%s", b.breakerName, err)

@@ -1,6 +1,7 @@
 package breaker
 
 import (
+	"reflect"
 	"time"
 
 	"go.uber.org/zap"
@@ -15,13 +16,15 @@ import (
 //Breaker engine that check anomaly and relabel pods
 type Breaker interface {
 	Run(stop <-chan struct{})
+	CompareConfig(specConfig *v1.BreakerStrategy) bool
 }
 
 //Config configuration required to create a Breaker
 type Config struct {
 	BreakerStrategyConfig v1.BreakerStrategy
+	BreakerConfigName     string
 	Selector              labels.Selector
-	PodLister             kv1.PodLister
+	PodLister             kv1.PodNamespaceLister
 	PodControl            pod.ControlInterface
 	Logger                *zap.Logger
 }
@@ -30,9 +33,10 @@ var _ Breaker = &BreakerImpl{}
 
 //BreakerImpl implementation of the breaker interface
 type BreakerImpl struct {
+	BreakerConfigName     string
 	breakerStrategyConfig v1.BreakerStrategy
 	selector              labels.Selector
-	podLister             kv1.PodLister
+	podLister             kv1.PodNamespaceLister
 	podControl            pod.ControlInterface
 
 	logger          *zap.Logger
@@ -71,13 +75,21 @@ func (b *BreakerImpl) Run(stop <-chan struct{}) {
 			}
 
 			for _, p := range podsToCut[:removeCount] {
-				b.podControl.UpdateBreakerAnnotationAndLabel(p)
+				b.podControl.UpdateBreakerAnnotationAndLabel(b.BreakerConfigName, p)
 			}
 
 		case <-stop:
 			return
 		}
 	}
+}
+
+// CompareConfig used to compare the current config with a possible new spec config
+func (b *BreakerImpl) CompareConfig(specConfig *v1.BreakerStrategy) bool {
+	if !reflect.DeepEqual(&b.breakerStrategyConfig, specConfig) {
+		return false
+	}
+	return true
 }
 
 func (b *BreakerImpl) computeMinAvailablePods(podUnderSelectorCount int) int {

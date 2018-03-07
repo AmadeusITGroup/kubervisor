@@ -28,29 +28,29 @@ func TestPurgeNotReadyPods(t *testing.T) {
 			name: "all ok",
 			args: args{
 				pods: []*kapiv1.Pod{
-					test.PodGen("A", nil, true, true, ""),
-					test.PodGen("B", nil, true, true, ""),
-					test.PodGen("C", nil, true, true, ""),
+					test.PodGen("A", "test-ns", nil, true, true, ""),
+					test.PodGen("B", "test-ns", nil, true, true, ""),
+					test.PodGen("C", "test-ns", nil, true, true, ""),
 				},
 			},
 			want: []*kapiv1.Pod{
-				test.PodGen("A", nil, true, true, ""),
-				test.PodGen("B", nil, true, true, ""),
-				test.PodGen("C", nil, true, true, ""),
+				test.PodGen("A", "test-ns", nil, true, true, ""),
+				test.PodGen("B", "test-ns", nil, true, true, ""),
+				test.PodGen("C", "test-ns", nil, true, true, ""),
 			},
 		},
 		{
 			name: "mix",
 			args: args{
 				pods: []*kapiv1.Pod{
-					test.PodGen("A", nil, false, true, ""),
-					test.PodGen("B", nil, true, false, ""),
-					test.PodGen("C", nil, false, false, ""),
-					test.PodGen("D", nil, true, true, ""),
+					test.PodGen("A", "test-ns", nil, false, true, ""),
+					test.PodGen("B", "test-ns", nil, true, false, ""),
+					test.PodGen("C", "test-ns", nil, false, false, ""),
+					test.PodGen("D", "test-ns", nil, true, true, ""),
 				},
 			},
 			want: []*kapiv1.Pod{
-				test.PodGen("D", nil, true, true, ""),
+				test.PodGen("D", "test-ns", nil, true, true, ""),
 			},
 		},
 	}
@@ -80,25 +80,25 @@ func TestKeepRunningPods(t *testing.T) {
 			name: "all ok",
 			args: args{
 				pods: []*kapiv1.Pod{
-					test.PodGen("A", nil, true, true, ""),
-					test.PodGen("B", nil, true, true, ""),
+					test.PodGen("A", "test-ns", nil, true, true, ""),
+					test.PodGen("B", "test-ns", nil, true, true, ""),
 				},
 			},
 			want: []*kapiv1.Pod{
-				test.PodGen("A", nil, true, true, ""),
-				test.PodGen("B", nil, true, true, ""),
+				test.PodGen("A", "test-ns", nil, true, true, ""),
+				test.PodGen("B", "test-ns", nil, true, true, ""),
 			},
 		},
 		{
 			name: "mix",
 			args: args{
 				pods: []*kapiv1.Pod{
-					test.PodGen("A", nil, false, true, ""),
-					test.PodGen("B", nil, true, false, ""),
+					test.PodGen("A", "test-ns", nil, false, true, ""),
+					test.PodGen("B", "test-ns", nil, true, false, ""),
 				},
 			},
 			want: []*kapiv1.Pod{
-				test.PodGen("B", nil, true, false, ""),
+				test.PodGen("B", "test-ns", nil, true, false, ""),
 			},
 		},
 	}
@@ -128,34 +128,34 @@ func TestKeepWithTrafficYesPods(t *testing.T) {
 			name: "all ok",
 			args: args{
 				pods: []*kapiv1.Pod{
-					test.PodGen("A", nil, true, true, labeling.LabelTrafficYes),
-					test.PodGen("B", nil, true, true, labeling.LabelTrafficYes),
+					test.PodGen("A", "test-ns", nil, true, true, labeling.LabelTrafficYes),
+					test.PodGen("B", "test-ns", nil, true, true, labeling.LabelTrafficYes),
 				},
 			},
 			want: []*kapiv1.Pod{
-				test.PodGen("A", nil, true, true, labeling.LabelTrafficYes),
-				test.PodGen("B", nil, true, true, labeling.LabelTrafficYes),
+				test.PodGen("A", "test-ns", nil, true, true, labeling.LabelTrafficYes),
+				test.PodGen("B", "test-ns", nil, true, true, labeling.LabelTrafficYes),
 			},
 		},
 		{
 			name: "mix",
 			args: args{
 				pods: []*kapiv1.Pod{
-					test.PodGen("A", nil, false, true, labeling.LabelTrafficNo),
-					test.PodGen("B", nil, true, false, labeling.LabelTrafficYes),
-					test.PodGen("C", nil, false, true, ""),
+					test.PodGen("A", "test-ns", nil, false, true, labeling.LabelTrafficNo),
+					test.PodGen("B", "test-ns", nil, true, false, labeling.LabelTrafficYes),
+					test.PodGen("C", "test-ns", nil, false, true, ""),
 				},
 			},
 			want: []*kapiv1.Pod{
-				test.PodGen("B", nil, true, false, labeling.LabelTrafficYes),
+				test.PodGen("B", "test-ns", nil, true, false, labeling.LabelTrafficYes),
 			},
 		},
 		{
 			name: "none",
 			args: args{
 				pods: []*kapiv1.Pod{
-					test.PodGen("A", nil, false, true, labeling.LabelTrafficNo),
-					test.PodGen("B", nil, true, false, labeling.LabelTrafficPause),
+					test.PodGen("A", "test-ns", nil, false, true, labeling.LabelTrafficNo),
+					test.PodGen("B", "test-ns", nil, true, false, labeling.LabelTrafficPause),
 				},
 			},
 			want: []*kapiv1.Pod{},

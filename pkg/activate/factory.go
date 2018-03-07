@@ -43,7 +43,8 @@ func New(cfg FactoryConfig) (Activator, error) {
 		logger:                  cfg.Logger,
 		podControl:              cfg.PodControl,
 		podLister:               cfg.PodLister,
-		selector:                augmentedSelector,
+		selectorConfig:          cfg.Selector,
+		augmentedSelector:       augmentedSelector,
 		breakerName:             cfg.BreakerName,
 		evaluationPeriod:        time.Second,
 	}
