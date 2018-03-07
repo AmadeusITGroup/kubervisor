@@ -24,6 +24,18 @@ func TestGetRetryAt(t *testing.T) {
 		{
 			name: "empty",
 			args: args{
+				pod: &kv1.Pod{
+					ObjectMeta: metav1.ObjectMeta{
+						Annotations: map[string]string{},
+					},
+				},
+			},
+			want:    time.Time{},
+			wantErr: true,
+		},
+		{
+			name: "nil",
+			args: args{
 				pod: &kv1.Pod{},
 			},
 			want:    time.Time{},
@@ -56,7 +68,7 @@ func TestGetRetryAt(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got, err := GetRetryAt(tt.args.pod)
+			got, err := GetBreakAt(tt.args.pod)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("GetRetryAt() error = %v, wantErr %v", err, tt.wantErr)
 				return
@@ -80,6 +92,18 @@ func TestGetRetryCount(t *testing.T) {
 	}{
 		{
 			name: "empty",
+			args: args{
+				pod: &kv1.Pod{
+					ObjectMeta: metav1.ObjectMeta{
+						Annotations: map[string]string{},
+					},
+				},
+			},
+			want:    0,
+			wantErr: true,
+		},
+		{
+			name: "nil",
 			args: args{
 				pod: &kv1.Pod{},
 			},

@@ -39,9 +39,9 @@ type BreakerConfigList struct {
 
 // BreakerConfigSpec contains BreakerConfig specification
 type BreakerConfigSpec struct {
-	Breaker BreakerStrategy `json:"breaker"`
-	Retry   RetryStrategy   `json:"retry"`
-	Service string          `json:"service,omitempty"`
+	Breaker   BreakerStrategy   `json:"breaker"`
+	Activator ActivatorStrategy `json:"activator"`
+	Service   string            `json:"service,omitempty"`
 }
 
 // BreakerConfigStatus contains BreakerConfig status
@@ -70,23 +70,24 @@ type DiscreteValueOutOfList struct {
 	GoodValues           []string `json:"goodValues,omitempty"` // Good Values ["200","201"]. If empty means that BadValues should be used to do exclusion instead of inclusion.
 	BadValues            []string `json:"badValues,omitempty"`  // Bad Values ["500","404"].
 	TolerancePercent     *uint    `json:"tolerance"`            // % of Bad values tolerated until the pod is considered out of SLA
-	MinimumActivityCount *uint    `json:"tolerance"`            // Minimum number of event required to perform analysis on the pod
+	MinimumActivityCount *uint    `json:"minActivity"`          // Minimum number of event required to perform analysis on the pod
 
 }
 
-// RetryStrategy contains RetryStrategy definition
-type RetryStrategy struct {
-	Mode     RetryStrategyMode `json:"mode"`
-	Period   time.Duration     `json:"period,omitempty"`
-	MaxRetry time.Duration     `json:"maxRetry,omitempty"`
+// ActivatorStrategy contains ActivatorStrategy definition
+type ActivatorStrategy struct {
+	Mode          ActivatorStrategyMode `json:"mode"`
+	Period        time.Duration         `json:"period,omitempty"`
+	MaxRetryCount *uint                 `json:"maxRetryCount,omitempty"`
+	MaxPauseCount *uint                 `json:"maxPauseCount,omitempty"`
 }
 
-// RetryStrategyMode represent the breaker Strategy Mode
-type RetryStrategyMode string
+// ActivatorStrategyMode represent the breaker Strategy Mode
+type ActivatorStrategyMode string
 
-// RetryStrategyModeDisabled represent the default retry strategy
+// ActivatorStrategyMode defines the possible behavior of the activator
 const (
-	RetryStrategyModePeriodic      RetryStrategyMode = "periodic"
-	RetryStrategyModeRetryAndKill  RetryStrategyMode = "retryAndKill"
-	RetryStrategyModeRetryAndPause RetryStrategyMode = "retryAndPause"
+	ActivatorStrategyModePeriodic      ActivatorStrategyMode = "periodic"
+	ActivatorStrategyModeRetryAndKill  ActivatorStrategyMode = "retryAndKill"
+	ActivatorStrategyModeRetryAndPause ActivatorStrategyMode = "retryAndPause"
 )

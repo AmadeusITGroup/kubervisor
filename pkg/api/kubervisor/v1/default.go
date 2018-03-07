@@ -1,6 +1,8 @@
 package v1
 
-//DefaultDiscreteValueOutOfList injecting default value for the struct
+import "time"
+
+//DefaultDiscreteValueOutOfList injecting default values for the struct
 func DefaultDiscreteValueOutOfList(item *DiscreteValueOutOfList) *DiscreteValueOutOfList {
 	copy := item.DeepCopy()
 	if copy.BadValues == nil {
@@ -14,6 +16,24 @@ func DefaultDiscreteValueOutOfList(item *DiscreteValueOutOfList) *DiscreteValueO
 	}
 	if copy.TolerancePercent == nil {
 		copy.TolerancePercent = NewUInt(50)
+	}
+	return copy
+}
+
+//DefaultActivatorStrategy injecting default values for the struct
+func DefaultActivatorStrategy(item *ActivatorStrategy) *ActivatorStrategy {
+	copy := item.DeepCopy()
+	if copy.MaxPauseCount == nil {
+		copy.MaxPauseCount = NewUInt(1)
+	}
+	if copy.MaxRetryCount == nil {
+		copy.MaxRetryCount = NewUInt(3)
+	}
+	if copy.Mode == "" {
+		copy.Mode = ActivatorStrategyModePeriodic
+	}
+	if copy.Period == 0 {
+		copy.Period = time.Duration(10)
 	}
 	return copy
 }

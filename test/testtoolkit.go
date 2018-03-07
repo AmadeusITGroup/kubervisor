@@ -61,6 +61,11 @@ type TestStepSequence struct {
 	duration time.Duration
 }
 
+//Len return the number of steps in the sequence
+func (es *TestStepSequence) Len() int {
+	return len(es.steps)
+}
+
 //PassOnlyOnce to be called when a step in the sequence is considered as passed and can't be passed a second time else (t.Fatal)
 func (es *TestStepSequence) PassOnlyOnce(step int) {
 	defer func() {
@@ -74,8 +79,14 @@ func (es *TestStepSequence) PassOnlyOnce(step int) {
 		es.t.Fatalf("Step out of bound")
 		return
 	}
+
 	es.steps[step].Lock()
 	defer es.steps[step].Unlock()
+	if es.steps[step].doneOnce {
+		es.t.Fatalf("Step pass 2 times, expecting once only")
+		return
+	}
+
 	close(es.steps[step].c)
 	es.steps[step].c = nil
 	es.steps[step].doneOnce = true
@@ -104,6 +115,16 @@ func (es *TestStepSequence) PassAtLeastOnce(step int) {
 	close(es.steps[step].c)
 	es.steps[step].c = nil
 	es.steps[step].doneOnce = true
+}
+
+//Completed check that all step of the sequence have been completed.
+func (es *TestStepSequence) Completed() bool {
+	for _, s := range es.steps {
+		if !s.doneOnce {
+			return false
+		}
+	}
+	return true
 }
 
 //ValidateTestSequence validate that the sequence is completed in order in the given time
@@ -225,4 +246,60 @@ func PodGen(name string, labels map[string]string, running, ready bool, trafficL
 		p.Status = kapiv1.PodStatus{Phase: kapiv1.PodUnknown}
 	}
 	return &p
+}
+
+//TestPodControl test mock for podcontro
+type TestPodControl struct {
+	T                                        *testing.T
+	Case                                     string
+	FailOnUndefinedFunc                      bool
+	UpdateBreakerAnnotationAndLabelFunc      func(p *kapiv1.Pod) (*kapiv1.Pod, error)
+	UpdateActivationLabelsAndAnnotationsFunc func(p *kapiv1.Pod) (*kapiv1.Pod, error)
+	UpdatePauseLabelsAndAnnotationsFunc      func(p *kapiv1.Pod) (*kapiv1.Pod, error)
+	KillPodFunc                              func(p *kapiv1.Pod) error
+}
+
+//UpdateBreakerAnnotationAndLabel fake implementation for podcontrol
+func (t *TestPodControl) UpdateBreakerAnnotationAndLabel(p *kapiv1.Pod) (*kapiv1.Pod, error) {
+	if t.UpdateBreakerAnnotationAndLabelFunc != nil {
+		return t.UpdateBreakerAnnotationAndLabelFunc(p)
+	}
+	if t.FailOnUndefinedFunc {
+		t.T.Errorf("UpdateBreakerAnnotationAndLabel should not be called in %s/%s", t.T.Name(), t.Case)
+	}
+	return nil, nil
+}
+
+//UpdateActivationLabelsAndAnnotations fake implementation for podcontrol
+func (t *TestPodControl) UpdateActivationLabelsAndAnnotations(p *kapiv1.Pod) (*kapiv1.Pod, error) {
+	if t.UpdateActivationLabelsAndAnnotationsFunc != nil {
+		return t.UpdateActivationLabelsAndAnnotationsFunc(p)
+	}
+	if t.FailOnUndefinedFunc {
+		t.T.Errorf("UpdateActivationLabelsAndAnnotationsFunc should not be called in %s/%s", t.T.Name(), t.Case)
+	}
+	return nil, nil
+}
+
+//UpdatePauseLabelsAndAnnotations fake implementation for podcontrol
+func (t *TestPodControl) UpdatePauseLabelsAndAnnotations(p *kapiv1.Pod) (*kapiv1.Pod, error) {
+	if t.UpdatePauseLabelsAndAnnotationsFunc != nil {
+		return t.UpdatePauseLabelsAndAnnotationsFunc(p)
+	}
+	if t.FailOnUndefinedFunc {
+		t.T.Errorf("UpdatePauseLabelsAndAnnotationsFunc should not be called in %s/%s", t.T.Name(), t.Case)
+	}
+
+	return nil, nil
+}
+
+//KillPod fake implementation for podcontrol
+func (t *TestPodControl) KillPod(p *kapiv1.Pod) error {
+	if t.KillPodFunc != nil {
+		return t.KillPodFunc(p)
+	}
+	if t.FailOnUndefinedFunc {
+		t.T.Errorf("KillPod should not be called in %s/%s", t.T.Name(), t.Case)
+	}
+	return nil
 }
