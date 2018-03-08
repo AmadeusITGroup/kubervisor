@@ -1,6 +1,7 @@
 package controller
 
 import (
+	"context"
 	"fmt"
 	"net/http"
 	"time"
@@ -11,6 +12,8 @@ import (
 	apiv1 "k8s.io/api/core/v1"
 	apiextensionsclient "k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/labels"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
 	"k8s.io/apimachinery/pkg/util/wait"
 	kubeinformers "k8s.io/client-go/informers"
@@ -24,10 +27,13 @@ import (
 	"k8s.io/client-go/tools/record"
 	"k8s.io/client-go/util/workqueue"
 
+	kubervisorapi "github.com/amadeusitgroup/podkubervisor/pkg/api/kubervisor/v1"
 	kubervisorclient "github.com/amadeusitgroup/podkubervisor/pkg/client"
 	bclient "github.com/amadeusitgroup/podkubervisor/pkg/client/clientset/versioned"
 	binformers "github.com/amadeusitgroup/podkubervisor/pkg/client/informers/externalversions"
 	blisters "github.com/amadeusitgroup/podkubervisor/pkg/client/listers/kubervisor/v1"
+	"github.com/amadeusitgroup/podkubervisor/pkg/controller/item"
+	"github.com/amadeusitgroup/podkubervisor/pkg/pod"
 )
 
 // Controller represent the kubervisor controller
@@ -49,7 +55,17 @@ type Controller struct {
 	podLister corev1listers.PodLister
 	PodSynced cache.InformerSynced
 
-	queue workqueue.RateLimitingInterface // BreakerConfigs to be synced
+	serviceLister corev1listers.ServiceLister
+	ServiceSynced cache.InformerSynced
+
+	queue       workqueue.RateLimitingInterface // BreakerConfigs to be synced
+	enqueueFunc func(bc *kubervisorapi.BreakerConfig)
+
+	items                 item.BreakerConfigItemStore
+	updateHandler         func(*kubervisorapi.BreakerConfig) error
+	podControl            pod.ControlInterface
+	rootContext           context.Context
+	rootContextCancelFunc context.CancelFunc
 
 	// Kubernetes Probes handler
 	health healthcheck.Handler
@@ -94,7 +110,10 @@ func New(cfg *Config) *Controller {
 	eventBroadcaster.StartRecordingToSink(&v1core.EventSinkImpl{Interface: v1core.New(kubeClient.Core().RESTClient()).Events("")})
 
 	podInformer := kubeInformerFactory.Core().V1().Pods()
+	serviceInformer := kubeInformerFactory.Core().V1().Services()
 	breakerInformer := breakerInformerFactory.Breaker().V1().BreakerConfigs()
+
+	ctx, ctxCancel := context.WithCancel(context.Background())
 
 	ctrl := &Controller{
 		nbWorker: cfg.NbWorker,
@@ -104,12 +123,20 @@ func New(cfg *Config) *Controller {
 		breakerInformerFactory: breakerInformerFactory,
 		podLister:              podInformer.Lister(),
 		PodSynced:              podInformer.Informer().HasSynced,
+		serviceLister:          serviceInformer.Lister(),
+		ServiceSynced:          serviceInformer.Informer().HasSynced,
 		breakerLister:          breakerInformer.Lister(),
 		BreakerSynced:          breakerInformer.Informer().HasSynced,
+
+		podControl:            pod.NewPodControl(kubeClient),
+		rootContext:           ctx,
+		rootContextCancelFunc: ctxCancel,
 
 		queue:    workqueue.NewNamedRateLimitingQueue(workqueue.DefaultControllerRateLimiter(), "breakerconfig"),
 		recorder: eventBroadcaster.NewRecorder(scheme.Scheme, apiv1.EventSource{Component: "kubervisor-controller"}),
 	}
+	ctrl.enqueueFunc = ctrl.enqueue
+
 	breakerInformer.Informer().AddEventHandler(
 		cache.ResourceEventHandlerFuncs{
 			AddFunc:    ctrl.onAddBreakerConfig,
@@ -123,6 +150,14 @@ func New(cfg *Config) *Controller {
 			AddFunc:    ctrl.onAddPod,
 			UpdateFunc: ctrl.onUpdatePod,
 			DeleteFunc: ctrl.onDeletePod,
+		},
+	)
+
+	serviceInformer.Informer().AddEventHandler(
+		cache.ResourceEventHandlerFuncs{
+			AddFunc:    ctrl.onAddService,
+			UpdateFunc: ctrl.onUpdateService,
+			DeleteFunc: ctrl.onDeleteService,
 		},
 	)
 
@@ -154,10 +189,8 @@ func (ctrl *Controller) run(stop <-chan struct{}) error {
 }
 
 func (ctrl *Controller) runWorker() {
-	/*
-		for c.processNextItem() {
-		}
-	*/
+	for ctrl.processNextItem() {
+	}
 }
 
 func (ctrl *Controller) processNextItem() bool {
@@ -183,8 +216,99 @@ func (ctrl *Controller) processNextItem() bool {
 	return true
 }
 
-func (c *Controller) sync(key string) (bool, error) {
+func (ctrl *Controller) sync(key string) (bool, error) {
+	ctrl.Logger.Sugar().Debug("sync() key: %s, key")
+	startTime := time.Now()
+	defer func() {
+		ctrl.Logger.Sugar().Debug("Finished syncing BreakerConfig %q in %v", key, time.Since(startTime))
+		// TODO add prometheus metric here
+	}()
+	namespace, name, err := cache.SplitMetaNamespaceKey(key)
+	if err != nil {
+		return false, err
+	}
+	ctrl.Logger.Sugar().Debug("Syncing BreakerConfig %s/%s", namespace, name)
+	sharedBreakerConfig, err := ctrl.breakerLister.BreakerConfigs(namespace).Get(name)
+	if err != nil {
+		ctrl.Logger.Sugar().Errorf("unable to get BreakerConfig %s/%s: %v. Maybe deleted", namespace, name, err)
+		return false, nil
+	}
+	if !kubervisorapi.IsBreakerConfigDefaulted(sharedBreakerConfig) {
+		defaultedBreakerConfig := kubervisorapi.DefaultBreakerConfig(sharedBreakerConfig)
+		if err = ctrl.updateHandler(defaultedBreakerConfig); err != nil {
+			ctrl.Logger.Sugar().Errorf("unable to default BreakerConfig %s/%s, error:%v", namespace, name, err)
+			return false, fmt.Errorf("unable to default BreakerConfig %s/%s, error:%s", namespace, name, err)
+		}
+		ctrl.Logger.Sugar().Debugf("BreakerConfig %s/%s defaulted", namespace, name)
+		return false, nil
+	}
+
+	// TODO add validation
+
+	// TODO: add test the case of graceful deletion
+	if sharedBreakerConfig.DeletionTimestamp != nil {
+		return false, nil
+	}
+
+	bc := sharedBreakerConfig.DeepCopy()
+	return ctrl.syncBreakerConfig(bc)
+}
+
+func (ctrl *Controller) syncBreakerConfig(bc *kubervisorapi.BreakerConfig) (bool, error) {
+	key := fmt.Sprintf("%s/%s", bc.Namespace, bc.Name)
+
+	associatedSvc, err := ctrl.serviceLister.Services(bc.Namespace).Get(bc.Spec.Service)
+	if err != nil {
+		if !apierrors.IsNotFound(err) {
+			ctrl.Logger.Sugar().Errorf("associated service %s/%s didn't exist, error:", bc.Namespace, bc.Spec.Service)
+			return false, err
+		}
+		return false, err
+	}
+	obj, exist, err := ctrl.items.GetByKey(key)
+	if err != nil {
+		return false, err
+	}
+
+	var bci item.Interface
+	if !exist {
+		ctrl.Logger.Sugar().Debugw("item not found for key:%s", key)
+		if bci, err = ctrl.newBreakerConfigItem(bc, associatedSvc); err != nil {
+			return false, err
+		}
+		ctrl.items.Add(bci)
+	} else {
+		var ok bool
+		bci, ok = obj.(item.Interface)
+		if !ok {
+			return false, fmt.Errorf("unable to case the obj to a BreakerConfigItem")
+		}
+		if IsSpecUpdated(bc, associatedSvc, bci) {
+			bci.Stop()
+			if bci, err = ctrl.newBreakerConfigItem(bc, associatedSvc); err != nil {
+				return false, err
+			}
+			ctrl.items.Update(bci)
+		}
+	}
+
 	return true, nil
+}
+
+func (ctrl *Controller) newBreakerConfigItem(bc *kubervisorapi.BreakerConfig, svc *apiv1.Service) (item.Interface, error) {
+	itemConfig := &item.Config{
+		Logger:     ctrl.Logger,
+		Selector:   labels.Set(svc.Spec.Selector).AsSelectorPreValidated(),
+		PodLister:  ctrl.podLister,
+		PodControl: ctrl.podControl,
+	}
+	bci, err := item.New(bc, itemConfig)
+	if err != nil {
+		ctrl.Logger.Sugar().Errorf("unable to create new BreakerConfigItem, err:%v", err)
+		return nil, err
+	}
+	bci.Start(ctrl.rootContext)
+	return bci, nil
 }
 
 func initKubeConfig(c *Config) (*rest.Config, error) {
@@ -192,4 +316,18 @@ func initKubeConfig(c *Config) (*rest.Config, error) {
 		return clientcmd.BuildConfigFromFlags(c.Master, c.KubeConfigFile) // out of cluster config
 	}
 	return rest.InClusterConfig()
+}
+
+func (ctrl *Controller) deleteBreakerConfig(ns, name string) error {
+	return ctrl.breakerClient.Breaker().BreakerConfigs(ns).Delete(name, &metav1.DeleteOptions{})
+}
+
+// enqueue adds key in the controller queue
+func (ctrl *Controller) enqueue(bc *kubervisorapi.BreakerConfig) {
+	key, err := cache.MetaNamespaceKeyFunc(bc)
+	if err != nil {
+		ctrl.Logger.Sugar().Errorf("Controller:enqueue: couldn't get key for BreakerConfig %s/%s: %v", bc.Namespace, bc.Name, err)
+		return
+	}
+	ctrl.queue.Add(key)
 }

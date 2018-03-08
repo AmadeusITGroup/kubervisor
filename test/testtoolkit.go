@@ -215,19 +215,20 @@ var MapOfSequences = map[string]*TestStepSequence{}
 
 //NewTestPodLister create a new PodLister.
 // FOR TEST PURPOSE ONLY
-func NewTestPodLister(pods []*kapiv1.Pod) kv1.PodLister {
+func NewTestPodLister(pods []*kapiv1.Pod, namespace string) kv1.PodNamespaceLister {
 	index := cache.NewIndexer(cache.MetaNamespaceKeyFunc, cache.Indexers{})
 	for _, p := range pods {
 		index.Add(p)
 	}
-	return kv1.NewPodLister(index)
+	return kv1.NewPodLister(index).Pods(namespace)
 }
 
 //PodGen generate a pod with some label and status
 // FOR TEST PURPOSE ONLY
-func PodGen(name string, labels map[string]string, running, ready bool, trafficLabel labeling.LabelTraffic) *kapiv1.Pod {
+func PodGen(name, namespace string, labels map[string]string, running, ready bool, trafficLabel labeling.LabelTraffic) *kapiv1.Pod {
 	p := kapiv1.Pod{}
 	p.Name = name
+	p.Namespace = namespace
 	if trafficLabel != "" {
 		if labels == nil {
 			labels = map[string]string{}
@@ -253,16 +254,16 @@ type TestPodControl struct {
 	T                                        *testing.T
 	Case                                     string
 	FailOnUndefinedFunc                      bool
-	UpdateBreakerAnnotationAndLabelFunc      func(p *kapiv1.Pod) (*kapiv1.Pod, error)
+	UpdateBreakerAnnotationAndLabelFunc      func(name string, p *kapiv1.Pod) (*kapiv1.Pod, error)
 	UpdateActivationLabelsAndAnnotationsFunc func(p *kapiv1.Pod) (*kapiv1.Pod, error)
 	UpdatePauseLabelsAndAnnotationsFunc      func(p *kapiv1.Pod) (*kapiv1.Pod, error)
 	KillPodFunc                              func(p *kapiv1.Pod) error
 }
 
 //UpdateBreakerAnnotationAndLabel fake implementation for podcontrol
-func (t *TestPodControl) UpdateBreakerAnnotationAndLabel(p *kapiv1.Pod) (*kapiv1.Pod, error) {
+func (t *TestPodControl) UpdateBreakerAnnotationAndLabel(name string, p *kapiv1.Pod) (*kapiv1.Pod, error) {
 	if t.UpdateBreakerAnnotationAndLabelFunc != nil {
-		return t.UpdateBreakerAnnotationAndLabelFunc(p)
+		return t.UpdateBreakerAnnotationAndLabelFunc(name, p)
 	}
 	if t.FailOnUndefinedFunc {
 		t.T.Errorf("UpdateBreakerAnnotationAndLabel should not be called in %s/%s", t.T.Name(), t.Case)

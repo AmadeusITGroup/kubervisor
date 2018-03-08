@@ -7,9 +7,13 @@ import (
 )
 
 type emptyCustomBreakerT struct {
+	SimilarConfig bool
 }
 
 func (e *emptyCustomBreakerT) Run(stop <-chan struct{}) {}
+func (e *emptyCustomBreakerT) CompareConfig(specConfig *v1.BreakerStrategy) bool {
+	return e.SimilarConfig
+}
 
 var emptyCustomBreaker Breaker = &emptyCustomBreakerT{}
 

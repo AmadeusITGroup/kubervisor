@@ -7,13 +7,12 @@ import (
 	kapiv1 "k8s.io/api/core/v1"
 	clientset "k8s.io/client-go/kubernetes"
 
-	"github.com/amadeusitgroup/podkubervisor/pkg/api/kubervisor/v1"
 	"github.com/amadeusitgroup/podkubervisor/pkg/labeling"
 )
 
 //ControlInterface interface to act on pods
 type ControlInterface interface {
-	UpdateBreakerAnnotationAndLabel(p *kapiv1.Pod) (*kapiv1.Pod, error)
+	UpdateBreakerAnnotationAndLabel(breakConfigName string, p *kapiv1.Pod) (*kapiv1.Pod, error)
 	UpdateActivationLabelsAndAnnotations(p *kapiv1.Pod) (*kapiv1.Pod, error)
 	UpdatePauseLabelsAndAnnotations(p *kapiv1.Pod) (*kapiv1.Pod, error)
 	KillPod(p *kapiv1.Pod) error
@@ -21,10 +20,14 @@ type ControlInterface interface {
 
 var _ ControlInterface = &Control{}
 
+// NewPodControl returns new PodControl instance
+func NewPodControl(client clientset.Interface) *Control {
+	return &Control{kubeClient: client}
+}
+
 //Control implements pod controlInterface
 type Control struct {
-	kubeClient    clientset.Interface
-	breakerConfig v1.BreakerConfig
+	kubeClient clientset.Interface
 }
 
 func copyAndDefault(inputPod *kapiv1.Pod) *kapiv1.Pod {
@@ -39,11 +42,11 @@ func copyAndDefault(inputPod *kapiv1.Pod) *kapiv1.Pod {
 }
 
 //UpdateBreakerAnnotationAndLabel implements pod control
-func (c *Control) UpdateBreakerAnnotationAndLabel(inputPod *kapiv1.Pod) (*kapiv1.Pod, error) {
+func (c *Control) UpdateBreakerAnnotationAndLabel(breakConfigName string, inputPod *kapiv1.Pod) (*kapiv1.Pod, error) {
 	//Copy to avoid modifying object inside the cache
 	p := copyAndDefault(inputPod)
 
-	p.Labels[labeling.LabelBreakerNameKey] = c.breakerConfig.Name
+	p.Labels[labeling.LabelBreakerNameKey] = breakConfigName
 	p.Labels[labeling.LabelTrafficKey] = string(labeling.LabelTrafficNo)
 
 	retryCount, _ := labeling.GetRetryCount(p)

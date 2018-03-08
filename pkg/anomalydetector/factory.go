@@ -22,9 +22,7 @@ func New(cfg FactoryConfig) (AnomalyDetector, error) {
 
 	switch {
 	case cfg.BreakerStrategyConfig.DiscreteValueOutOfList != nil:
-		{
-			return newDiscreteValueOutOfListAnalyser(cfg.Config)
-		}
+		return newDiscreteValueOutOfListAnalyser(cfg.Config)
 	case cfg.customFactory != nil:
 		return cfg.customFactory(cfg)
 	default:

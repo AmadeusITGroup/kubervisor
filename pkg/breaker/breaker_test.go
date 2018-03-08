@@ -15,7 +15,6 @@ import (
 	"github.com/amadeusitgroup/podkubervisor/pkg/api/kubervisor/v1"
 	"github.com/amadeusitgroup/podkubervisor/pkg/labeling"
 	"github.com/amadeusitgroup/podkubervisor/pkg/pod"
-
 	test "github.com/amadeusitgroup/podkubervisor/test"
 )
 
@@ -100,17 +99,18 @@ func TestBreakerImpl_Run(t *testing.T) {
 	testprefix := t.Name()
 	devlogger, _ := zap.NewDevelopment()
 
-	ARunningReadyTraffic := test.PodGen("A", map[string]string{"app": "foo"}, true, true, labeling.LabelTrafficYes)
-	BRunningReadyTraffic := test.PodGen("B", map[string]string{"app": "foo"}, true, true, labeling.LabelTrafficYes)
-	CNotRunningReadyTraffic := test.PodGen("C", map[string]string{"app": "foo"}, false, true, labeling.LabelTrafficYes)
-	DRunningNotReadyTraffic := test.PodGen("D", map[string]string{"app": "foo"}, true, false, labeling.LabelTrafficYes)
-	ERunningReadyNoTraffic := test.PodGen("E", map[string]string{"app": "foo"}, true, false, labeling.LabelTrafficNo)
-	BadAppRunningReadyTraffic := test.PodGen("BadApp", map[string]string{"app": "bar"}, true, true, labeling.LabelTrafficYes)
+	ARunningReadyTraffic := test.PodGen("A", "test-ns", map[string]string{"app": "foo"}, true, true, labeling.LabelTrafficYes)
+	BRunningReadyTraffic := test.PodGen("B", "test-ns", map[string]string{"app": "foo"}, true, true, labeling.LabelTrafficYes)
+	CNotRunningReadyTraffic := test.PodGen("C", "test-ns", map[string]string{"app": "foo"}, false, true, labeling.LabelTrafficYes)
+	DRunningNotReadyTraffic := test.PodGen("D", "test-ns", map[string]string{"app": "foo"}, true, false, labeling.LabelTrafficYes)
+	ERunningReadyNoTraffic := test.PodGen("E", "test-ns", map[string]string{"app": "foo"}, true, false, labeling.LabelTrafficNo)
+	BadAppRunningReadyTraffic := test.PodGen("BadApp", "test-ns", map[string]string{"app": "bar"}, true, true, labeling.LabelTrafficYes)
 
 	type fields struct {
+		breakerConfigName     string
 		breakerStrategyConfig v1.BreakerStrategy
 		selector              labels.Selector
-		podLister             kv1.PodLister
+		podLister             kv1.PodNamespaceLister
 		podControl            pod.ControlInterface
 		logger                *zap.Logger
 		anomalyDetector       anomalydetector.AnomalyDetector
@@ -140,11 +140,12 @@ func TestBreakerImpl_Run(t *testing.T) {
 						ERunningReadyNoTraffic,
 						BadAppRunningReadyTraffic,
 					},
+					"test-ns",
 				),
 				logger:          devlogger,
 				anomalyDetector: &testAnomalyDetector{pods: []*kapiv1.Pod{ARunningReadyTraffic}},
 				podControl: &test.TestPodControl{
-					UpdateBreakerAnnotationAndLabelFunc: func(p *kapiv1.Pod) (*kapiv1.Pod, error) {
+					UpdateBreakerAnnotationAndLabelFunc: func(name string, p *kapiv1.Pod) (*kapiv1.Pod, error) {
 						if p == ARunningReadyTraffic {
 							test.GetTestSequence(t, testprefix+"/ok").PassAtLeastOnce(0)
 						} else {
@@ -177,11 +178,12 @@ func TestBreakerImpl_Run(t *testing.T) {
 						ERunningReadyNoTraffic,
 						BadAppRunningReadyTraffic,
 					},
+					"test-ns",
 				),
 				logger:          devlogger,
 				anomalyDetector: &testAnomalyDetector{pods: []*kapiv1.Pod{ARunningReadyTraffic, BRunningReadyTraffic}},
 				podControl: &test.TestPodControl{
-					UpdateBreakerAnnotationAndLabelFunc: func(p *kapiv1.Pod) (*kapiv1.Pod, error) {
+					UpdateBreakerAnnotationAndLabelFunc: func(name string, p *kapiv1.Pod) (*kapiv1.Pod, error) {
 						switch p {
 						case ARunningReadyTraffic:
 							test.GetTestSequence(t, testprefix+"/cutall").PassAtLeastOnce(0)
@@ -217,11 +219,12 @@ func TestBreakerImpl_Run(t *testing.T) {
 						ERunningReadyNoTraffic,
 						BadAppRunningReadyTraffic,
 					},
+					"test-ns",
 				),
 				logger:          devlogger,
 				anomalyDetector: &testAnomalyDetector{pods: []*kapiv1.Pod{ARunningReadyTraffic, BRunningReadyTraffic}},
 				podControl: &test.TestPodControl{
-					UpdateBreakerAnnotationAndLabelFunc: func(p *kapiv1.Pod) (*kapiv1.Pod, error) {
+					UpdateBreakerAnnotationAndLabelFunc: func(name string, p *kapiv1.Pod) (*kapiv1.Pod, error) {
 						t.Fatalf("Test bigCount should not break any pod")
 						return p, nil
 					},
@@ -250,11 +253,12 @@ func TestBreakerImpl_Run(t *testing.T) {
 						ERunningReadyNoTraffic,
 						BadAppRunningReadyTraffic,
 					},
+					"test-ns",
 				),
 				logger:          devlogger,
 				anomalyDetector: &testAnomalyDetector{pods: []*kapiv1.Pod{ARunningReadyTraffic}},
 				podControl: &test.TestPodControl{
-					UpdateBreakerAnnotationAndLabelFunc: func(p *kapiv1.Pod) (*kapiv1.Pod, error) {
+					UpdateBreakerAnnotationAndLabelFunc: func(name string, p *kapiv1.Pod) (*kapiv1.Pod, error) {
 						switch p {
 						case ARunningReadyTraffic:
 							test.GetTestSequence(t, testprefix+"/0quota1cut2running").PassAtLeastOnce(0)
@@ -288,11 +292,12 @@ func TestBreakerImpl_Run(t *testing.T) {
 						ERunningReadyNoTraffic,
 						BadAppRunningReadyTraffic,
 					},
+					"test-ns",
 				),
 				logger:          devlogger,
 				anomalyDetector: &testAnomalyDetector{pods: []*kapiv1.Pod{ARunningReadyTraffic, BRunningReadyTraffic}},
 				podControl: &test.TestPodControl{
-					UpdateBreakerAnnotationAndLabelFunc: func(p *kapiv1.Pod) (*kapiv1.Pod, error) {
+					UpdateBreakerAnnotationAndLabelFunc: func(name string, p *kapiv1.Pod) (*kapiv1.Pod, error) {
 						switch p {
 						case ARunningReadyTraffic:
 							test.GetTestSequence(t, testprefix+"/only1").PassAtLeastOnce(0)
@@ -356,4 +361,63 @@ func (t *testAnomalyDetector) GetPodsOutOfBounds() ([]*kapiv1.Pod, error) {
 		return []*kapiv1.Pod{}, nil
 	}
 	return t.pods, nil
+}
+
+func TestBreakerImpl_CompareConfig(t *testing.T) {
+	type fields struct {
+		BreakerConfigName     string
+		breakerStrategyConfig v1.BreakerStrategy
+		selector              labels.Selector
+		podLister             kv1.PodNamespaceLister
+		podControl            pod.ControlInterface
+		logger                *zap.Logger
+		anomalyDetector       anomalydetector.AnomalyDetector
+	}
+	type args struct {
+		specConfig *v1.BreakerStrategy
+	}
+	tests := []struct {
+		name   string
+		fields fields
+		args   args
+		want   bool
+	}{
+
+		{
+			name: "similar",
+			fields: fields{
+				breakerStrategyConfig: *v1.DefaultBreakerStrategy(&v1.BreakerStrategy{}),
+			},
+			args: args{
+				specConfig: v1.DefaultBreakerStrategy(&v1.BreakerStrategy{}),
+			},
+			want: true,
+		},
+		{
+			name: "different",
+			fields: fields{
+				breakerStrategyConfig: *v1.DefaultBreakerStrategy(&v1.BreakerStrategy{}),
+			},
+			args: args{
+				specConfig: v1.DefaultBreakerStrategy(&v1.BreakerStrategy{EvaluationPeriod: time.Duration(42)}),
+			},
+			want: false,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			b := &BreakerImpl{
+				BreakerConfigName:     tt.fields.BreakerConfigName,
+				breakerStrategyConfig: tt.fields.breakerStrategyConfig,
+				selector:              tt.fields.selector,
+				podLister:             tt.fields.podLister,
+				podControl:            tt.fields.podControl,
+				logger:                tt.fields.logger,
+				anomalyDetector:       tt.fields.anomalyDetector,
+			}
+			if got := b.CompareConfig(tt.args.specConfig); got != tt.want {
+				t.Errorf("BreakerImpl.CompareConfig() = %v, want %v", got, tt.want)
+			}
+		})
+	}
 }

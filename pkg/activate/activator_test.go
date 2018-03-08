@@ -37,7 +37,7 @@ func TestActivatorImpl_Run(t *testing.T) {
 	type fields struct {
 		activatorStrategyConfig v1.ActivatorStrategy
 		selector                labels.Selector
-		podLister               kv1.PodLister
+		podLister               kv1.PodNamespaceLister
 		podControl              pod.ControlInterface
 		breakerName             string
 		logger                  *zap.Logger
@@ -59,13 +59,13 @@ func TestActivatorImpl_Run(t *testing.T) {
 				selector: labels.SelectorFromSet(map[string]string{"app": "foo"}),
 				podLister: test.NewTestPodLister(
 					[]*kapiv1.Pod{
-						test.PodGen("A", map[string]string{"app": "foo"}, true, true, labeling.LabelTrafficNo),
-						test.PodGen("AA", map[string]string{"app": "foo"}, true, true, labeling.LabelTrafficNo),
-						test.PodGen("B", map[string]string{"app": "foo"}, true, true, labeling.LabelTrafficYes),
-						test.PodGen("C", map[string]string{"app": "foo"}, true, true, labeling.LabelTrafficPause),
-						test.PodGen("D", map[string]string{"app": "foo"}, true, true, ""),
-						test.PodGen("E", map[string]string{"app": "other"}, true, true, labeling.LabelTrafficNo),
-					}),
+						test.PodGen("A", "test-ns", map[string]string{"app": "foo"}, true, true, labeling.LabelTrafficNo),
+						test.PodGen("AA", "test-ns", map[string]string{"app": "foo"}, true, true, labeling.LabelTrafficNo),
+						test.PodGen("B", "test-ns", map[string]string{"app": "foo"}, true, true, labeling.LabelTrafficYes),
+						test.PodGen("C", "test-ns", map[string]string{"app": "foo"}, true, true, labeling.LabelTrafficPause),
+						test.PodGen("D", "test-ns", map[string]string{"app": "foo"}, true, true, ""),
+						test.PodGen("E", "test-ns", map[string]string{"app": "other"}, true, true, labeling.LabelTrafficNo),
+					}, "test-ns"),
 				breakerName: "2pods",
 				logger:      devlogger,
 				strategyApplier: &testStrategyApplier{
@@ -94,7 +94,7 @@ func TestActivatorImpl_Run(t *testing.T) {
 			sequence := test.NewTestSequence(t, testprefix+"/"+tt.name, tt.stepCount, tt.sequenceTimeout)
 			b := &ActivatorImpl{
 				activatorStrategyConfig: tt.fields.activatorStrategyConfig,
-				selector:                tt.fields.selector,
+				augmentedSelector:       tt.fields.selector,
 				podLister:               tt.fields.podLister,
 				podControl:              tt.fields.podControl,
 				breakerName:             tt.fields.breakerName,
@@ -121,7 +121,7 @@ func TestActivatorImpl_applyActivatorStrategy(t *testing.T) {
 	type fields struct {
 		activatorStrategyConfig v1.ActivatorStrategy
 		selector                labels.Selector
-		podLister               kv1.PodLister
+		podLister               kv1.PodNamespaceLister
 		podControl              pod.ControlInterface
 		breakerName             string
 		logger                  *zap.Logger
@@ -136,13 +136,13 @@ func TestActivatorImpl_applyActivatorStrategy(t *testing.T) {
 	}{
 		{
 			name:     "missingBreatAtAnnotation",
-			inputPod: func() *kapiv1.Pod { return test.PodGen("A", nil, true, true, "") },
+			inputPod: func() *kapiv1.Pod { return test.PodGen("A", "test-ns", nil, true, true, "") },
 			wantErr:  true,
 		},
 		{
 			name: "missingRetryCountAnnotation",
 			inputPod: func() *kapiv1.Pod {
-				p := test.PodGen("A", nil, true, true, "")
+				p := test.PodGen("A", "test-ns", nil, true, true, "")
 				p.Annotations = map[string]string{labeling.AnnotationBreakAtKey: string("1978-12-04T22:11:00+00:00")}
 				return p
 			},
@@ -160,7 +160,7 @@ func TestActivatorImpl_applyActivatorStrategy(t *testing.T) {
 				},
 			},
 			inputPod: func() *kapiv1.Pod {
-				p := test.PodGen("A", nil, true, true, "")
+				p := test.PodGen("A", "test-ns", nil, true, true, "")
 				p.Annotations = map[string]string{
 					labeling.AnnotationBreakAtKey:    string("2078-12-04T22:11:00+00:00"),
 					labeling.AnnotationRetryCountKey: "1",
@@ -184,7 +184,7 @@ func TestActivatorImpl_applyActivatorStrategy(t *testing.T) {
 				},
 			},
 			inputPod: func() *kapiv1.Pod {
-				p := test.PodGen("A", nil, true, true, "")
+				p := test.PodGen("A", "test-ns", nil, true, true, "")
 				p.Annotations = map[string]string{
 					labeling.AnnotationBreakAtKey:    string("1978-12-04T22:11:00+00:00"),
 					labeling.AnnotationRetryCountKey: "1",
@@ -210,7 +210,7 @@ func TestActivatorImpl_applyActivatorStrategy(t *testing.T) {
 				},
 			},
 			inputPod: func() *kapiv1.Pod {
-				p := test.PodGen("A", nil, true, true, "")
+				p := test.PodGen("A", "test-ns", nil, true, true, "")
 				p.Annotations = map[string]string{
 					labeling.AnnotationBreakAtKey:    string("1978-12-04T22:11:00+00:00"),
 					labeling.AnnotationRetryCountKey: "1",
@@ -235,7 +235,7 @@ func TestActivatorImpl_applyActivatorStrategy(t *testing.T) {
 				},
 			},
 			inputPod: func() *kapiv1.Pod {
-				p := test.PodGen("A", nil, true, true, "")
+				p := test.PodGen("A", "test-ns", nil, true, true, "")
 				p.Annotations = map[string]string{
 					labeling.AnnotationBreakAtKey:    string("1978-12-04T22:11:00+00:00"),
 					labeling.AnnotationRetryCountKey: "4",
@@ -262,7 +262,7 @@ func TestActivatorImpl_applyActivatorStrategy(t *testing.T) {
 				},
 			},
 			inputPod: func() *kapiv1.Pod {
-				p := test.PodGen("A", nil, true, true, "")
+				p := test.PodGen("A", "test-ns", nil, true, true, "")
 				p.Annotations = map[string]string{
 					labeling.AnnotationBreakAtKey:    string("1978-12-04T22:11:00+00:00"),
 					labeling.AnnotationRetryCountKey: "4",
@@ -287,7 +287,7 @@ func TestActivatorImpl_applyActivatorStrategy(t *testing.T) {
 				},
 			},
 			inputPod: func() *kapiv1.Pod {
-				p := test.PodGen("A", nil, true, true, "")
+				p := test.PodGen("A", "test-ns", nil, true, true, "")
 				p.Annotations = map[string]string{
 					labeling.AnnotationBreakAtKey:    string("1978-12-04T22:11:00+00:00"),
 					labeling.AnnotationRetryCountKey: "2",
@@ -314,7 +314,7 @@ func TestActivatorImpl_applyActivatorStrategy(t *testing.T) {
 				},
 			},
 			inputPod: func() *kapiv1.Pod {
-				p := test.PodGen("A", nil, true, true, "")
+				p := test.PodGen("A", "test-ns", nil, true, true, "")
 				p.Annotations = map[string]string{
 					labeling.AnnotationBreakAtKey:    string("1978-12-04T22:11:00+00:00"),
 					labeling.AnnotationRetryCountKey: "2",
@@ -341,7 +341,7 @@ func TestActivatorImpl_applyActivatorStrategy(t *testing.T) {
 				},
 			},
 			inputPod: func() *kapiv1.Pod {
-				p := test.PodGen("A", nil, true, true, "")
+				p := test.PodGen("A", "test-ns", nil, true, true, "")
 				p.Annotations = map[string]string{
 					labeling.AnnotationBreakAtKey:    string("1978-12-04T22:11:00+00:00"),
 					labeling.AnnotationRetryCountKey: "2",
@@ -368,7 +368,7 @@ func TestActivatorImpl_applyActivatorStrategy(t *testing.T) {
 				},
 			},
 			inputPod: func() *kapiv1.Pod {
-				p := test.PodGen("A", nil, true, true, "")
+				p := test.PodGen("A", "test-ns", nil, true, true, "")
 				p.Annotations = map[string]string{
 					labeling.AnnotationBreakAtKey:    string("1978-12-04T22:11:00+00:00"),
 					labeling.AnnotationRetryCountKey: "2",
@@ -395,10 +395,10 @@ func TestActivatorImpl_applyActivatorStrategy(t *testing.T) {
 					},
 				},
 				selector:  labels.SelectorFromSet(map[string]string{"app": "foo"}),
-				podLister: test.NewTestPodLister([]*kapiv1.Pod{}),
+				podLister: test.NewTestPodLister([]*kapiv1.Pod{}, "test-ns"),
 			},
 			inputPod: func() *kapiv1.Pod {
-				p := test.PodGen("A", map[string]string{"app": "foo"}, true, true, "")
+				p := test.PodGen("A", "test-ns", map[string]string{"app": "foo"}, true, true, "")
 				p.Annotations = map[string]string{
 					labeling.AnnotationBreakAtKey:    string("1978-12-04T22:11:00+00:00"),
 					labeling.AnnotationRetryCountKey: "4",
@@ -425,10 +425,10 @@ func TestActivatorImpl_applyActivatorStrategy(t *testing.T) {
 					},
 				},
 				selector:  labels.SelectorFromSet(map[string]string{"app": "foo"}),
-				podLister: test.NewTestPodLister([]*kapiv1.Pod{}),
+				podLister: test.NewTestPodLister([]*kapiv1.Pod{}, "test-ns"),
 			},
 			inputPod: func() *kapiv1.Pod {
-				p := test.PodGen("A", map[string]string{"app": "foo"}, true, true, "")
+				p := test.PodGen("A", "test-ns", map[string]string{"app": "foo"}, true, true, "")
 				p.Annotations = map[string]string{
 					labeling.AnnotationBreakAtKey:    string("1978-12-04T22:11:00+00:00"),
 					labeling.AnnotationRetryCountKey: "4",
@@ -455,10 +455,10 @@ func TestActivatorImpl_applyActivatorStrategy(t *testing.T) {
 					},
 				},
 				selector:  labels.SelectorFromSet(map[string]string{"app": "foo"}),
-				podLister: test.NewTestPodLister([]*kapiv1.Pod{}),
+				podLister: test.NewTestPodLister([]*kapiv1.Pod{}, "test-ns"),
 			},
 			inputPod: func() *kapiv1.Pod {
-				p := test.PodGen("A", map[string]string{"app": "foo"}, true, true, "")
+				p := test.PodGen("A", "test-ns", map[string]string{"app": "foo"}, true, true, "")
 				p.Annotations = map[string]string{
 					labeling.AnnotationBreakAtKey:    string("1978-12-04T22:11:00+00:00"),
 					labeling.AnnotationRetryCountKey: "4",
@@ -478,7 +478,7 @@ func TestActivatorImpl_applyActivatorStrategy(t *testing.T) {
 
 			b := &ActivatorImpl{
 				activatorStrategyConfig: tt.fields.activatorStrategyConfig,
-				selector:                tt.fields.selector,
+				augmentedSelector:       tt.fields.selector,
 				podLister:               tt.fields.podLister,
 				podControl:              tt.fields.podControl,
 				breakerName:             tt.fields.breakerName,
@@ -496,4 +496,80 @@ func TestActivatorImpl_applyActivatorStrategy(t *testing.T) {
 		})
 	}
 
+}
+
+func TestActivatorImpl_CompareConfig(t *testing.T) {
+	type fields struct {
+		config FactoryConfig
+	}
+	type args struct {
+		specStrategy *v1.ActivatorStrategy
+		specSelector labels.Selector
+	}
+	tests := []struct {
+		name   string
+		fields fields
+		args   args
+		want   bool
+	}{
+		{
+			name: "similar",
+			fields: fields{
+				config: FactoryConfig{
+					Config: Config{
+						ActivatorStrategyConfig: *v1.DefaultActivatorStrategy(&v1.ActivatorStrategy{}),
+						Selector:                labels.Set{"app": "test1"}.AsSelectorPreValidated(),
+					},
+				},
+			},
+			args: args{
+				specStrategy: v1.DefaultActivatorStrategy(&v1.ActivatorStrategy{}),
+				specSelector: labels.Set{"app": "test1"}.AsSelectorPreValidated(),
+			},
+			want: true,
+		},
+		{
+			name: "different selector",
+			fields: fields{
+				config: FactoryConfig{
+					Config: Config{
+						ActivatorStrategyConfig: *v1.DefaultActivatorStrategy(&v1.ActivatorStrategy{}),
+						Selector:                labels.Set{"app": "test1"}.AsSelectorPreValidated(),
+					},
+				},
+			},
+			args: args{
+				specStrategy: v1.DefaultActivatorStrategy(&v1.ActivatorStrategy{}),
+				specSelector: labels.Set{"app": "test2"}.AsSelectorPreValidated(),
+			},
+			want: false,
+		},
+		{
+			name: "similar",
+			fields: fields{
+				config: FactoryConfig{
+					Config: Config{
+						ActivatorStrategyConfig: *v1.DefaultActivatorStrategy(&v1.ActivatorStrategy{}),
+						Selector:                labels.Set{"app": "test1"}.AsSelectorPreValidated(),
+					},
+				},
+			},
+			args: args{
+				specStrategy: v1.DefaultActivatorStrategy(&v1.ActivatorStrategy{MaxPauseCount: v1.NewUInt(42)}),
+				specSelector: labels.Set{"app": "test1"}.AsSelectorPreValidated(),
+			},
+			want: false,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			b, err := New(tt.fields.config)
+			if err != nil {
+				t.Errorf("factory.New failed, error:%v", err)
+			}
+			if got := b.CompareConfig(tt.args.specStrategy, tt.args.specSelector); got != tt.want {
+				t.Errorf("ActivatorImpl.CompareConfig() = %v, want %v", got, tt.want)
+			}
+		})
+	}
 }
