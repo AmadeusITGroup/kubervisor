@@ -17,11 +17,11 @@ PodKubervisor comes with its own resource (CRD) to configure the system:
 - display the current health check of the service
 
 
-# architecture
+## architecture
 
 ![architecture diagram][diagram1]
 
-[diagram1]: ./images/diagram1.png
+[diagram1]: ./docs/imgs/diagram1.png
 
 - The **BreakerConfig** is the CRD (Kubernetes Custom Resource Definition). It is used to configure the kubervisor for a given Service. It also contains the status for the health of the service.
 - The **Controller** reads the **BreakerConfig** to configure **Breaker** and **Activator** workers for the given service. It also monitors the service changes to adapt the configuration of the system. It also monitors the pods to build a cache for all the workers and to compute the health status of each service under control of the Kubervisor. The health of the serivce is persisted inside the status of the associated **BreakConfig*
@@ -29,15 +29,17 @@ PodKubervisor comes with its own resource (CRD) to configure the system:
 - The **Activator** is in charge of restablishing traffic on pods after the defined period of inactivity (equivalent to open state in a circuit breaker pattern). Depending on the configured policy and the numbers of retries performed on a pod, the **Activator** can decide to kill the pod or put it in *pause* (out of traffic forever) for further investigation.
 - The **Anomaly detector** part (all the blue part in the diagram) is where the data analysis is really performed. Depending on the KPI that you are working on (discrete value, continuous value) or the type of anomaly (ratio, threshold, trend ...) you can select an integrated implementation or delegate the to an external system that would return the list of pods that are out of policy. The proposed internal implementations used data from Prometheus.
 
-# System Operations
+more information in the developper [documentation page](./docs/developper_docs.md)
 
-## Admin side
+## System Operations
 
-### CRD
+### Admin side
+
+#### CRD
 
 TODO
 
-### Scope
+#### Scope
 
 The Kubervisor is an operator that can run in a dedicated namespace and cover the resource of that namespace only, or as a global operator taking action in all namespace that it had been granted access. The used service account will determine the scope on which the Kubervisor will work.
 
@@ -48,11 +50,11 @@ It requires to be given the following roles:
 - watch:        pod, service
 - delete:       pod
 
-### Deployment
+#### Deployment
 
 TODO (Helm ?)
 
-## User side
+### User side
 
 To configure the system a user would have to complete the following steps:
 

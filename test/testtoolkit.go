@@ -211,16 +211,23 @@ func GetTestSequence(t *testing.T, registrationName string) *TestStepSequence {
 	return s
 }
 
+//MapOfSequences represent a TestStepSequence map
 var MapOfSequences = map[string]*TestStepSequence{}
 
 //NewTestPodLister create a new PodLister.
 // FOR TEST PURPOSE ONLY
-func NewTestPodLister(pods []*kapiv1.Pod, namespace string) kv1.PodNamespaceLister {
+func NewTestPodLister(pods []*kapiv1.Pod) kv1.PodLister {
 	index := cache.NewIndexer(cache.MetaNamespaceKeyFunc, cache.Indexers{})
 	for _, p := range pods {
 		index.Add(p)
 	}
-	return kv1.NewPodLister(index).Pods(namespace)
+	return kv1.NewPodLister(index)
+}
+
+//NewTestPodNamespaceLister create a new PodNamespaceLister.
+// FOR TEST PURPOSE ONLY
+func NewTestPodNamespaceLister(pods []*kapiv1.Pod, namespace string) kv1.PodNamespaceLister {
+	return NewTestPodLister(pods).Pods(namespace)
 }
 
 //PodGen generate a pod with some label and status
@@ -229,11 +236,11 @@ func PodGen(name, namespace string, labels map[string]string, running, ready boo
 	p := kapiv1.Pod{}
 	p.Name = name
 	p.Namespace = namespace
+	p.SetLabels(labels)
 	if trafficLabel != "" {
 		if labels == nil {
 			labels = map[string]string{}
 		}
-		p.SetLabels(labels)
 		labeling.SetTraficLabel(&p, trafficLabel)
 	}
 	if running {
@@ -254,10 +261,23 @@ type TestPodControl struct {
 	T                                        *testing.T
 	Case                                     string
 	FailOnUndefinedFunc                      bool
+	InitBreakerAnnotationAndLabelFunc        func(name string, p *kapiv1.Pod) (*kapiv1.Pod, error)
 	UpdateBreakerAnnotationAndLabelFunc      func(name string, p *kapiv1.Pod) (*kapiv1.Pod, error)
 	UpdateActivationLabelsAndAnnotationsFunc func(p *kapiv1.Pod) (*kapiv1.Pod, error)
 	UpdatePauseLabelsAndAnnotationsFunc      func(p *kapiv1.Pod) (*kapiv1.Pod, error)
+	RemoveBreakerAnnotationAndLabelFunc      func(p *kapiv1.Pod) (*kapiv1.Pod, error)
 	KillPodFunc                              func(p *kapiv1.Pod) error
+}
+
+//UpdateBreakerAnnotationAndLabel fake implementation for podcontrol
+func (t *TestPodControl) InitBreakerAnnotationAndLabel(name string, p *kapiv1.Pod) (*kapiv1.Pod, error) {
+	if t.InitBreakerAnnotationAndLabelFunc != nil {
+		return t.InitBreakerAnnotationAndLabelFunc(name, p)
+	}
+	if t.FailOnUndefinedFunc {
+		t.T.Errorf("UpdateBreakerAnnotationAndLabel should not be called in %s/%s", t.T.Name(), t.Case)
+	}
+	return nil, nil
 }
 
 //UpdateBreakerAnnotationAndLabel fake implementation for podcontrol
@@ -289,6 +309,18 @@ func (t *TestPodControl) UpdatePauseLabelsAndAnnotations(p *kapiv1.Pod) (*kapiv1
 	}
 	if t.FailOnUndefinedFunc {
 		t.T.Errorf("UpdatePauseLabelsAndAnnotationsFunc should not be called in %s/%s", t.T.Name(), t.Case)
+	}
+
+	return nil, nil
+}
+
+// RemoveBreakerAnnotationAndLabel fake implementatin for podcontrol
+func (t *TestPodControl) RemoveBreakerAnnotationAndLabel(p *kapiv1.Pod) (*kapiv1.Pod, error) {
+	if t.RemoveBreakerAnnotationAndLabelFunc != nil {
+		return t.RemoveBreakerAnnotationAndLabelFunc(p)
+	}
+	if t.FailOnUndefinedFunc {
+		t.T.Errorf("RemoveBreakerAnnotationAndLabelFunc should not be called in %s/%s", t.T.Name(), t.Case)
 	}
 
 	return nil, nil

@@ -57,7 +57,7 @@ func TestActivatorImpl_Run(t *testing.T) {
 			name: "2pods",
 			fields: fields{
 				selector: labels.SelectorFromSet(map[string]string{"app": "foo"}),
-				podLister: test.NewTestPodLister(
+				podLister: test.NewTestPodNamespaceLister(
 					[]*kapiv1.Pod{
 						test.PodGen("A", "test-ns", map[string]string{"app": "foo"}, true, true, labeling.LabelTrafficNo),
 						test.PodGen("AA", "test-ns", map[string]string{"app": "foo"}, true, true, labeling.LabelTrafficNo),
@@ -395,7 +395,7 @@ func TestActivatorImpl_applyActivatorStrategy(t *testing.T) {
 					},
 				},
 				selector:  labels.SelectorFromSet(map[string]string{"app": "foo"}),
-				podLister: test.NewTestPodLister([]*kapiv1.Pod{}, "test-ns"),
+				podLister: test.NewTestPodNamespaceLister([]*kapiv1.Pod{}, "test-ns"),
 			},
 			inputPod: func() *kapiv1.Pod {
 				p := test.PodGen("A", "test-ns", map[string]string{"app": "foo"}, true, true, "")
@@ -425,7 +425,7 @@ func TestActivatorImpl_applyActivatorStrategy(t *testing.T) {
 					},
 				},
 				selector:  labels.SelectorFromSet(map[string]string{"app": "foo"}),
-				podLister: test.NewTestPodLister([]*kapiv1.Pod{}, "test-ns"),
+				podLister: test.NewTestPodNamespaceLister([]*kapiv1.Pod{}, "test-ns"),
 			},
 			inputPod: func() *kapiv1.Pod {
 				p := test.PodGen("A", "test-ns", map[string]string{"app": "foo"}, true, true, "")
@@ -455,7 +455,7 @@ func TestActivatorImpl_applyActivatorStrategy(t *testing.T) {
 					},
 				},
 				selector:  labels.SelectorFromSet(map[string]string{"app": "foo"}),
-				podLister: test.NewTestPodLister([]*kapiv1.Pod{}, "test-ns"),
+				podLister: test.NewTestPodNamespaceLister([]*kapiv1.Pod{}, "test-ns"),
 			},
 			inputPod: func() *kapiv1.Pod {
 				p := test.PodGen("A", "test-ns", map[string]string{"app": "foo"}, true, true, "")

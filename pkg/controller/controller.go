@@ -14,6 +14,7 @@ import (
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
+	"k8s.io/apimachinery/pkg/util/errors"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
 	"k8s.io/apimachinery/pkg/util/wait"
 	kubeinformers "k8s.io/client-go/informers"
@@ -33,6 +34,7 @@ import (
 	binformers "github.com/amadeusitgroup/podkubervisor/pkg/client/informers/externalversions"
 	blisters "github.com/amadeusitgroup/podkubervisor/pkg/client/listers/kubervisor/v1"
 	"github.com/amadeusitgroup/podkubervisor/pkg/controller/item"
+	"github.com/amadeusitgroup/podkubervisor/pkg/labeling"
 	"github.com/amadeusitgroup/podkubervisor/pkg/pod"
 )
 
@@ -166,6 +168,7 @@ func New(cfg *Config) *Controller {
 
 // Run start the Controller
 func (ctrl *Controller) Run(stop <-chan struct{}) error {
+	defer ctrl.rootContextCancelFunc()
 	var err error
 	ctrl.kubeInformerFactory.Start(stop)
 	ctrl.breakerInformerFactory.Start(stop)
@@ -292,7 +295,96 @@ func (ctrl *Controller) syncBreakerConfig(bc *kubervisorapi.BreakerConfig) (bool
 		}
 	}
 
-	return true, nil
+	globalActivity := false
+	// check if some pods have been removed from the service selector
+	// if it is the case, removed all labels and annotation
+	activity, err := ctrl.podsCleaner(bci.Name(), associatedSvc)
+	if err != nil {
+		return activity, err
+	}
+	if activity {
+		globalActivity = true
+	}
+
+	// initialize possible new pods (add labels)
+	activity, err = ctrl.initializePods(bci.Name(), associatedSvc)
+	if err != nil {
+		return activity, err
+	}
+	if activity {
+		globalActivity = true
+	}
+
+	return globalActivity, nil
+}
+
+// Used to select all currently associated to the BreakerConfig and check if it is still the case
+// if they are not manage anymore by the current service label selector, this function remove the added labels.
+func (ctrl *Controller) podsCleaner(bciName string, svc *apiv1.Service) (bool, error) {
+	selectorSet := labels.Set{labeling.LabelBreakerNameKey: bciName}
+	delete(selectorSet, labeling.LabelTrafficKey)
+	previousPods, err := ctrl.podLister.List(selectorSet.AsSelectorPreValidated())
+	if err != nil {
+		return false, err
+	}
+
+	svcSelector := svc.DeepCopy().Spec.Selector
+	delete(svcSelector, labeling.LabelTrafficKey)
+	currentPods, err := ctrl.podLister.List(labels.Set(svcSelector).AsSelectorPreValidated())
+	if err != nil {
+		return false, err
+	}
+
+	discaredPods := pod.ExcludeFromSlice(previousPods, currentPods)
+	errs := []error{}
+	activity := len(discaredPods) != 0
+	for _, pod := range discaredPods {
+		if _, err := ctrl.podControl.RemoveBreakerAnnotationAndLabel(pod); err != nil {
+			errs = append(errs, err)
+		}
+	}
+
+	return activity, errors.NewAggregate(errs)
+}
+
+func (ctrl *Controller) initializePods(bciName string, svc *apiv1.Service) (bool, error) {
+	pods, err := ctrl.searchNewPods(svc)
+	if err != nil {
+		return false, err
+	}
+	if len(pods) == 0 {
+		return false, nil
+	}
+	var errs []error
+	for _, p := range pods {
+		if _, err := ctrl.podControl.InitBreakerAnnotationAndLabel(bciName, p); err != nil {
+			errs = append(errs, err)
+		}
+
+	}
+
+	return true, errors.NewAggregate(errs)
+}
+
+func (ctrl *Controller) searchNewPods(svc *apiv1.Service) ([]*apiv1.Pod, error) {
+	podSelector := svc.DeepCopy().Spec.Selector
+	// remove LabelTraffic if it is already present
+	delete(podSelector, labeling.LabelTrafficKey)
+	pods, err := ctrl.kubeClient.Core().Pods(svc.Namespace).List(metav1.ListOptions{LabelSelector: labels.Set(podSelector).AsSelector().String()})
+	if err != nil {
+		return nil, err
+	}
+	outPods := []*apiv1.Pod{}
+	for _, p := range pods.Items {
+		_, ok1 := p.Labels[labeling.LabelTrafficKey]
+		_, ok2 := p.Labels[labeling.LabelBreakerNameKey]
+		if ok1 && ok2 {
+			continue
+		}
+		outPods = append(outPods, p.DeepCopy())
+	}
+
+	return outPods, nil
 }
 
 func (ctrl *Controller) newBreakerConfigItem(bc *kubervisorapi.BreakerConfig, svc *apiv1.Service) (item.Interface, error) {
