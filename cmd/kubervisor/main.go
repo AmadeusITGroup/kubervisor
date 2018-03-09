@@ -19,8 +19,6 @@ func main() {
 	runtime.GOMAXPROCS(runtime.NumCPU())
 
 	logger, _ := zap.NewProduction()
-	defer logger.Sync() // flushes buffer, if any
-
 	config := controller.NewConfig(logger)
 	config.AddFlags(pflag.CommandLine)
 
@@ -28,19 +26,20 @@ func main() {
 	pflag.Parse()
 	goflag.CommandLine.Parse([]string{})
 
+	if config.Debug {
+		config.Logger, _ = zap.NewDevelopment()
+	}
 	ctrl := controller.New(config)
 
 	if err := run(ctrl); err != nil {
-		//glog.Errorf("RedisOperator returns an error:%v", err)
 		os.Exit(1)
 	}
-
 	os.Exit(0)
 }
 
 func run(ctrl *controller.Controller) error {
 	ctx, cancelFunc := context.WithCancel(context.Background())
 	go signal.HandleSignal(cancelFunc)
-
+	defer ctrl.Logger.Sync()
 	return ctrl.Run(ctx.Done())
 }

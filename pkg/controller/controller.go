@@ -64,7 +64,7 @@ type Controller struct {
 	enqueueFunc func(bc *kubervisorapi.BreakerConfig)
 
 	items                 item.BreakerConfigItemStore
-	updateHandler         func(*kubervisorapi.BreakerConfig) error
+	updateHandlerFunc     func(*kubervisorapi.BreakerConfig) (*kubervisorapi.BreakerConfig, error)
 	podControl            pod.ControlInterface
 	rootContext           context.Context
 	rootContextCancelFunc context.CancelFunc
@@ -122,7 +122,9 @@ func New(cfg *Config) *Controller {
 		Logger:   cfg.Logger,
 
 		kubeInformerFactory:    kubeInformerFactory,
+		kubeClient:             kubeClient,
 		breakerInformerFactory: breakerInformerFactory,
+		breakerClient:          breakerClient,
 		podLister:              podInformer.Lister(),
 		PodSynced:              podInformer.Informer().HasSynced,
 		serviceLister:          serviceInformer.Lister(),
@@ -134,10 +136,14 @@ func New(cfg *Config) *Controller {
 		rootContext:           ctx,
 		rootContextCancelFunc: ctxCancel,
 
+		httpServer: &http.Server{Addr: cfg.ListenAddr},
+
 		queue:    workqueue.NewNamedRateLimitingQueue(workqueue.DefaultControllerRateLimiter(), "breakerconfig"),
 		recorder: eventBroadcaster.NewRecorder(scheme.Scheme, apiv1.EventSource{Component: "kubervisor-controller"}),
 	}
 	ctrl.enqueueFunc = ctrl.enqueue
+	ctrl.updateHandlerFunc = ctrl.updateHandler
+	ctrl.configureHealth()
 
 	breakerInformer.Informer().AddEventHandler(
 		cache.ResourceEventHandlerFuncs{
@@ -206,7 +212,7 @@ func (ctrl *Controller) processNextItem() bool {
 	if err == nil {
 		ctrl.queue.Forget(key)
 	} else {
-		utilruntime.HandleError(fmt.Errorf("Error syncing rediscluster: %v", err))
+		utilruntime.HandleError(fmt.Errorf("Error syncing breakerconfig: %v", err))
 		ctrl.queue.AddRateLimited(key)
 		return true
 	}
@@ -220,7 +226,7 @@ func (ctrl *Controller) processNextItem() bool {
 }
 
 func (ctrl *Controller) sync(key string) (bool, error) {
-	ctrl.Logger.Sugar().Debug("sync() key: %s, key")
+	ctrl.Logger.Sugar().Debugf("sync() key: %s", key)
 	startTime := time.Now()
 	defer func() {
 		ctrl.Logger.Sugar().Debug("Finished syncing BreakerConfig %q in %v", key, time.Since(startTime))
@@ -238,7 +244,7 @@ func (ctrl *Controller) sync(key string) (bool, error) {
 	}
 	if !kubervisorapi.IsBreakerConfigDefaulted(sharedBreakerConfig) {
 		defaultedBreakerConfig := kubervisorapi.DefaultBreakerConfig(sharedBreakerConfig)
-		if err = ctrl.updateHandler(defaultedBreakerConfig); err != nil {
+		if _, err = ctrl.updateHandlerFunc(defaultedBreakerConfig); err != nil {
 			ctrl.Logger.Sugar().Errorf("unable to default BreakerConfig %s/%s, error:%v", namespace, name, err)
 			return false, fmt.Errorf("unable to default BreakerConfig %s/%s, error:%s", namespace, name, err)
 		}
@@ -412,6 +418,10 @@ func initKubeConfig(c *Config) (*rest.Config, error) {
 
 func (ctrl *Controller) deleteBreakerConfig(ns, name string) error {
 	return ctrl.breakerClient.Breaker().BreakerConfigs(ns).Delete(name, &metav1.DeleteOptions{})
+}
+
+func (ctrl *Controller) updateHandler(bc *kubervisorapi.BreakerConfig) (*kubervisorapi.BreakerConfig, error) {
+	return ctrl.breakerClient.Breaker().BreakerConfigs(bc.Namespace).Update(bc)
 }
 
 // enqueue adds key in the controller queue
