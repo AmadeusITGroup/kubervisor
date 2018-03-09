@@ -12,9 +12,11 @@ import (
 
 //ControlInterface interface to act on pods
 type ControlInterface interface {
+	InitBreakerAnnotationAndLabel(breakConfigName string, inputPod *kapiv1.Pod) (*kapiv1.Pod, error)
 	UpdateBreakerAnnotationAndLabel(breakConfigName string, p *kapiv1.Pod) (*kapiv1.Pod, error)
 	UpdateActivationLabelsAndAnnotations(p *kapiv1.Pod) (*kapiv1.Pod, error)
 	UpdatePauseLabelsAndAnnotations(p *kapiv1.Pod) (*kapiv1.Pod, error)
+	RemoveBreakerAnnotationAndLabel(p *kapiv1.Pod) (*kapiv1.Pod, error)
 	KillPod(p *kapiv1.Pod) error
 }
 
@@ -39,6 +41,17 @@ func copyAndDefault(inputPod *kapiv1.Pod) *kapiv1.Pod {
 		p.Labels = map[string]string{}
 	}
 	return p
+}
+
+//InitBreakerAnnotationAndLabel implements pod control
+func (c *Control) InitBreakerAnnotationAndLabel(breakConfigName string, inputPod *kapiv1.Pod) (*kapiv1.Pod, error) {
+	//Copy to avoid modifying object inside the cache
+	p := copyAndDefault(inputPod)
+
+	p.Labels[labeling.LabelBreakerNameKey] = breakConfigName
+	p.Labels[labeling.LabelTrafficKey] = string(labeling.LabelTrafficKey)
+
+	return c.kubeClient.Core().Pods(p.Namespace).Update(p)
 }
 
 //UpdateBreakerAnnotationAndLabel implements pod control
@@ -74,6 +87,19 @@ func (c *Control) UpdatePauseLabelsAndAnnotations(inputPod *kapiv1.Pod) (*kapiv1
 	p := copyAndDefault(inputPod)
 
 	p.Labels[labeling.LabelTrafficKey] = string(labeling.LabelTrafficPause)
+
+	return c.kubeClient.Core().Pods(p.Namespace).Update(p)
+}
+
+// RemoveBreakerAnnotationAndLabel called to remove all labels and annotations added previously.
+func (c *Control) RemoveBreakerAnnotationAndLabel(inputPod *kapiv1.Pod) (*kapiv1.Pod, error) {
+	p := copyAndDefault(inputPod)
+
+	delete(p.Labels, labeling.LabelTrafficKey)
+	delete(p.Labels, labeling.LabelBreakerNameKey)
+
+	delete(p.Annotations, labeling.AnnotationBreakAtKey)
+	delete(p.Annotations, labeling.AnnotationRetryCountKey)
 
 	return c.kubeClient.Core().Pods(p.Namespace).Update(p)
 }

@@ -1,8 +1,6 @@
 package item
 
 import (
-	"fmt"
-
 	"go.uber.org/zap"
 	"k8s.io/apimachinery/pkg/labels"
 	kv1 "k8s.io/client-go/listers/core/v1"
@@ -23,7 +21,7 @@ func New(bc *apiv1.BreakerConfig, cfg *Config) (Interface, error) {
 	activateConfig := activator.FactoryConfig{
 		Config: activator.Config{
 			ActivatorStrategyConfig: bc.Spec.Activator,
-			BreakerName:             fmt.Sprintf("%s/%s", bc.Namespace, bc.Name),
+			BreakerName:             bc.Name,
 			PodControl:              cfg.PodControl,
 			PodLister:               cfg.PodLister.Pods(bc.Namespace),
 			Logger:                  cfg.Logger,
@@ -49,7 +47,8 @@ func New(bc *apiv1.BreakerConfig, cfg *Config) (Interface, error) {
 		return nil, err
 	}
 	return &BreakerConfigItem{
-		name:      fmt.Sprintf("%s/%s", bc.Namespace, bc.Name),
+		name:      bc.Name,
+		namespace: bc.Namespace,
 		activator: activatorInterface,
 		breaker:   breakerInterface,
 	}, nil

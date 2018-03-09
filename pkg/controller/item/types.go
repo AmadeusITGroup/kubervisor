@@ -33,6 +33,7 @@ func keyFunc(obj interface{}) (string, error) {
 // Interface item interface
 type Interface interface {
 	Name() string
+	Namespace() string
 	Start(ctx context.Context)
 	Stop() error
 	CompareWithSpec(spec *v1.BreakerConfigSpec, selector labels.Selector) bool
@@ -42,6 +43,7 @@ type Interface interface {
 type BreakerConfigItem struct {
 	// breaker config name
 	name      string
+	namespace string
 	activator activator.Activator
 	breaker   breaker.Breaker
 
@@ -52,6 +54,11 @@ type BreakerConfigItem struct {
 // Name returns the BreakerConfigItem name
 func (b *BreakerConfigItem) Name() string {
 	return b.name
+}
+
+// Namespace returns the BreakerConfigItem name
+func (b *BreakerConfigItem) Namespace() string {
+	return b.namespace
 }
 
 // Start used to star the Activator and Breaker

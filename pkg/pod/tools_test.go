@@ -4,11 +4,9 @@ import (
 	"reflect"
 	"testing"
 
-	kapiv1 "k8s.io/api/core/v1"
-
 	"github.com/amadeusitgroup/podkubervisor/pkg/labeling"
-
 	test "github.com/amadeusitgroup/podkubervisor/test"
+	kapiv1 "k8s.io/api/core/v1"
 )
 
 func TestPurgeNotReadyPods(t *testing.T) {
@@ -165,6 +163,56 @@ func TestKeepWithTrafficYesPods(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			if got := KeepWithTrafficYesPods(tt.args.pods); !reflect.DeepEqual(got, tt.want) {
 				t.Errorf("KeepWithTrafficYesPods() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestExcludeFromSlice(t *testing.T) {
+	pod1 := test.PodGen("pod1", "test-ns", nil, true, false, labeling.LabelTrafficYes)
+	pod2 := test.PodGen("pod2", "test-ns", nil, true, false, labeling.LabelTrafficYes)
+	pod3 := test.PodGen("pod3", "test-ns", nil, true, false, labeling.LabelTrafficYes)
+	pod4 := test.PodGen("pod4", "test-ns", nil, true, false, labeling.LabelTrafficYes)
+	pod5 := test.PodGen("pod5", "test-ns", nil, true, false, labeling.LabelTrafficYes)
+
+	type args struct {
+		fromSlice []*kapiv1.Pod
+		inSlice   []*kapiv1.Pod
+	}
+	tests := []struct {
+		name string
+		args args
+		want []*kapiv1.Pod
+	}{
+		{
+			name: "similar slice",
+			args: args{
+				fromSlice: []*kapiv1.Pod{pod1, pod2, pod3},
+				inSlice:   []*kapiv1.Pod{pod1, pod2, pod3},
+			},
+			want: []*kapiv1.Pod{},
+		},
+		{
+			name: "missing pods",
+			args: args{
+				fromSlice: []*kapiv1.Pod{pod1, pod2, pod3, pod4, pod5},
+				inSlice:   []*kapiv1.Pod{pod1, pod2, pod3},
+			},
+			want: []*kapiv1.Pod{pod4, pod5},
+		},
+		{
+			name: "additional pods",
+			args: args{
+				fromSlice: []*kapiv1.Pod{pod1, pod2, pod3, pod4, pod5},
+				inSlice:   []*kapiv1.Pod{pod1, pod2, pod3, pod4, pod5},
+			},
+			want: []*kapiv1.Pod{},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := ExcludeFromSlice(tt.args.fromSlice, tt.args.inSlice); !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("ExcludeFromSlice() = %v, want %v", got, tt.want)
 			}
 		})
 	}

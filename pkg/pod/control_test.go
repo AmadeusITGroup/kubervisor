@@ -268,3 +268,77 @@ func TestControl_KillPod(t *testing.T) {
 		})
 	}
 }
+
+func TestControl_RemoveBreakerAnnotationAndLabel(t *testing.T) {
+	checkFunc1 := func(t *testing.T, p *kapiv1.Pod) bool {
+		if _, ok := p.Labels[labeling.LabelTrafficKey]; ok {
+			t.Errorf("this label should not be present anymore! key:%s", labeling.LabelTrafficKey)
+			return false
+		}
+		if _, ok := p.Labels[labeling.LabelBreakerNameKey]; ok {
+			t.Errorf("this label should not be present anymore! key:%s", labeling.LabelBreakerNameKey)
+			return false
+		}
+		if _, ok := p.Annotations[labeling.AnnotationBreakAtKey]; ok {
+			t.Errorf("this label should not be present anymore! key:%s", labeling.AnnotationBreakAtKey)
+			return false
+		}
+		if _, ok := p.Annotations[labeling.AnnotationRetryCountKey]; ok {
+			t.Errorf("this label should not be present anymore! key:%s", labeling.AnnotationRetryCountKey)
+			return false
+		}
+		return true
+	}
+
+	type fields struct {
+		kubeClient clientset.Interface
+	}
+	type args struct {
+		inputPod *kapiv1.Pod
+	}
+	tests := []struct {
+		name      string
+		fields    fields
+		args      args
+		checkFunc func(*testing.T, *kapiv1.Pod) bool
+		wantErr   bool
+	}{
+		{
+			name: "not initialy present",
+			fields: fields{
+				kubeClient: kfakeclient.NewSimpleClientset(test.PodGen("A", "test-ns", nil, true, true, "")),
+			},
+			args: args{
+				inputPod: test.PodGen("A", "test-ns", nil, true, true, ""),
+			},
+			checkFunc: checkFunc1,
+			wantErr:   false,
+		},
+		{
+			name: "remove labels and annotation",
+			fields: fields{
+				kubeClient: kfakeclient.NewSimpleClientset(test.PodGen("A", "test-ns", map[string]string{labeling.LabelTrafficKey: "yes", labeling.LabelBreakerNameKey: "foo"}, true, true, "")),
+			},
+			args: args{
+				inputPod: test.PodGen("A", "test-ns", nil, true, true, ""),
+			},
+			checkFunc: checkFunc1,
+			wantErr:   false,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			c := &Control{
+				kubeClient: tt.fields.kubeClient,
+			}
+			got, err := c.RemoveBreakerAnnotationAndLabel(tt.args.inputPod)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("Control.RemoveBreakerAnnotationAndLabel() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+			if !tt.checkFunc(t, got) {
+				t.Errorf("Control.RemoveBreakerAnnotationAndLabel() checkFunc return false, output pod:%v", got)
+			}
+		})
+	}
+}

@@ -48,3 +48,21 @@ func KeepWithTrafficYesPods(pods []*kapiv1.Pod) []*kapiv1.Pod {
 		return false
 	})
 }
+
+// ExcludeFromSlice return a slice of Pod that is not present in another slice
+func ExcludeFromSlice(fromSlice, inSlice []*kapiv1.Pod) []*kapiv1.Pod {
+	output := []*kapiv1.Pod{}
+	for _, from := range fromSlice {
+		found := false
+		for _, in := range inSlice {
+			if from.Name == in.Name && from.Namespace == in.Namespace {
+				found = true
+				break
+			}
+		}
+		if !found {
+			output = append(output, from)
+		}
+	}
+	return output
+}

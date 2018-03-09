@@ -131,7 +131,7 @@ func TestBreakerImpl_Run(t *testing.T) {
 					MinPodsAvailableCount: v1.NewUInt(1),
 				},
 				selector: labels.SelectorFromSet(map[string]string{"app": "foo"}),
-				podLister: test.NewTestPodLister(
+				podLister: test.NewTestPodNamespaceLister(
 					[]*kapiv1.Pod{
 						ARunningReadyTraffic,
 						BRunningReadyTraffic,
@@ -169,7 +169,7 @@ func TestBreakerImpl_Run(t *testing.T) {
 					MinPodsAvailableRatio: v1.NewUInt(0),
 				},
 				selector: labels.SelectorFromSet(map[string]string{"app": "foo"}),
-				podLister: test.NewTestPodLister(
+				podLister: test.NewTestPodNamespaceLister(
 					[]*kapiv1.Pod{
 						ARunningReadyTraffic,
 						BRunningReadyTraffic,
@@ -210,7 +210,7 @@ func TestBreakerImpl_Run(t *testing.T) {
 					MinPodsAvailableRatio: v1.NewUInt(0),
 				},
 				selector: labels.SelectorFromSet(map[string]string{"app": "foo"}),
-				podLister: test.NewTestPodLister(
+				podLister: test.NewTestPodNamespaceLister(
 					[]*kapiv1.Pod{
 						ARunningReadyTraffic,
 						BRunningReadyTraffic,
@@ -244,7 +244,7 @@ func TestBreakerImpl_Run(t *testing.T) {
 					MinPodsAvailableRatio: v1.NewUInt(0),
 				},
 				selector: labels.SelectorFromSet(map[string]string{"app": "foo"}),
-				podLister: test.NewTestPodLister(
+				podLister: test.NewTestPodNamespaceLister(
 					[]*kapiv1.Pod{
 						ARunningReadyTraffic,
 						BRunningReadyTraffic,
@@ -283,7 +283,7 @@ func TestBreakerImpl_Run(t *testing.T) {
 					MinPodsAvailableRatio: v1.NewUInt(0),
 				},
 				selector: labels.SelectorFromSet(map[string]string{"app": "foo"}),
-				podLister: test.NewTestPodLister(
+				podLister: test.NewTestPodNamespaceLister(
 					[]*kapiv1.Pod{
 						ARunningReadyTraffic,
 						BRunningReadyTraffic,
