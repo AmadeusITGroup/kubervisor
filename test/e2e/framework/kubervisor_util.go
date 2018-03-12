@@ -29,41 +29,41 @@ func BuildAndSetClients() (versioned.Interface, clientset.Interface) {
 	return kubervisorClient, kubeClient
 }
 
-// NewBreakerConfig return new instance of a BreakerConfig
-func NewBreakerConfig(name string) *v1.BreakerConfig {
-	return &v1.BreakerConfig{
+// NewKubervisorService return new instance of a KubervisorService
+func NewKubervisorService(name string) *v1.KubervisorService {
+	return &v1.KubervisorService{
 		ObjectMeta: kmetav1.ObjectMeta{
 			Name: name,
 		},
-		Spec: v1.BreakerConfigSpec{
+		Spec: v1.KubervisorServiceSpec{
 			Activator: *v1.DefaultActivatorStrategy(&v1.ActivatorStrategy{}),
 			Breaker:   *v1.DefaultBreakerStrategy(&v1.BreakerStrategy{}),
 		},
 	}
 }
 
-// CreateBreakerConfig is an higher order func that returns the func to create a BreakerConfig
-func CreateBreakerConfig(client versioned.Interface, bc *v1.BreakerConfig, namespace string) func() error {
+// CreateKubervisorService is an higher order func that returns the func to create a KubervisorService
+func CreateKubervisorService(client versioned.Interface, bc *v1.KubervisorService, namespace string) func() error {
 	return func() error {
-		if _, err := client.BreakerV1().BreakerConfigs(namespace).Create(bc); err != nil {
-			Warningf("cannot create BreakerConfig %s/%s: %v", namespace, bc.Name, err)
+		if _, err := client.BreakerV1().KubervisorServices(namespace).Create(bc); err != nil {
+			Warningf("cannot create KubervisorService %s/%s: %v", namespace, bc.Name, err)
 			return err
 		}
-		Logf("BreakerConfig created")
+		Logf("KubervisorService created")
 		return nil
 	}
 }
 
-// IsBreakerConfigCreated is an higher order func that returns the func to create a BreakerConfig
-func IsBreakerConfigCreated(client versioned.Interface, name, namespace string) func() error {
+// IsKubervisorServiceCreated is an higher order func that returns the func to create a KubervisorService
+func IsKubervisorServiceCreated(client versioned.Interface, name, namespace string) func() error {
 	return func() error {
-		bc, err := client.BreakerV1().BreakerConfigs(namespace).Get(name, kmetav1.GetOptions{})
+		bc, err := client.BreakerV1().KubervisorServices(namespace).Get(name, kmetav1.GetOptions{})
 		if err != nil {
-			Warningf("cannot get BreakerConfig %s/%s: %v", namespace, name, err)
+			Warningf("cannot get KubervisorService %s/%s: %v", namespace, name, err)
 			return err
 		}
 		if bc == nil {
-			return fmt.Errorf("BreakerConfig  %s/%s is nil", namespace, name)
+			return fmt.Errorf("KubervisorService  %s/%s is nil", namespace, name)
 		}
 		return nil
 	}

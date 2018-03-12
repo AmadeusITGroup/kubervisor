@@ -34,7 +34,7 @@ func DefineKubervisorResources(clientset apiextensionsclient.Interface) (*apiext
 			Names: apiextensionsv1beta1.CustomResourceDefinitionNames{
 				Plural:     v1.ResourcePlural,
 				Singular:   v1.ResourceSingular,
-				Kind:       reflect.TypeOf(v1.BreakerConfig{}).Name(),
+				Kind:       reflect.TypeOf(v1.KubervisorService{}).Name(),
 				ShortNames: []string{"rdc"},
 			},
 		},

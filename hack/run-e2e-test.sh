@@ -42,5 +42,5 @@ echo "[[[ Cleaning ]]]"
 echo "Remove kubervisor helm chart"
 helm del --purge kubervisor
 
-echo "Remove CRD breakerconfig"
-kubectl delete crd breakerconfigs.breaker.kubervisor.io
+echo "Remove CRD kubervisorservice"
+kubectl delete crd kubervisorservices.breaker.kubervisor.io

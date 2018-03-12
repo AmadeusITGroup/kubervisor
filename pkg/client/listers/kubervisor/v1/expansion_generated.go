@@ -28,10 +28,10 @@ SOFTWARE.
 
 package v1
 
-// BreakerConfigListerExpansion allows custom methods to be added to
-// BreakerConfigLister.
-type BreakerConfigListerExpansion interface{}
+// KubervisorServiceListerExpansion allows custom methods to be added to
+// KubervisorServiceLister.
+type KubervisorServiceListerExpansion interface{}
 
-// BreakerConfigNamespaceListerExpansion allows custom methods to be added to
-// BreakerConfigNamespaceLister.
-type BreakerConfigNamespaceListerExpansion interface{}
+// KubervisorServiceNamespaceListerExpansion allows custom methods to be added to
+// KubervisorServiceNamespaceLister.
+type KubervisorServiceNamespaceListerExpansion interface{}

@@ -35,7 +35,7 @@ import (
 
 type BreakerV1Interface interface {
 	RESTClient() rest.Interface
-	BreakerConfigsGetter
+	KubervisorServicesGetter
 }
 
 // BreakerV1Client is used to interact with features provided by the breaker.kubervisor.io group.
@@ -43,8 +43,8 @@ type BreakerV1Client struct {
 	restClient rest.Interface
 }
 
-func (c *BreakerV1Client) BreakerConfigs(namespace string) BreakerConfigInterface {
-	return newBreakerConfigs(c, namespace)
+func (c *BreakerV1Client) KubervisorServices(namespace string) KubervisorServiceInterface {
+	return newKubervisorServices(c, namespace)
 }
 
 // NewForConfig creates a new BreakerV1Client for the given config.

@@ -13,12 +13,12 @@ import (
 	"github.com/amadeusitgroup/podkubervisor/pkg/breaker"
 )
 
-// BreakerConfigItemStore represent the BreakerConfig Item store
-type BreakerConfigItemStore kcache.Store
+// KubervisorServiceItemStore represent the KubervisorService Item store
+type KubervisorServiceItemStore kcache.Store
 
 // NewBreackerConfigItemStore returns new instance of a BreackerConfigItemStore
-func NewBreackerConfigItemStore() BreakerConfigItemStore {
-	return BreakerConfigItemStore(kcache.NewStore(keyFunc))
+func NewBreackerConfigItemStore() KubervisorServiceItemStore {
+	return KubervisorServiceItemStore(kcache.NewStore(keyFunc))
 }
 
 func keyFunc(obj interface{}) (string, error) {
@@ -36,11 +36,11 @@ type Interface interface {
 	Namespace() string
 	Start(ctx context.Context)
 	Stop() error
-	CompareWithSpec(spec *v1.BreakerConfigSpec, selector labels.Selector) bool
+	CompareWithSpec(spec *v1.KubervisorServiceSpec, selector labels.Selector) bool
 }
 
-//BreakerConfigItem  Use to agreagate all sub process linked to a BreakerConfig
-type BreakerConfigItem struct {
+//KubervisorServiceItem  Use to agreagate all sub process linked to a KubervisorService
+type KubervisorServiceItem struct {
 	// breaker config name
 	name      string
 	namespace string
@@ -51,18 +51,18 @@ type BreakerConfigItem struct {
 	waitGroup  sync.WaitGroup
 }
 
-// Name returns the BreakerConfigItem name
-func (b *BreakerConfigItem) Name() string {
+// Name returns the KubervisorServiceItem name
+func (b *KubervisorServiceItem) Name() string {
 	return b.name
 }
 
-// Namespace returns the BreakerConfigItem name
-func (b *BreakerConfigItem) Namespace() string {
+// Namespace returns the KubervisorServiceItem name
+func (b *KubervisorServiceItem) Namespace() string {
 	return b.namespace
 }
 
 // Start used to star the Activator and Breaker
-func (b *BreakerConfigItem) Start(ctx context.Context) {
+func (b *KubervisorServiceItem) Start(ctx context.Context) {
 	var internalContext context.Context
 	internalContext, b.cancelFunc = context.WithCancel(ctx)
 	go b.runBreaker(internalContext)
@@ -70,7 +70,7 @@ func (b *BreakerConfigItem) Start(ctx context.Context) {
 }
 
 // Stop used to stop the Activator and Breaker
-func (b *BreakerConfigItem) Stop() error {
+func (b *KubervisorServiceItem) Stop() error {
 	if b.cancelFunc == nil {
 		return nil
 	}
@@ -79,8 +79,8 @@ func (b *BreakerConfigItem) Stop() error {
 	return nil
 }
 
-// CompareWithSpec used to compare the current configuration with a new BreakerConfigSpec
-func (b *BreakerConfigItem) CompareWithSpec(spec *v1.BreakerConfigSpec, selector labels.Selector) bool {
+// CompareWithSpec used to compare the current configuration with a new KubervisorServiceSpec
+func (b *KubervisorServiceItem) CompareWithSpec(spec *v1.KubervisorServiceSpec, selector labels.Selector) bool {
 	if !b.activator.CompareConfig(&spec.Activator, selector) {
 		return false
 	}
@@ -91,13 +91,13 @@ func (b *BreakerConfigItem) CompareWithSpec(spec *v1.BreakerConfigSpec, selector
 	return true
 }
 
-func (b *BreakerConfigItem) runBreaker(ctx context.Context) {
+func (b *KubervisorServiceItem) runBreaker(ctx context.Context) {
 	b.waitGroup.Add(1)
 	defer b.waitGroup.Done()
 	b.breaker.Run(ctx.Done())
 }
 
-func (b *BreakerConfigItem) runActivator(ctx context.Context) {
+func (b *KubervisorServiceItem) runActivator(ctx context.Context) {
 	b.waitGroup.Add(1)
 	defer b.waitGroup.Done()
 	b.activator.Run(ctx.Done())

@@ -36,8 +36,8 @@ type FakeBreakerV1 struct {
 	*testing.Fake
 }
 
-func (c *FakeBreakerV1) BreakerConfigs(namespace string) v1.BreakerConfigInterface {
-	return &FakeBreakerConfigs{c, namespace}
+func (c *FakeBreakerV1) KubervisorServices(namespace string) v1.KubervisorServiceInterface {
+	return &FakeKubervisorServices{c, namespace}
 }
 
 // RESTClient returns a RESTClient that is used to communicate

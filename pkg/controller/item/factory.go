@@ -12,8 +12,8 @@ import (
 	"github.com/amadeusitgroup/podkubervisor/pkg/breaker"
 )
 
-// New return new BreakerConfigItem instance
-func New(bc *apiv1.BreakerConfig, cfg *Config) (Interface, error) {
+// New return new KubervisorServiceItem instance
+func New(bc *apiv1.KubervisorService, cfg *Config) (Interface, error) {
 	if cfg.customFactory != nil {
 		return cfg.customFactory(bc, cfg)
 	}
@@ -34,7 +34,7 @@ func New(bc *apiv1.BreakerConfig, cfg *Config) (Interface, error) {
 
 	breakerConfig := breaker.FactoryConfig{
 		Config: breaker.Config{
-			BreakerConfigName:     bc.Name,
+			KubervisorServiceName: bc.Name,
 			BreakerStrategyConfig: bc.Spec.Breaker,
 			Selector:              cfg.Selector,
 			PodControl:            cfg.PodControl,
@@ -46,7 +46,7 @@ func New(bc *apiv1.BreakerConfig, cfg *Config) (Interface, error) {
 	if err != nil {
 		return nil, err
 	}
-	return &BreakerConfigItem{
+	return &KubervisorServiceItem{
 		name:      bc.Name,
 		namespace: bc.Namespace,
 		activator: activatorInterface,
@@ -66,6 +66,6 @@ type Config struct {
 }
 
 //Factory functor for Interface
-type Factory func(bc *apiv1.BreakerConfig, cfg *Config) (Interface, error)
+type Factory func(bc *apiv1.KubervisorService, cfg *Config) (Interface, error)
 
 var _ Factory = New

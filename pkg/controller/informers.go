@@ -8,23 +8,23 @@ import (
 	kubervisorapi "github.com/amadeusitgroup/podkubervisor/pkg/api/kubervisor/v1"
 )
 
-func (ctrl *Controller) onAddBreakerConfig(obj interface{}) {
-	bc, ok := obj.(*kubervisorapi.BreakerConfig)
+func (ctrl *Controller) onAddKubervisorService(obj interface{}) {
+	bc, ok := obj.(*kubervisorapi.KubervisorService)
 	if !ok {
-		ctrl.Logger.Sugar().Errorf("adding BreakerConfig, expected BreakerConfig object. Got: %+v", obj)
+		ctrl.Logger.Sugar().Errorf("adding KubervisorService, expected KubervisorService object. Got: %+v", obj)
 		return
 	}
-	ctrl.Logger.Sugar().Debugf("onAddBreakerConfig %s/%s", bc.Namespace, bc.Name)
-	if !reflect.DeepEqual(bc.Status, kubervisorapi.BreakerConfigStatus{}) {
-		ctrl.Logger.Sugar().Errorf("BreakerConfig %s/%s created with non empty status. Going to be removed", bc.Namespace, bc.Name)
+	ctrl.Logger.Sugar().Debugf("onAddKubervisorService %s/%s", bc.Namespace, bc.Name)
+	if !reflect.DeepEqual(bc.Status, kubervisorapi.KubervisorServiceStatus{}) {
+		ctrl.Logger.Sugar().Errorf("KubervisorService %s/%s created with non empty status. Going to be removed", bc.Namespace, bc.Name)
 
 		if _, err := cache.MetaNamespaceKeyFunc(bc); err != nil {
-			ctrl.Logger.Sugar().Errorf("couldn't get key for BreakerConfig (to be deleted) %s/%s: %v", bc.Namespace, bc.Name, err)
+			ctrl.Logger.Sugar().Errorf("couldn't get key for KubervisorService (to be deleted) %s/%s: %v", bc.Namespace, bc.Name, err)
 			return
 		}
-		// TODO: how to remove a breakerconfig created with an invalid or even with a valid status. What in case of error for this delete?
-		if err := ctrl.deleteBreakerConfig(bc.Namespace, bc.Name); err != nil {
-			ctrl.Logger.Sugar().Errorf("unable to delete non empty status BreakerConfig %s/%s: %v. No retry will be performed.", bc.Namespace, bc.Name, err)
+		// TODO: how to remove a kubervisorservice created with an invalid or even with a valid status. What in case of error for this delete?
+		if err := ctrl.deleteKubervisorService(bc.Namespace, bc.Name); err != nil {
+			ctrl.Logger.Sugar().Errorf("unable to delete non empty status KubervisorService %s/%s: %v. No retry will be performed.", bc.Namespace, bc.Name, err)
 		}
 
 		return
@@ -33,37 +33,37 @@ func (ctrl *Controller) onAddBreakerConfig(obj interface{}) {
 	ctrl.enqueueFunc(bc)
 }
 
-func (ctrl *Controller) onDeleteBreakerConfig(obj interface{}) {
+func (ctrl *Controller) onDeleteKubervisorService(obj interface{}) {
 	_, err := cache.DeletionHandlingMetaNamespaceKeyFunc(obj)
 	if err != nil {
 		ctrl.Logger.Sugar().Errorf("Unable to get key for %#v: %v", obj, err)
 		return
 	}
-	bc, ok := obj.(*kubervisorapi.BreakerConfig)
+	bc, ok := obj.(*kubervisorapi.KubervisorService)
 	if !ok {
 		tombstone, ok := obj.(cache.DeletedFinalStateUnknown)
 		if !ok {
-			ctrl.Logger.Sugar().Errorf("unknown object from BreakerConfig delete event: %#v", obj)
+			ctrl.Logger.Sugar().Errorf("unknown object from KubervisorService delete event: %#v", obj)
 			return
 		}
-		bc, ok = tombstone.Obj.(*kubervisorapi.BreakerConfig)
+		bc, ok = tombstone.Obj.(*kubervisorapi.KubervisorService)
 		if !ok {
-			ctrl.Logger.Sugar().Errorf("Tombstone contained object that is not an BreakerConfig: %#v", obj)
+			ctrl.Logger.Sugar().Errorf("Tombstone contained object that is not an KubervisorService: %#v", obj)
 			return
 		}
 	}
-	ctrl.Logger.Sugar().Debugf("onDeleteBreakerConfig %s/%s", bc.Namespace, bc.Name)
+	ctrl.Logger.Sugar().Debugf("onDeleteKubervisorService %s/%s", bc.Namespace, bc.Name)
 
 	ctrl.enqueueFunc(bc)
 }
 
-func (ctrl *Controller) onUpdateBreakerConfig(oldObj, newObj interface{}) {
-	bc, ok := newObj.(*kubervisorapi.BreakerConfig)
+func (ctrl *Controller) onUpdateKubervisorService(oldObj, newObj interface{}) {
+	bc, ok := newObj.(*kubervisorapi.KubervisorService)
 	if !ok {
-		ctrl.Logger.Sugar().Errorf("updating BreakerConfig, expected BreakerConfig object. Got: %+v", newObj)
+		ctrl.Logger.Sugar().Errorf("updating KubervisorService, expected KubervisorService object. Got: %+v", newObj)
 		return
 	}
-	ctrl.Logger.Sugar().Debugf("onUpdateBreakerConfig %s/%s", bc.Namespace, bc.Name)
+	ctrl.Logger.Sugar().Debugf("onUpdateKubervisorService %s/%s", bc.Namespace, bc.Name)
 
 	ctrl.enqueueFunc(bc)
 }

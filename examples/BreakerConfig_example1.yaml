@@ -14,7 +14,7 @@ items:
     selector:
       app: foo
 - apiVersion: breaker.kubervisor.io/v1
-  kind: BreakerConfig
+  kind: KubervisorService
   metadata:
     name: foo-bc
     labels:

@@ -41,59 +41,59 @@ import (
 	cache "k8s.io/client-go/tools/cache"
 )
 
-// BreakerConfigInformer provides access to a shared informer and lister for
-// BreakerConfigs.
-type BreakerConfigInformer interface {
+// KubervisorServiceInformer provides access to a shared informer and lister for
+// KubervisorServices.
+type KubervisorServiceInformer interface {
 	Informer() cache.SharedIndexInformer
-	Lister() v1.BreakerConfigLister
+	Lister() v1.KubervisorServiceLister
 }
 
-type breakerConfigInformer struct {
+type kubervisorServiceInformer struct {
 	factory          internalinterfaces.SharedInformerFactory
 	tweakListOptions internalinterfaces.TweakListOptionsFunc
 	namespace        string
 }
 
-// NewBreakerConfigInformer constructs a new informer for BreakerConfig type.
+// NewKubervisorServiceInformer constructs a new informer for KubervisorService type.
 // Always prefer using an informer factory to get a shared informer instead of getting an independent
 // one. This reduces memory footprint and number of connections to the server.
-func NewBreakerConfigInformer(client versioned.Interface, namespace string, resyncPeriod time.Duration, indexers cache.Indexers) cache.SharedIndexInformer {
-	return NewFilteredBreakerConfigInformer(client, namespace, resyncPeriod, indexers, nil)
+func NewKubervisorServiceInformer(client versioned.Interface, namespace string, resyncPeriod time.Duration, indexers cache.Indexers) cache.SharedIndexInformer {
+	return NewFilteredKubervisorServiceInformer(client, namespace, resyncPeriod, indexers, nil)
 }
 
-// NewFilteredBreakerConfigInformer constructs a new informer for BreakerConfig type.
+// NewFilteredKubervisorServiceInformer constructs a new informer for KubervisorService type.
 // Always prefer using an informer factory to get a shared informer instead of getting an independent
 // one. This reduces memory footprint and number of connections to the server.
-func NewFilteredBreakerConfigInformer(client versioned.Interface, namespace string, resyncPeriod time.Duration, indexers cache.Indexers, tweakListOptions internalinterfaces.TweakListOptionsFunc) cache.SharedIndexInformer {
+func NewFilteredKubervisorServiceInformer(client versioned.Interface, namespace string, resyncPeriod time.Duration, indexers cache.Indexers, tweakListOptions internalinterfaces.TweakListOptionsFunc) cache.SharedIndexInformer {
 	return cache.NewSharedIndexInformer(
 		&cache.ListWatch{
 			ListFunc: func(options meta_v1.ListOptions) (runtime.Object, error) {
 				if tweakListOptions != nil {
 					tweakListOptions(&options)
 				}
-				return client.BreakerV1().BreakerConfigs(namespace).List(options)
+				return client.BreakerV1().KubervisorServices(namespace).List(options)
 			},
 			WatchFunc: func(options meta_v1.ListOptions) (watch.Interface, error) {
 				if tweakListOptions != nil {
 					tweakListOptions(&options)
 				}
-				return client.BreakerV1().BreakerConfigs(namespace).Watch(options)
+				return client.BreakerV1().KubervisorServices(namespace).Watch(options)
 			},
 		},
-		&kubervisor_v1.BreakerConfig{},
+		&kubervisor_v1.KubervisorService{},
 		resyncPeriod,
 		indexers,
 	)
 }
 
-func (f *breakerConfigInformer) defaultInformer(client versioned.Interface, resyncPeriod time.Duration) cache.SharedIndexInformer {
-	return NewFilteredBreakerConfigInformer(client, f.namespace, resyncPeriod, cache.Indexers{cache.NamespaceIndex: cache.MetaNamespaceIndexFunc}, f.tweakListOptions)
+func (f *kubervisorServiceInformer) defaultInformer(client versioned.Interface, resyncPeriod time.Duration) cache.SharedIndexInformer {
+	return NewFilteredKubervisorServiceInformer(client, f.namespace, resyncPeriod, cache.Indexers{cache.NamespaceIndex: cache.MetaNamespaceIndexFunc}, f.tweakListOptions)
 }
 
-func (f *breakerConfigInformer) Informer() cache.SharedIndexInformer {
-	return f.factory.InformerFor(&kubervisor_v1.BreakerConfig{}, f.defaultInformer)
+func (f *kubervisorServiceInformer) Informer() cache.SharedIndexInformer {
+	return f.factory.InformerFor(&kubervisor_v1.KubervisorService{}, f.defaultInformer)
 }
 
-func (f *breakerConfigInformer) Lister() v1.BreakerConfigLister {
-	return v1.NewBreakerConfigLister(f.Informer().GetIndexer())
+func (f *kubervisorServiceInformer) Lister() v1.KubervisorServiceLister {
+	return v1.NewKubervisorServiceLister(f.Informer().GetIndexer())
 }

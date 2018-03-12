@@ -8,8 +8,8 @@ import (
 	"github.com/amadeusitgroup/podkubervisor/pkg/controller/item"
 )
 
-// IsSpecUpdated return true if the the BreakerConfig have been updated
-func IsSpecUpdated(bc *kubervisorapi.BreakerConfig, svc *corev1.Service, bci item.Interface) bool {
+// IsSpecUpdated return true if the the KubervisorService have been updated
+func IsSpecUpdated(bc *kubervisorapi.KubervisorService, svc *corev1.Service, bci item.Interface) bool {
 	selector := labels.Set(svc.Spec.Selector).AsSelectorPreValidated()
 	return bci.CompareWithSpec(&bc.Spec, selector)
 }

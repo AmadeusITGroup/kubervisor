@@ -63,8 +63,8 @@ func (f *genericInformer) Lister() cache.GenericLister {
 func (f *sharedInformerFactory) ForResource(resource schema.GroupVersionResource) (GenericInformer, error) {
 	switch resource {
 	// Group=breaker.kubervisor.io, Version=v1
-	case v1.SchemeGroupVersion.WithResource("breakerconfigs"):
-		return &genericInformer{resource: resource.GroupResource(), informer: f.Breaker().V1().BreakerConfigs().Informer()}, nil
+	case v1.SchemeGroupVersion.WithResource("kubervisorservices"):
+		return &genericInformer{resource: resource.GroupResource(), informer: f.Breaker().V1().KubervisorServices().Informer()}, nil
 
 	}
 

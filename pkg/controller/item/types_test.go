@@ -11,7 +11,7 @@ import (
 	"k8s.io/apimachinery/pkg/labels"
 )
 
-func TestBreakerConfigItem_CompareWithSpec(t *testing.T) {
+func TestKubervisorServiceItem_CompareWithSpec(t *testing.T) {
 	type fields struct {
 		name       string
 		activator  activator.Activator
@@ -20,7 +20,7 @@ func TestBreakerConfigItem_CompareWithSpec(t *testing.T) {
 		waitGroup  sync.WaitGroup
 	}
 	type args struct {
-		spec     *v1.BreakerConfigSpec
+		spec     *v1.KubervisorServiceSpec
 		selector labels.Selector
 	}
 	tests := []struct {
@@ -40,7 +40,7 @@ func TestBreakerConfigItem_CompareWithSpec(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			b := &BreakerConfigItem{
+			b := &KubervisorServiceItem{
 				name:       tt.fields.name,
 				activator:  tt.fields.activator,
 				breaker:    tt.fields.breaker,
@@ -48,7 +48,7 @@ func TestBreakerConfigItem_CompareWithSpec(t *testing.T) {
 				waitGroup:  tt.fields.waitGroup,
 			}
 			if got := b.CompareWithSpec(tt.args.spec, tt.args.selector); got != tt.want {
-				t.Errorf("BreakerConfigItem.CompareWithSpec() = %v, want %v", got, tt.want)
+				t.Errorf("KubervisorServiceItem.CompareWithSpec() = %v, want %v", got, tt.want)
 			}
 		})
 	}
