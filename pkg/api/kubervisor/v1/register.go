@@ -18,11 +18,11 @@ func Resource(resource string) schema.GroupResource {
 
 const (
 	// ResourcePlural is the id to indentify pluarals
-	ResourcePlural = "breakerconfigs"
+	ResourcePlural = "kubervisorservices"
 	// ResourceSingular represents the id for identify singular resource
-	ResourceSingular = "breakerconfig"
+	ResourceSingular = "kubervisorservice"
 	// ResourceKind represent the resource kind
-	ResourceKind = "BreakerConfig"
+	ResourceKind = "KubervisorService"
 	// ResourceVersion represent the resource version
 	ResourceVersion = "v1"
 )
@@ -45,8 +45,8 @@ func init() {
 // Adds the list of known types to api.Scheme.
 func addKnownTypes(scheme *runtime.Scheme) error {
 	scheme.AddKnownTypes(SchemeGroupVersion,
-		&BreakerConfig{},
-		&BreakerConfigList{},
+		&KubervisorService{},
+		&KubervisorServiceList{},
 	)
 	metav1.AddToGroupVersion(scheme, SchemeGroupVersion)
 	return nil

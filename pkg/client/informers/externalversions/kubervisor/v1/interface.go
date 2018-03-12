@@ -34,8 +34,8 @@ import (
 
 // Interface provides access to all the informers in this group version.
 type Interface interface {
-	// BreakerConfigs returns a BreakerConfigInformer.
-	BreakerConfigs() BreakerConfigInformer
+	// KubervisorServices returns a KubervisorServiceInformer.
+	KubervisorServices() KubervisorServiceInformer
 }
 
 type version struct {
@@ -49,7 +49,7 @@ func New(f internalinterfaces.SharedInformerFactory, namespace string, tweakList
 	return &version{factory: f, namespace: namespace, tweakListOptions: tweakListOptions}
 }
 
-// BreakerConfigs returns a BreakerConfigInformer.
-func (v *version) BreakerConfigs() BreakerConfigInformer {
-	return &breakerConfigInformer{factory: v.factory, namespace: v.namespace, tweakListOptions: v.tweakListOptions}
+// KubervisorServices returns a KubervisorServiceInformer.
+func (v *version) KubervisorServices() KubervisorServiceInformer {
+	return &kubervisorServiceInformer{factory: v.factory, namespace: v.namespace, tweakListOptions: v.tweakListOptions}
 }

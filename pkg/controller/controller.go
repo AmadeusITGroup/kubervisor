@@ -51,7 +51,7 @@ type Controller struct {
 	kubeClient    clientset.Interface
 	breakerClient bclient.Interface
 
-	breakerLister blisters.BreakerConfigLister
+	breakerLister blisters.KubervisorServiceLister
 	BreakerSynced cache.InformerSynced
 
 	podLister corev1listers.PodLister
@@ -60,11 +60,11 @@ type Controller struct {
 	serviceLister corev1listers.ServiceLister
 	ServiceSynced cache.InformerSynced
 
-	queue       workqueue.RateLimitingInterface // BreakerConfigs to be synced
-	enqueueFunc func(bc *kubervisorapi.BreakerConfig)
+	queue       workqueue.RateLimitingInterface // KubervisorServices to be synced
+	enqueueFunc func(bc *kubervisorapi.KubervisorService)
 
-	items                 item.BreakerConfigItemStore
-	updateHandlerFunc     func(*kubervisorapi.BreakerConfig) (*kubervisorapi.BreakerConfig, error)
+	items                 item.KubervisorServiceItemStore
+	updateHandlerFunc     func(*kubervisorapi.KubervisorService) (*kubervisorapi.KubervisorService, error)
 	podControl            pod.ControlInterface
 	rootContext           context.Context
 	rootContextCancelFunc context.CancelFunc
@@ -91,7 +91,7 @@ func New(cfg *Config) *Controller {
 
 	_, err = kubervisorclient.DefineKubervisorResources(extClient)
 	if err != nil && !apierrors.IsAlreadyExists(err) {
-		sugar.Fatalf("Unable to define BreakerConfig resource:%v", err)
+		sugar.Fatalf("Unable to define KubervisorService resource:%v", err)
 	}
 
 	kubeClient, err := clientset.NewForConfig(kubeConfig)
@@ -113,7 +113,7 @@ func New(cfg *Config) *Controller {
 
 	podInformer := kubeInformerFactory.Core().V1().Pods()
 	serviceInformer := kubeInformerFactory.Core().V1().Services()
-	breakerInformer := breakerInformerFactory.Breaker().V1().BreakerConfigs()
+	breakerInformer := breakerInformerFactory.Breaker().V1().KubervisorServices()
 
 	ctx, ctxCancel := context.WithCancel(context.Background())
 
@@ -138,7 +138,7 @@ func New(cfg *Config) *Controller {
 
 		httpServer: &http.Server{Addr: cfg.ListenAddr},
 
-		queue:    workqueue.NewNamedRateLimitingQueue(workqueue.DefaultControllerRateLimiter(), "breakerconfig"),
+		queue:    workqueue.NewNamedRateLimitingQueue(workqueue.DefaultControllerRateLimiter(), "kubervisorservice"),
 		recorder: eventBroadcaster.NewRecorder(scheme.Scheme, apiv1.EventSource{Component: "kubervisor-controller"}),
 	}
 	ctrl.enqueueFunc = ctrl.enqueue
@@ -147,9 +147,9 @@ func New(cfg *Config) *Controller {
 
 	breakerInformer.Informer().AddEventHandler(
 		cache.ResourceEventHandlerFuncs{
-			AddFunc:    ctrl.onAddBreakerConfig,
-			UpdateFunc: ctrl.onUpdateBreakerConfig,
-			DeleteFunc: ctrl.onDeleteBreakerConfig,
+			AddFunc:    ctrl.onAddKubervisorService,
+			UpdateFunc: ctrl.onUpdateKubervisorService,
+			DeleteFunc: ctrl.onDeleteKubervisorService,
 		},
 	)
 
@@ -212,7 +212,7 @@ func (ctrl *Controller) processNextItem() bool {
 	if err == nil {
 		ctrl.queue.Forget(key)
 	} else {
-		utilruntime.HandleError(fmt.Errorf("Error syncing breakerconfig: %v", err))
+		utilruntime.HandleError(fmt.Errorf("Error syncing kubervisorservice: %v", err))
 		ctrl.queue.AddRateLimited(key)
 		return true
 	}
@@ -229,41 +229,41 @@ func (ctrl *Controller) sync(key string) (bool, error) {
 	ctrl.Logger.Sugar().Debugf("sync() key: %s", key)
 	startTime := time.Now()
 	defer func() {
-		ctrl.Logger.Sugar().Debug("Finished syncing BreakerConfig %q in %v", key, time.Since(startTime))
+		ctrl.Logger.Sugar().Debug("Finished syncing KubervisorService %q in %v", key, time.Since(startTime))
 		// TODO add prometheus metric here
 	}()
 	namespace, name, err := cache.SplitMetaNamespaceKey(key)
 	if err != nil {
 		return false, err
 	}
-	ctrl.Logger.Sugar().Debug("Syncing BreakerConfig %s/%s", namespace, name)
-	sharedBreakerConfig, err := ctrl.breakerLister.BreakerConfigs(namespace).Get(name)
+	ctrl.Logger.Sugar().Debug("Syncing KubervisorService %s/%s", namespace, name)
+	sharedKubervisorService, err := ctrl.breakerLister.KubervisorServices(namespace).Get(name)
 	if err != nil {
-		ctrl.Logger.Sugar().Errorf("unable to get BreakerConfig %s/%s: %v. Maybe deleted", namespace, name, err)
+		ctrl.Logger.Sugar().Errorf("unable to get KubervisorService %s/%s: %v. Maybe deleted", namespace, name, err)
 		return false, nil
 	}
-	if !kubervisorapi.IsBreakerConfigDefaulted(sharedBreakerConfig) {
-		defaultedBreakerConfig := kubervisorapi.DefaultBreakerConfig(sharedBreakerConfig)
-		if _, err = ctrl.updateHandlerFunc(defaultedBreakerConfig); err != nil {
-			ctrl.Logger.Sugar().Errorf("unable to default BreakerConfig %s/%s, error:%v", namespace, name, err)
-			return false, fmt.Errorf("unable to default BreakerConfig %s/%s, error:%s", namespace, name, err)
+	if !kubervisorapi.IsKubervisorServiceDefaulted(sharedKubervisorService) {
+		defaultedKubervisorService := kubervisorapi.DefaultKubervisorService(sharedKubervisorService)
+		if _, err = ctrl.updateHandlerFunc(defaultedKubervisorService); err != nil {
+			ctrl.Logger.Sugar().Errorf("unable to default KubervisorService %s/%s, error:%v", namespace, name, err)
+			return false, fmt.Errorf("unable to default KubervisorService %s/%s, error:%s", namespace, name, err)
 		}
-		ctrl.Logger.Sugar().Debugf("BreakerConfig %s/%s defaulted", namespace, name)
+		ctrl.Logger.Sugar().Debugf("KubervisorService %s/%s defaulted", namespace, name)
 		return false, nil
 	}
 
 	// TODO add validation
 
 	// TODO: add test the case of graceful deletion
-	if sharedBreakerConfig.DeletionTimestamp != nil {
+	if sharedKubervisorService.DeletionTimestamp != nil {
 		return false, nil
 	}
 
-	bc := sharedBreakerConfig.DeepCopy()
-	return ctrl.syncBreakerConfig(bc)
+	bc := sharedKubervisorService.DeepCopy()
+	return ctrl.syncKubervisorService(bc)
 }
 
-func (ctrl *Controller) syncBreakerConfig(bc *kubervisorapi.BreakerConfig) (bool, error) {
+func (ctrl *Controller) syncKubervisorService(bc *kubervisorapi.KubervisorService) (bool, error) {
 	key := fmt.Sprintf("%s/%s", bc.Namespace, bc.Name)
 
 	associatedSvc, err := ctrl.serviceLister.Services(bc.Namespace).Get(bc.Spec.Service)
@@ -282,7 +282,7 @@ func (ctrl *Controller) syncBreakerConfig(bc *kubervisorapi.BreakerConfig) (bool
 	var bci item.Interface
 	if !exist {
 		ctrl.Logger.Sugar().Debugw("item not found for key:%s", key)
-		if bci, err = ctrl.newBreakerConfigItem(bc, associatedSvc); err != nil {
+		if bci, err = ctrl.newKubervisorServiceItem(bc, associatedSvc); err != nil {
 			return false, err
 		}
 		ctrl.items.Add(bci)
@@ -290,11 +290,11 @@ func (ctrl *Controller) syncBreakerConfig(bc *kubervisorapi.BreakerConfig) (bool
 		var ok bool
 		bci, ok = obj.(item.Interface)
 		if !ok {
-			return false, fmt.Errorf("unable to case the obj to a BreakerConfigItem")
+			return false, fmt.Errorf("unable to case the obj to a KubervisorServiceItem")
 		}
 		if IsSpecUpdated(bc, associatedSvc, bci) {
 			bci.Stop()
-			if bci, err = ctrl.newBreakerConfigItem(bc, associatedSvc); err != nil {
+			if bci, err = ctrl.newKubervisorServiceItem(bc, associatedSvc); err != nil {
 				return false, err
 			}
 			ctrl.items.Update(bci)
@@ -324,7 +324,7 @@ func (ctrl *Controller) syncBreakerConfig(bc *kubervisorapi.BreakerConfig) (bool
 	return globalActivity, nil
 }
 
-// Used to select all currently associated to the BreakerConfig and check if it is still the case
+// Used to select all currently associated to the KubervisorService and check if it is still the case
 // if they are not manage anymore by the current service label selector, this function remove the added labels.
 func (ctrl *Controller) podsCleaner(bciName string, svc *apiv1.Service) (bool, error) {
 	selectorSet := labels.Set{labeling.LabelBreakerNameKey: bciName}
@@ -393,7 +393,7 @@ func (ctrl *Controller) searchNewPods(svc *apiv1.Service) ([]*apiv1.Pod, error) 
 	return outPods, nil
 }
 
-func (ctrl *Controller) newBreakerConfigItem(bc *kubervisorapi.BreakerConfig, svc *apiv1.Service) (item.Interface, error) {
+func (ctrl *Controller) newKubervisorServiceItem(bc *kubervisorapi.KubervisorService, svc *apiv1.Service) (item.Interface, error) {
 	itemConfig := &item.Config{
 		Logger:     ctrl.Logger,
 		Selector:   labels.Set(svc.Spec.Selector).AsSelectorPreValidated(),
@@ -402,7 +402,7 @@ func (ctrl *Controller) newBreakerConfigItem(bc *kubervisorapi.BreakerConfig, sv
 	}
 	bci, err := item.New(bc, itemConfig)
 	if err != nil {
-		ctrl.Logger.Sugar().Errorf("unable to create new BreakerConfigItem, err:%v", err)
+		ctrl.Logger.Sugar().Errorf("unable to create new KubervisorServiceItem, err:%v", err)
 		return nil, err
 	}
 	bci.Start(ctrl.rootContext)
@@ -416,19 +416,19 @@ func initKubeConfig(c *Config) (*rest.Config, error) {
 	return rest.InClusterConfig()
 }
 
-func (ctrl *Controller) deleteBreakerConfig(ns, name string) error {
-	return ctrl.breakerClient.Breaker().BreakerConfigs(ns).Delete(name, &metav1.DeleteOptions{})
+func (ctrl *Controller) deleteKubervisorService(ns, name string) error {
+	return ctrl.breakerClient.Breaker().KubervisorServices(ns).Delete(name, &metav1.DeleteOptions{})
 }
 
-func (ctrl *Controller) updateHandler(bc *kubervisorapi.BreakerConfig) (*kubervisorapi.BreakerConfig, error) {
-	return ctrl.breakerClient.Breaker().BreakerConfigs(bc.Namespace).Update(bc)
+func (ctrl *Controller) updateHandler(bc *kubervisorapi.KubervisorService) (*kubervisorapi.KubervisorService, error) {
+	return ctrl.breakerClient.Breaker().KubervisorServices(bc.Namespace).Update(bc)
 }
 
 // enqueue adds key in the controller queue
-func (ctrl *Controller) enqueue(bc *kubervisorapi.BreakerConfig) {
+func (ctrl *Controller) enqueue(bc *kubervisorapi.KubervisorService) {
 	key, err := cache.MetaNamespaceKeyFunc(bc)
 	if err != nil {
-		ctrl.Logger.Sugar().Errorf("Controller:enqueue: couldn't get key for BreakerConfig %s/%s: %v", bc.Namespace, bc.Name, err)
+		ctrl.Logger.Sugar().Errorf("Controller:enqueue: couldn't get key for KubervisorService %s/%s: %v", bc.Namespace, bc.Name, err)
 		return
 	}
 	ctrl.queue.Add(key)

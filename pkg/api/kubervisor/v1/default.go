@@ -2,8 +2,8 @@ package v1
 
 import "time"
 
-// DefaultBreakerConfig injecting default values for the struct
-func DefaultBreakerConfig(item *BreakerConfig) *BreakerConfig {
+// DefaultKubervisorService injecting default values for the struct
+func DefaultKubervisorService(item *KubervisorService) *KubervisorService {
 	copy := item.DeepCopy()
 	copy.Spec.Activator = *DefaultActivatorStrategy(&copy.Spec.Activator)
 	copy.Spec.Breaker = *DefaultBreakerStrategy(&copy.Spec.Breaker)
@@ -74,8 +74,8 @@ func NewUInt(val uint) *uint {
 	return output
 }
 
-// IsBreakerConfigDefaulted used to check if a BreakerConfig is already defaulted
-func IsBreakerConfigDefaulted(bc *BreakerConfig) bool {
+// IsKubervisorServiceDefaulted used to check if a KubervisorService is already defaulted
+func IsKubervisorServiceDefaulted(bc *KubervisorService) bool {
 	if !isActivatorStrategyDefaulted(&bc.Spec.Activator) {
 		return false
 	}

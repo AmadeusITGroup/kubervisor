@@ -23,8 +23,8 @@ PodKubervisor comes with its own resource (CRD) to configure the system:
 
 [diagram1]: ./docs/imgs/diagram1.png
 
-- The **BreakerConfig** is the CRD (Kubernetes Custom Resource Definition). It is used to configure the kubervisor for a given Service. It also contains the status for the health of the service.
-- The **Controller** reads the **BreakerConfig** to configure **Breaker** and **Activator** workers for the given service. It also monitors the service changes to adapt the configuration of the system. It also monitors the pods to build a cache for all the workers and to compute the health status of each service under control of the Kubervisor. The health of the serivce is persisted inside the status of the associated **BreakConfig*
+- The **KubervisorService** is the CRD (Kubernetes Custom Resource Definition). It is used to configure the kubervisor for a given Service. It also contains the status for the health of the service.
+- The **Controller** reads the **KubervisorService** to configure **Breaker** and **Activator** workers for the given service. It also monitors the service changes to adapt the configuration of the system. It also monitors the pods to build a cache for all the workers and to compute the health status of each service under control of the Kubervisor. The health of the serivce is persisted inside the status of the associated **BreakConfig*
 - The **Breaker** is in charge of invoking the configured **anamaly detection**. Ensuring that it is not going bellow defined threshold or ratio, the **Breaker** will relabel some pods to prevent them to receive traffic.
 - The **Activator** is in charge of restablishing traffic on pods after the defined period of inactivity (equivalent to open state in a circuit breaker pattern). Depending on the configured policy and the numbers of retries performed on a pod, the **Activator** can decide to kill the pod or put it in *pause* (out of traffic forever) for further investigation.
 - The **Anomaly detector** part (all the blue part in the diagram) is where the data analysis is really performed. Depending on the KPI that you are working on (discrete value, continuous value) or the type of anomaly (ratio, threshold, trend ...) you can select an integrated implementation or delegate the to an external system that would return the list of pods that are out of policy. The proposed internal implementations used data from Prometheus.
@@ -58,7 +58,7 @@ TODO (Helm ?)
 
 To configure the system a user would have to complete the following steps:
 
-- Create the **BreakerConfig** CRD in the namespace of the associated service
+- Create the **KubervisorService** CRD in the namespace of the associated service
 - - Select the service (by name)
 - - Define the BreakConfiguration to configure the Anomaly Detection mechanism
 - - Configure the Activator

@@ -24,11 +24,11 @@ func (ctrl *Controller) runHTTPServer(stop <-chan struct{}) error {
 
 func (ctrl *Controller) configureHealth() {
 	ctrl.health = healthcheck.NewHandler()
-	ctrl.health.AddReadinessCheck("BreakerConfig_cache_sync", func() error {
+	ctrl.health.AddReadinessCheck("KubervisorService_cache_sync", func() error {
 		if ctrl.BreakerSynced() {
 			return nil
 		}
-		return fmt.Errorf("BreakerConfig cache not sync")
+		return fmt.Errorf("KubervisorService cache not sync")
 	})
 	ctrl.health.AddReadinessCheck("Pod_cache_sync", func() error {
 		if ctrl.PodSynced() {

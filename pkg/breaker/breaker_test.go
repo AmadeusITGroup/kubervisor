@@ -365,7 +365,7 @@ func (t *testAnomalyDetector) GetPodsOutOfBounds() ([]*kapiv1.Pod, error) {
 
 func TestBreakerImpl_CompareConfig(t *testing.T) {
 	type fields struct {
-		BreakerConfigName     string
+		KubervisorServiceName string
 		breakerStrategyConfig v1.BreakerStrategy
 		selector              labels.Selector
 		podLister             kv1.PodNamespaceLister
@@ -407,7 +407,7 @@ func TestBreakerImpl_CompareConfig(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			b := &BreakerImpl{
-				BreakerConfigName:     tt.fields.BreakerConfigName,
+				KubervisorServiceName: tt.fields.KubervisorServiceName,
 				breakerStrategyConfig: tt.fields.breakerStrategyConfig,
 				selector:              tt.fields.selector,
 				podLister:             tt.fields.podLister,

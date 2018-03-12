@@ -22,7 +22,7 @@ type Breaker interface {
 //Config configuration required to create a Breaker
 type Config struct {
 	BreakerStrategyConfig v1.BreakerStrategy
-	BreakerConfigName     string
+	KubervisorServiceName string
 	Selector              labels.Selector
 	PodLister             kv1.PodNamespaceLister
 	PodControl            pod.ControlInterface
@@ -33,7 +33,7 @@ var _ Breaker = &BreakerImpl{}
 
 //BreakerImpl implementation of the breaker interface
 type BreakerImpl struct {
-	BreakerConfigName     string
+	KubervisorServiceName string
 	breakerStrategyConfig v1.BreakerStrategy
 	selector              labels.Selector
 	podLister             kv1.PodNamespaceLister
@@ -75,7 +75,7 @@ func (b *BreakerImpl) Run(stop <-chan struct{}) {
 			}
 
 			for _, p := range podsToCut[:removeCount] {
-				b.podControl.UpdateBreakerAnnotationAndLabel(b.BreakerConfigName, p)
+				b.podControl.UpdateBreakerAnnotationAndLabel(b.KubervisorServiceName, p)
 			}
 
 		case <-stop:

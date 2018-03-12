@@ -256,9 +256,9 @@ func Test_isActivatorStrategyDefaulted(t *testing.T) {
 	}
 }
 
-func TestIsBreakerConfigDefaulted(t *testing.T) {
+func TestIsKubervisorServiceDefaulted(t *testing.T) {
 	type args struct {
-		bc *BreakerConfig
+		bc *KubervisorService
 	}
 	tests := []struct {
 		name string
@@ -268,8 +268,8 @@ func TestIsBreakerConfigDefaulted(t *testing.T) {
 		{
 			name: "already defaulted",
 			args: args{
-				bc: &BreakerConfig{
-					Spec: BreakerConfigSpec{
+				bc: &KubervisorService{
+					Spec: KubervisorServiceSpec{
 						Activator: *DefaultActivatorStrategy(&ActivatorStrategy{}),
 						Breaker:   *DefaultBreakerStrategy(&BreakerStrategy{}),
 					},
@@ -280,8 +280,8 @@ func TestIsBreakerConfigDefaulted(t *testing.T) {
 		{
 			name: "Activator not defaulted",
 			args: args{
-				bc: &BreakerConfig{
-					Spec: BreakerConfigSpec{
+				bc: &KubervisorService{
+					Spec: KubervisorServiceSpec{
 						Breaker: *DefaultBreakerStrategy(&BreakerStrategy{}),
 					},
 				},
@@ -291,8 +291,8 @@ func TestIsBreakerConfigDefaulted(t *testing.T) {
 		{
 			name: "Breaker not defaulted",
 			args: args{
-				bc: &BreakerConfig{
-					Spec: BreakerConfigSpec{
+				bc: &KubervisorService{
+					Spec: KubervisorServiceSpec{
 						Activator: *DefaultActivatorStrategy(&ActivatorStrategy{}),
 					},
 				},
@@ -302,18 +302,18 @@ func TestIsBreakerConfigDefaulted(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if got := IsBreakerConfigDefaulted(tt.args.bc); got != tt.want {
-				t.Errorf("IsBreakerConfigDefaulted() = %v, want %v", got, tt.want)
+			if got := IsKubervisorServiceDefaulted(tt.args.bc); got != tt.want {
+				t.Errorf("IsKubervisorServiceDefaulted() = %v, want %v", got, tt.want)
 			}
 		})
 	}
 }
 
-func TestDefaultBreakerConfig(t *testing.T) {
-	bc := &BreakerConfig{}
-	bc = DefaultBreakerConfig(bc)
+func TestDefaultKubervisorService(t *testing.T) {
+	bc := &KubervisorService{}
+	bc = DefaultKubervisorService(bc)
 
-	if !IsBreakerConfigDefaulted(bc) {
-		t.Errorf("BreakerConfig is not defaulted properly")
+	if !IsKubervisorServiceDefaulted(bc) {
+		t.Errorf("KubervisorService is not defaulted properly")
 	}
 }

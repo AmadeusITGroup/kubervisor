@@ -26,4 +26,4 @@ SOFTWARE.
 
 package v1
 
-type BreakerConfigExpansion interface{}
+type KubervisorServiceExpansion interface{}

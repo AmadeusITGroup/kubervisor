@@ -26,12 +26,12 @@ var _ = AfterSuite(func() {
 
 })
 
-var _ = Describe("BreakerConfig CRUD", func() {
-	It("should create a BreakerConfig", func() {
-		bc := framework.NewBreakerConfig("foo")
+var _ = Describe("KubervisorService CRUD", func() {
+	It("should create a KubervisorService", func() {
+		bc := framework.NewKubervisorService("foo")
 
-		Eventually(framework.CreateBreakerConfig(kubervisorClient, bc, testNs), "5s", "1s").ShouldNot(HaveOccurred())
-		Eventually(framework.IsBreakerConfigCreated(kubervisorClient, bc.Name, testNs), "5s", "1s").ShouldNot(HaveOccurred())
+		Eventually(framework.CreateKubervisorService(kubervisorClient, bc, testNs), "5s", "1s").ShouldNot(HaveOccurred())
+		Eventually(framework.IsKubervisorServiceCreated(kubervisorClient, bc.Name, testNs), "5s", "1s").ShouldNot(HaveOccurred())
 
 	})
 })

@@ -23,7 +23,7 @@ func TestNew(t *testing.T) {
 	})
 
 	type args struct {
-		bc  *apiv1.BreakerConfig
+		bc  *apiv1.KubervisorService
 		cfg *Config
 	}
 	tests := []struct {
@@ -32,11 +32,11 @@ func TestNew(t *testing.T) {
 		wantErr bool
 	}{
 		{
-			name: "create simple BreakerConfigItem",
+			name: "create simple KubervisorServiceItem",
 			args: args{
-				bc: &apiv1.BreakerConfig{
+				bc: &apiv1.KubervisorService{
 					ObjectMeta: metav1.ObjectMeta{Name: "test-bc", Namespace: "test-ns"},
-					Spec: apiv1.BreakerConfigSpec{
+					Spec: apiv1.KubervisorServiceSpec{
 						Activator: *activatorStrategyConfig,
 						Breaker:   *breakerStrategyConfig,
 					},
