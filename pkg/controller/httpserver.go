@@ -10,7 +10,7 @@ import (
 func (ctrl *Controller) runHTTPServer(stop <-chan struct{}) error {
 	sugar := ctrl.Logger.Sugar()
 	go func() {
-		sugar.Info("Listening on http://%s\n", ctrl.httpServer.Addr)
+		sugar.Infof("Listening on http://%s", ctrl.httpServer.Addr)
 
 		if err := ctrl.httpServer.ListenAndServe(); err != nil {
 			sugar.Error("Http server error: ", err)
@@ -36,4 +36,11 @@ func (ctrl *Controller) configureHealth() {
 		}
 		return fmt.Errorf("Pod cache not sync")
 	})
+	ctrl.health.AddReadinessCheck("Service_cache_sync", func() error {
+		if ctrl.ServiceSynced() {
+			return nil
+		}
+		return fmt.Errorf("Service cache not sync")
+	})
+	ctrl.httpServer.Handler = ctrl.health
 }

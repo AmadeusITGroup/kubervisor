@@ -14,6 +14,7 @@ type Config struct {
 	KubeConfigFile string
 	Master         string
 	ListenAddr     string
+	Debug          bool
 
 	NbWorker uint32
 
@@ -31,4 +32,5 @@ func (c *Config) AddFlags(fs *pflag.FlagSet) {
 	fs.StringVar(&c.Master, "master", c.Master, "The address of the Kubernetes API server. Overrides any value in kubeconfig. Only required if out-of-cluster.")
 	fs.StringVar(&c.ListenAddr, "addr", "0.0.0.0:8086", "listen address of the http server which serves kubernetes probes and prometheus endpoints")
 	fs.Uint32Var(&c.NbWorker, "nbworker", nbWorkerDefault, "Number of running workers in the controller")
+	fs.BoolVar(&c.Debug, "debug", c.Debug, "used to activate debug logs")
 }
