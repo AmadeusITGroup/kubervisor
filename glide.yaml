@@ -11,3 +11,7 @@ import:
 - package: github.com/spf13/pflag
 - package: go.uber.org/zap
 - package: github.com/heptiolabs/healthcheck
+- package: github.com/onsi/ginkgo
+  version: ^1.4.0
+- package: github.com/onsi/gomega
+  version: ^1.3.0
