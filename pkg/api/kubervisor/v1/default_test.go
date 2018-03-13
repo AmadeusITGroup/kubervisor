@@ -53,38 +53,6 @@ func Test_isDiscreteValueOutOfListDefaulted(t *testing.T) {
 			},
 			want: false,
 		},
-		{
-			name: "missing GoodValues",
-			args: args{
-				item: &DiscreteValueOutOfList{
-					PrometheusService: "",
-					PromQL:            "",
-					Key:               "",
-					PodNameKey:        "",
-					//GoodValues:        []string{},
-					BadValues:            []string{},
-					TolerancePercent:     NewUInt(1),
-					MinimumActivityCount: NewUInt(1),
-				},
-			},
-			want: false,
-		},
-		{
-			name: "missing BadValues",
-			args: args{
-				item: &DiscreteValueOutOfList{
-					PrometheusService: "",
-					PromQL:            "",
-					Key:               "",
-					PodNameKey:        "",
-					GoodValues:        []string{},
-					//BadValues:         []string{},
-					TolerancePercent:     NewUInt(1),
-					MinimumActivityCount: NewUInt(1),
-				},
-			},
-			want: false,
-		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {

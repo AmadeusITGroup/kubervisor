@@ -125,12 +125,6 @@ func isBreakerStrategyDefaulted(item *BreakerStrategy) bool {
 
 // isDiscreteValueOutOfListDefaulted used to check if a DiscreteValueOutOfList is already defaulted
 func isDiscreteValueOutOfListDefaulted(item *DiscreteValueOutOfList) bool {
-	if item.BadValues == nil {
-		return false
-	}
-	if item.GoodValues == nil {
-		return false
-	}
 	if item.MinimumActivityCount == nil {
 		return false
 	}

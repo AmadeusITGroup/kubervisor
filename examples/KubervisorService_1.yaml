@@ -4,7 +4,7 @@ items:
 - apiVersion: v1
   kind: Service
   metadata:
-    name: svc-foo
+    name: foo-svc
     labels:
       app: foo
   spec:
@@ -22,20 +22,19 @@ items:
   spec:
     service: foo-svc
     breaker:
-      evaluationPeriod: 10s
       minPodsAvailableCount: 2
-      MinPodsAvailableRatio: 50
+      minPodsAvailableRatio: 50
       discreteValueOutOfList: 
         prometheusService:
         promQL:
         key:
         podNamekey:
-        goodValues:
+        goodValues: ["200"]
         badValues:
         tolerance: 80
         minActivity: 50
     activator:
       mode: periodic
-      period: 30s
+      period: 30
       maxRetryCount: 5
       maxPauseCount: 5

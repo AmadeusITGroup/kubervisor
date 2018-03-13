@@ -1,0 +1,130 @@
+package controller
+
+import (
+	"reflect"
+	"testing"
+	"time"
+
+	apiv1 "github.com/amadeusitgroup/podkubervisor/pkg/api/kubervisor/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+)
+
+func TestUpdateStatusConditionServiceError(t *testing.T) {
+	now := metav1.Now()
+	pastTime := metav1.NewTime(now.Truncate(2 * time.Minute))
+	msg := "service not found"
+
+	type args struct {
+		status     *apiv1.KubervisorServiceStatus
+		msg        string
+		updatetime metav1.Time
+	}
+	tests := []struct {
+		name    string
+		args    args
+		want    *apiv1.KubervisorServiceStatus
+		wantErr bool
+	}{
+		{
+			name: "add new condition",
+			args: args{
+				status: &apiv1.KubervisorServiceStatus{
+					Conditions: []apiv1.KubervisorServiceCondition{},
+				},
+				msg:        msg,
+				updatetime: now,
+			},
+			want: &apiv1.KubervisorServiceStatus{
+				Conditions: []apiv1.KubervisorServiceCondition{newStatusConditionServiceError(msg, now)},
+			},
+			wantErr: false,
+		},
+
+		{
+			name: "update condition",
+			args: args{
+				status: &apiv1.KubervisorServiceStatus{
+					Conditions: []apiv1.KubervisorServiceCondition{newStatusConditionServiceError(msg, pastTime)},
+				},
+				msg:        msg,
+				updatetime: now,
+			},
+			want: &apiv1.KubervisorServiceStatus{
+				Conditions: []apiv1.KubervisorServiceCondition{newStatusConditionServiceError(msg, now)},
+			},
+			wantErr: false,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, err := UpdateStatusConditionServiceError(tt.args.status, tt.args.msg, tt.args.updatetime)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("UpdateStatusConditionServiceError() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+			if !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("UpdateStatusConditionServiceError() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestUpdateStatusConditionInitFailure(t *testing.T) {
+	now := metav1.Now()
+	pastTime := metav1.NewTime(now.Truncate(2 * time.Minute))
+	msg := "bad breaker config"
+
+	type args struct {
+		status     *apiv1.KubervisorServiceStatus
+		msg        string
+		updatetime metav1.Time
+	}
+	tests := []struct {
+		name    string
+		args    args
+		want    *apiv1.KubervisorServiceStatus
+		wantErr bool
+	}{
+		{
+			name: "add new condition",
+			args: args{
+				status: &apiv1.KubervisorServiceStatus{
+					Conditions: []apiv1.KubervisorServiceCondition{},
+				},
+				msg:        msg,
+				updatetime: now,
+			},
+			want: &apiv1.KubervisorServiceStatus{
+				Conditions: []apiv1.KubervisorServiceCondition{newStatusConditionInitFailed(msg, now)},
+			},
+			wantErr: false,
+		},
+
+		{
+			name: "update condition",
+			args: args{
+				status: &apiv1.KubervisorServiceStatus{
+					Conditions: []apiv1.KubervisorServiceCondition{newStatusConditionInitFailed(msg, pastTime)},
+				},
+				msg:        msg,
+				updatetime: now,
+			},
+			want: &apiv1.KubervisorServiceStatus{
+				Conditions: []apiv1.KubervisorServiceCondition{newStatusConditionInitFailed(msg, now)},
+			},
+			wantErr: false,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, err := UpdateStatusConditionInitFailure(tt.args.status, tt.args.msg, tt.args.updatetime)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("UpdateStatusConditionInitFailure() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+			if !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("UpdateStatusConditionInitFailure() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
