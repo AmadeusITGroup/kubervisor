@@ -38,6 +38,7 @@ type Interface interface {
 	Start(ctx context.Context)
 	Stop() error
 	CompareWithSpec(spec *v1.KubervisorServiceSpec, selector labels.Selector) bool
+	GetStatus() v1.BreakerStatus
 }
 
 //KubervisorServiceItem  Use to agreagate all sub process linked to a KubervisorService
@@ -102,4 +103,9 @@ func (b *KubervisorServiceItem) runActivator(ctx context.Context) {
 	b.waitGroup.Add(1)
 	defer b.waitGroup.Done()
 	b.activator.Run(ctx.Done())
+}
+
+//GetStatus get the current status for the breaker (stats on pods)
+func (b *KubervisorServiceItem) GetStatus() v1.BreakerStatus {
+	return b.breaker.GetStatus()
 }

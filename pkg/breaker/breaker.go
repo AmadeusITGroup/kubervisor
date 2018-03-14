@@ -4,6 +4,8 @@ import (
 	"reflect"
 	"time"
 
+	"github.com/amadeusitgroup/podkubervisor/pkg/labeling"
+
 	"go.uber.org/zap"
 	"k8s.io/apimachinery/pkg/labels"
 	kv1 "k8s.io/client-go/listers/core/v1"
@@ -17,6 +19,7 @@ import (
 type Breaker interface {
 	Run(stop <-chan struct{})
 	CompareConfig(specConfig *v1.BreakerStrategy) bool
+	GetStatus() v1.BreakerStatus
 }
 
 //Config configuration required to create a Breaker
@@ -27,6 +30,7 @@ type Config struct {
 	PodLister             kv1.PodNamespaceLister
 	PodControl            pod.ControlInterface
 	Logger                *zap.Logger
+	BreakerName           string
 }
 
 var _ Breaker = &BreakerImpl{}
@@ -105,4 +109,27 @@ func (b *BreakerImpl) computeMinAvailablePods(podUnderSelectorCount int) int {
 		return quota
 	}
 	return count
+}
+
+//GetStatus return the status for the breaker
+func (b *BreakerImpl) GetStatus() v1.BreakerStatus {
+	status := v1.BreakerStatus{}
+	allPods, _ := b.podLister.List(b.selector)
+	status.NbPodsManaged = uint32(len(allPods))
+	for _, p := range allPods {
+		if !pod.IsReady(p) {
+			status.NbPodsManaged--
+			continue
+		}
+		yesTraffic, pauseTraffic, err := labeling.IsPodTrafficLabelOkOrPause(p)
+		switch {
+		case err != nil:
+			status.NbPodsUnknown++
+		case pauseTraffic:
+			status.NbPodsPaused++
+		case !yesTraffic:
+			status.NbPodsBreaked++
+		}
+	}
+	return status
 }

@@ -1,10 +1,8 @@
 package activate
 
 import (
+	"fmt"
 	"time"
-
-	"k8s.io/apimachinery/pkg/labels"
-	"k8s.io/apimachinery/pkg/selection"
 
 	"github.com/amadeusitgroup/podkubervisor/pkg/labeling"
 )
@@ -26,25 +24,17 @@ func New(cfg FactoryConfig) (Activator, error) {
 		return cfg.customFactory(cfg)
 	}
 
-	augmentedSelector := labels.Everything()
-	if cfg.Selector != nil {
-		augmentedSelector = cfg.Selector.DeepCopySelector()
+	augmentedSelector, errSelector := labeling.SelectorWithBreakerName(cfg.Selector, cfg.BreakerName)
+	if errSelector != nil {
+		return nil, fmt.Errorf("Can't build activator: %v", errSelector)
 	}
-
-	var err error
-	rqBreaker, err := labels.NewRequirement(labeling.LabelBreakerNameKey, selection.Equals, []string{cfg.BreakerName})
-	if err != nil {
-		return nil, err
-	}
-	augmentedSelector = augmentedSelector.Add(*rqBreaker)
 
 	a := &ActivatorImpl{
 		activatorStrategyConfig: cfg.ActivatorStrategyConfig,
 		logger:                  cfg.Logger,
 		podControl:              cfg.PodControl,
 		podLister:               cfg.PodLister,
-		selectorConfig:          cfg.Selector,
-		augmentedSelector:       augmentedSelector,
+		selectorConfig:          augmentedSelector,
 		breakerName:             cfg.BreakerName,
 		evaluationPeriod:        time.Second,
 	}

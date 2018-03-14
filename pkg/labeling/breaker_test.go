@@ -7,6 +7,7 @@ import (
 
 	kv1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/labels"
 )
 
 func TestGetRetryAt(t *testing.T) {
@@ -144,6 +145,67 @@ func TestGetRetryCount(t *testing.T) {
 			}
 			if got != tt.want {
 				t.Errorf("GetRetryCount() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestSelectorWithBreakerName(t *testing.T) {
+	type args struct {
+		inputSelector labels.Selector
+		breakerName   string
+	}
+	tests := []struct {
+		name    string
+		args    args
+		want    labels.Selector
+		wantErr bool
+	}{
+		{
+			name: "fine",
+			args: args{
+				inputSelector: labels.Set{"app": "test1"}.AsSelectorPreValidated(),
+				breakerName:   "b1",
+			},
+			wantErr: false,
+			want:    labels.Set{"app": "test1", LabelBreakerNameKey: "b1"}.AsSelectorPreValidated(),
+		},
+		{
+			name: "fine nil",
+			args: args{
+				breakerName: "b1",
+			},
+			wantErr: false,
+			want:    labels.Set{LabelBreakerNameKey: "b1"}.AsSelectorPreValidated(),
+		},
+		{
+			name: "fine everything",
+			args: args{
+				inputSelector: labels.Everything(),
+				breakerName:   "b1",
+			},
+			wantErr: false,
+			want:    labels.Set{LabelBreakerNameKey: "b1"}.AsSelectorPreValidated(),
+		},
+		{
+			name: "Error fornat",
+			args: args{
+				inputSelector: labels.Everything(),
+				breakerName:   "b1!@#!!",
+			},
+			wantErr: true,
+			want:    nil,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, err := SelectorWithBreakerName(tt.args.inputSelector, tt.args.breakerName)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("SelectorWithBreakerName() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+			if !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("SelectorWithBreakerName() = %v, want %v", got, tt.want)
 			}
 		})
 	}

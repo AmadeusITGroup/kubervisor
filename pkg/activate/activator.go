@@ -38,13 +38,13 @@ var _ Activator = &ActivatorImpl{}
 type ActivatorImpl struct {
 	activatorStrategyConfig v1.ActivatorStrategy
 	selectorConfig          labels.Selector
-	augmentedSelector       labels.Selector
-	podLister               kv1.PodNamespaceLister
-	podControl              pod.ControlInterface
-	breakerName             string
-	logger                  *zap.Logger
-	evaluationPeriod        time.Duration
-	strategyApplier         strategyApplier
+	//	augmentedSelector       labels.Selector
+	podLister        kv1.PodNamespaceLister
+	podControl       pod.ControlInterface
+	breakerName      string
+	logger           *zap.Logger
+	evaluationPeriod time.Duration
+	strategyApplier  strategyApplier
 }
 
 type strategyApplier interface {
@@ -54,7 +54,7 @@ type strategyApplier interface {
 //Run implements Activator run loop ( to launch as goroutine: go Run())}
 func (b *ActivatorImpl) Run(stop <-chan struct{}) {
 	rqTrafficNo, _ := labels.NewRequirement(labeling.LabelTrafficKey, selection.Equals, []string{string(labeling.LabelTrafficNo)})
-	withTrafficNoSelector := b.augmentedSelector.Add(*rqTrafficNo)
+	withTrafficNoSelector := b.selectorConfig.Add(*rqTrafficNo)
 
 	ticker := time.NewTicker(b.evaluationPeriod)
 	defer ticker.Stop()
@@ -83,7 +83,8 @@ func (b *ActivatorImpl) CompareConfig(specStrategy *v1.ActivatorStrategy, specSe
 	if !reflect.DeepEqual(&b.activatorStrategyConfig, specStrategy) {
 		return false
 	}
-	if !reflect.DeepEqual(b.selectorConfig, specSelector) {
+	s, _ := labeling.SelectorWithBreakerName(specSelector, b.breakerName)
+	if !reflect.DeepEqual(s, b.selectorConfig) {
 		return false
 	}
 
@@ -125,7 +126,7 @@ func (b *ActivatorImpl) applyActivatorStrategy(p *kapiv1.Pod) error {
 	case v1.ActivatorStrategyModeRetryAndPause:
 		if retryCount > int(*b.activatorStrategyConfig.MaxRetryCount) {
 			rqTrafficPause, _ := labels.NewRequirement(labeling.LabelTrafficKey, selection.Equals, []string{string(labeling.LabelTrafficPause)})
-			withTrafficPauseSelector := b.augmentedSelector.Add(*rqTrafficPause)
+			withTrafficPauseSelector := b.selectorConfig.Add(*rqTrafficPause)
 			list, err := b.podLister.List(withTrafficPauseSelector)
 			if err != nil {
 				return fmt.Errorf("in activator '%s', can't list paused pods:%s", b.breakerName, err)
