@@ -67,4 +67,31 @@ To configure the system a user would have to complete the following steps:
 
 To deactivate any effect of the Kubervisor for a given service, simply delete from the Selector the label with key **kubervisor/traffic**
 
+If you know that some pods are going to be under control of the Kubervisor, it is advised to directly add a label **kubervisor/traffic=yes** inside the pod template. This label must not be part of template only, not the selector!
 
+```
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: myapplication
+  labels:
+    app: myapplication
+spec:
+  replicas: 3
+  selector:
+    matchLabels:                       # <-- kubervisor labels must not appear in the selector!
+      app: myapplication
+  template:
+    metadata:
+      labels:
+        app: myapplication
+        kubervisor/traffic: yes        # <-- add label for kubervisor
+    spec:
+      containers:
+      - name: myapp
+        image: myapp:1.7.9
+        ports:
+        - containerPort: 80
+```
+
+This label is automattically added by the controller on the pods if it is missing. But this happens once the resources are synchronized in the controller (every couple of seconds in theory) and of course if the controller is running. Having the label already preset in the pod template prevent so corner case in case the controller is missbehaving or absent.
