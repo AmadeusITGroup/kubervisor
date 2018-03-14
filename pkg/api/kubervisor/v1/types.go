@@ -95,6 +95,7 @@ type KubervisorServiceStatus struct {
 type BreakerStatus struct {
 	NbPodsManaged uint32 `json:"nbPodsManaged,omitempty"`
 	NbPodsBreaked uint32 `json:"nbPodsBreaked,omitempty"`
+	NbPodsPaused  uint32 `json:"nbPodsPaused,omitempty"`
 	// Last time the condition was checked.
 	LastProbeTime metav1.Time `json:"lastProbeTime,omitempty"`
 }

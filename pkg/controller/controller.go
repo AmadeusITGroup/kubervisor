@@ -272,7 +272,6 @@ func (ctrl *Controller) syncKubervisorService(bc *kubervisorapi.KubervisorServic
 	now := metav1.Now()
 	// Init status.StartTime
 	if bc.Status.StartTime == nil {
-		now := metav1.Now()
 		bc.Status.StartTime = &now
 		if _, err := ctrl.updateHandlerFunc(bc); err != nil {
 			ctrl.Logger.Sugar().Errorf("BreakerService %s/%s: unable init startTime: %v", bc.Namespace, bc.Name, err)
