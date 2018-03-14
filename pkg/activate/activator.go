@@ -38,13 +38,12 @@ var _ Activator = &ActivatorImpl{}
 type ActivatorImpl struct {
 	activatorStrategyConfig v1.ActivatorStrategy
 	selectorConfig          labels.Selector
-	//	augmentedSelector       labels.Selector
-	podLister        kv1.PodNamespaceLister
-	podControl       pod.ControlInterface
-	breakerName      string
-	logger           *zap.Logger
-	evaluationPeriod time.Duration
-	strategyApplier  strategyApplier
+	podLister               kv1.PodNamespaceLister
+	podControl              pod.ControlInterface
+	breakerName             string
+	logger                  *zap.Logger
+	evaluationPeriod        time.Duration
+	strategyApplier         strategyApplier
 }
 
 type strategyApplier interface {

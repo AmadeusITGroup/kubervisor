@@ -7,15 +7,16 @@ import (
 	"testing"
 	"time"
 
+	"go.uber.org/zap"
+	kapiv1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/labels"
+	kv1 "k8s.io/client-go/listers/core/v1"
+
 	"github.com/amadeusitgroup/podkubervisor/pkg/anomalydetector"
 	"github.com/amadeusitgroup/podkubervisor/pkg/api/kubervisor/v1"
 	"github.com/amadeusitgroup/podkubervisor/pkg/labeling"
 	"github.com/amadeusitgroup/podkubervisor/pkg/pod"
 	test "github.com/amadeusitgroup/podkubervisor/test"
-	"go.uber.org/zap"
-	kapiv1 "k8s.io/api/core/v1"
-	"k8s.io/apimachinery/pkg/labels"
-	kv1 "k8s.io/client-go/listers/core/v1"
 )
 
 func TestBreakerImpl_computeMinAvailablePods(t *testing.T) {
