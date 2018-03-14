@@ -14,6 +14,9 @@ func (e *emptyCustomBreakerT) Run(stop <-chan struct{}) {}
 func (e *emptyCustomBreakerT) CompareConfig(specConfig *v1.BreakerStrategy) bool {
 	return e.SimilarConfig
 }
+func (e *emptyCustomBreakerT) GetStatus() v1.BreakerStatus {
+	return v1.BreakerStatus{}
+}
 
 var emptyCustomBreaker Breaker = &emptyCustomBreakerT{}
 
@@ -51,6 +54,18 @@ func TestNew(t *testing.T) {
 				return ok
 			},
 		},
+		{
+			name: "bad breaker name",
+			args: args{
+				cfg: FactoryConfig{
+					Config: Config{
+						BreakerName: "b1!@#!",
+					},
+				},
+			},
+			wantErr: true,
+		},
+
 		{
 			name: "error",
 			args: args{

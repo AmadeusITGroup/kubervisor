@@ -94,7 +94,7 @@ func TestActivatorImpl_Run(t *testing.T) {
 			sequence := test.NewTestSequence(t, testprefix+"/"+tt.name, tt.stepCount, tt.sequenceTimeout)
 			b := &ActivatorImpl{
 				activatorStrategyConfig: tt.fields.activatorStrategyConfig,
-				augmentedSelector:       tt.fields.selector,
+				selectorConfig:          tt.fields.selector,
 				podLister:               tt.fields.podLister,
 				podControl:              tt.fields.podControl,
 				breakerName:             tt.fields.breakerName,
@@ -478,7 +478,7 @@ func TestActivatorImpl_applyActivatorStrategy(t *testing.T) {
 
 			b := &ActivatorImpl{
 				activatorStrategyConfig: tt.fields.activatorStrategyConfig,
-				augmentedSelector:       tt.fields.selector,
+				selectorConfig:          tt.fields.selector,
 				podLister:               tt.fields.podLister,
 				podControl:              tt.fields.podControl,
 				breakerName:             tt.fields.breakerName,
@@ -518,6 +518,7 @@ func TestActivatorImpl_CompareConfig(t *testing.T) {
 				config: FactoryConfig{
 					Config: Config{
 						ActivatorStrategyConfig: *v1.DefaultActivatorStrategy(&v1.ActivatorStrategy{}),
+						BreakerName:             "b1",
 						Selector:                labels.Set{"app": "test1"}.AsSelectorPreValidated(),
 					},
 				},

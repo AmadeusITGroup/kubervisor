@@ -21,6 +21,7 @@ func New(bc *apiv1.KubervisorService, cfg *Config) (Interface, error) {
 	activateConfig := activator.FactoryConfig{
 		Config: activator.Config{
 			ActivatorStrategyConfig: bc.Spec.Activator,
+			Selector:                cfg.Selector,
 			BreakerName:             bc.Name,
 			PodControl:              cfg.PodControl,
 			PodLister:               cfg.PodLister.Pods(bc.Namespace),
@@ -40,6 +41,7 @@ func New(bc *apiv1.KubervisorService, cfg *Config) (Interface, error) {
 			PodControl:            cfg.PodControl,
 			PodLister:             cfg.PodLister.Pods(bc.Namespace),
 			Logger:                cfg.Logger,
+			BreakerName:           bc.Name,
 		},
 	}
 	breakerInterface, err := breaker.New(breakerConfig)

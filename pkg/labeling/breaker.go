@@ -6,6 +6,8 @@ import (
 	"time"
 
 	kv1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/labels"
+	"k8s.io/apimachinery/pkg/selection"
 )
 
 //Kubervisor keys for Labels and Annotations
@@ -37,4 +39,19 @@ func GetRetryCount(pod *kv1.Pod) (int, error) {
 		return 0, fmt.Errorf("No retryCount annotation")
 	}
 	return strconv.Atoi(retryCount)
+}
+
+//SelectorWithBreakerName augment the given selector with the breaker name
+func SelectorWithBreakerName(inputSelector labels.Selector, breakerName string) (labels.Selector, error) {
+	augmentedSelector := labels.Everything()
+	if inputSelector != nil {
+		augmentedSelector = inputSelector.DeepCopySelector()
+	}
+
+	var err error
+	rqBreaker, err := labels.NewRequirement(LabelBreakerNameKey, selection.Equals, []string{breakerName})
+	if err != nil {
+		return nil, err
+	}
+	return augmentedSelector.Add(*rqBreaker), nil
 }

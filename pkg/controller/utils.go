@@ -62,6 +62,23 @@ func UpdateStatusConditionInitFailure(status *apiv1.KubervisorServiceStatus, msg
 	return UpdateStatusCondition(status, apiv1.KubervisorServiceInitFailed, updatetime, newFunc, upFunc)
 }
 
+// newStatusConditionRunning used to create a new KubervisorServiceCondition for running
+func newStatusConditionRunning(msg string, creationTime metav1.Time) apiv1.KubervisorServiceCondition {
+	return newStatusCondition(apiv1.KubervisorServiceRunning, kapiv1.ConditionTrue, msg, "KubervisorService running", creationTime)
+}
+
+// UpdateStatusConditionRunning used to udpate or create a KubervisorServiceCondition for Running
+func UpdateStatusConditionRunning(status *apiv1.KubervisorServiceStatus, msg string, updatetime metav1.Time) (*apiv1.KubervisorServiceStatus, error) {
+	newFunc := func() apiv1.KubervisorServiceCondition {
+		return newStatusConditionRunning(msg, updatetime)
+	}
+	upFunc := func(old *apiv1.KubervisorServiceCondition) apiv1.KubervisorServiceCondition {
+		return updateStatusCondition(old, kapiv1.ConditionTrue, updatetime)
+	}
+
+	return UpdateStatusCondition(status, apiv1.KubervisorServiceRunning, updatetime, newFunc, upFunc)
+}
+
 // UpdateStatusCondition used to udpate or create a KubervisorServiceCondition
 func UpdateStatusCondition(status *apiv1.KubervisorServiceStatus, conditionType apiv1.KubervisorServiceConditionType, updatetime metav1.Time, newConditionFunc func() apiv1.KubervisorServiceCondition, updateConditionFunc func(old *apiv1.KubervisorServiceCondition) apiv1.KubervisorServiceCondition) (*apiv1.KubervisorServiceStatus, error) {
 	newStatus := status.DeepCopy()
@@ -71,6 +88,7 @@ func UpdateStatusCondition(status *apiv1.KubervisorServiceStatus, conditionType 
 			found = true
 			newStatus.Conditions[idCondition] = updateConditionFunc(&condition)
 		} else {
+			// TODO improve condition status transition. Can we have 2 condition with true ?
 			newStatus.Conditions[idCondition] = updateStatusCondition(&condition, kapiv1.ConditionFalse, updatetime)
 		}
 	}

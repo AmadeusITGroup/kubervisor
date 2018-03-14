@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"reflect"
 	"time"
 
 	"github.com/heptiolabs/healthcheck"
@@ -326,27 +327,31 @@ func (ctrl *Controller) syncKubervisorService(bc *kubervisorapi.KubervisorServic
 		}
 	}
 
-	globalActivity := false
 	// check if some pods have been removed from the service selector
 	// if it is the case, removed all labels and annotation
-	activity, err := ctrl.podsCleaner(bci.Name(), associatedSvc)
-	if err != nil {
-		return activity, err
-	}
-	if activity {
-		globalActivity = true
+	if _, err = ctrl.podsCleaner(bci.Name(), associatedSvc); err != nil {
+		return false, err
 	}
 
 	// initialize possible new pods (add labels)
-	activity, err = ctrl.initializePods(bci.Name(), associatedSvc)
-	if err != nil {
-		return activity, err
-	}
-	if activity {
-		globalActivity = true
+	if _, err = ctrl.initializePods(bci.Name(), associatedSvc); err != nil {
+		return false, err
 	}
 
-	return globalActivity, nil
+	newStatus := bci.GetStatus()
+	if !reflect.DeepEqual(&newStatus, bc.Status.Breaker) {
+		bc.Status.Breaker = &newStatus
+		//update status to running
+		if newStatus, err := UpdateStatusConditionRunning(&bc.Status, "", now); err == nil {
+			bc.Status = *newStatus
+		}
+
+		ctrl.Logger.Sugar().Debugf("BreakerService %s/%s: breaker status updated", bc.Namespace, bc.Name)
+		if _, err := ctrl.updateHandlerFunc(bc); err != nil {
+			return false, err
+		}
+	}
+	return false, nil
 }
 
 // Used to select all currently associated to the KubervisorService and check if it is still the case
@@ -434,6 +439,13 @@ func (ctrl *Controller) createItem(bc *kubervisorapi.KubervisorService, associat
 		}
 		return nil, err
 	}
+
+	//update status to running
+	if newStatus, err := UpdateStatusConditionRunning(&bc.Status, "", now); err == nil {
+		bc.Status = *newStatus
+		ctrl.updateHandlerFunc(bc)
+	}
+
 	return bci, nil
 }
 
