@@ -136,6 +136,8 @@ func New(cfg *Config) *Controller {
 		rootContext:           ctx,
 		rootContextCancelFunc: ctxCancel,
 
+		items: item.NewBreackerConfigItemStore(),
+
 		httpServer: &http.Server{Addr: cfg.ListenAddr},
 
 		queue:    workqueue.NewNamedRateLimitingQueue(workqueue.DefaultControllerRateLimiter(), "kubervisorservice"),
@@ -229,20 +231,22 @@ func (ctrl *Controller) sync(key string) (bool, error) {
 	ctrl.Logger.Sugar().Debugf("sync() key: %s", key)
 	startTime := time.Now()
 	defer func() {
-		ctrl.Logger.Sugar().Debug("Finished syncing KubervisorService %q in %v", key, time.Since(startTime))
+		ctrl.Logger.Sugar().Debugf("Finished syncing KubervisorService %q in %v", key, time.Since(startTime))
 		// TODO add prometheus metric here
 	}()
 	namespace, name, err := cache.SplitMetaNamespaceKey(key)
 	if err != nil {
 		return false, err
 	}
-	ctrl.Logger.Sugar().Debug("Syncing KubervisorService %s/%s", namespace, name)
+	ctrl.Logger.Sugar().Debugf("Syncing KubervisorService %s/%s", namespace, name)
 	sharedKubervisorService, err := ctrl.breakerLister.KubervisorServices(namespace).Get(name)
 	if err != nil {
 		ctrl.Logger.Sugar().Errorf("unable to get KubervisorService %s/%s: %v. Maybe deleted", namespace, name, err)
 		return false, nil
 	}
+
 	if !kubervisorapi.IsKubervisorServiceDefaulted(sharedKubervisorService) {
+		ctrl.Logger.Sugar().Debugf("KubervisorService IsKubervisorServiceDefaulted return false for:%s/%s", namespace, name)
 		defaultedKubervisorService := kubervisorapi.DefaultKubervisorService(sharedKubervisorService)
 		if _, err = ctrl.updateHandlerFunc(defaultedKubervisorService); err != nil {
 			ctrl.Logger.Sugar().Errorf("unable to default KubervisorService %s/%s, error:%v", namespace, name, err)
@@ -265,12 +269,33 @@ func (ctrl *Controller) sync(key string) (bool, error) {
 
 func (ctrl *Controller) syncKubervisorService(bc *kubervisorapi.KubervisorService) (bool, error) {
 	key := fmt.Sprintf("%s/%s", bc.Namespace, bc.Name)
+	now := metav1.Now()
+	// Init status.StartTime
+	if bc.Status.StartTime == nil {
+		bc.Status.StartTime = &now
+		if _, err := ctrl.updateHandlerFunc(bc); err != nil {
+			ctrl.Logger.Sugar().Errorf("BreakerService %s/%s: unable init startTime: %v", bc.Namespace, bc.Name, err)
+			return false, err
+		}
+		ctrl.Logger.Sugar().Infof("BreakerService %s/%s: startTime updated", bc.Namespace, bc.Name)
+		return true, nil
+	}
+	ctrl.Logger.Sugar().Debugf("BreakerService %s/%s: startTime already setted", bc.Namespace, bc.Name)
 
 	associatedSvc, err := ctrl.serviceLister.Services(bc.Namespace).Get(bc.Spec.Service)
 	if err != nil {
 		if !apierrors.IsNotFound(err) {
-			ctrl.Logger.Sugar().Errorf("associated service %s/%s didn't exist, error:", bc.Namespace, bc.Spec.Service)
 			return false, err
+		}
+		msg := fmt.Sprintf("associated service %s/%s didn't exist, error:", bc.Namespace, bc.Spec.Service)
+		newStatus, err2 := UpdateStatusConditionServiceError(&bc.Status, msg, now)
+		if err2 != nil {
+			return false, err2
+		}
+		bc.Status = *newStatus
+		ctrl.Logger.Sugar().Errorf(msg)
+		if _, err2 = ctrl.updateHandlerFunc(bc); err2 != nil {
+			return false, err2
 		}
 		return false, err
 	}
@@ -281,8 +306,8 @@ func (ctrl *Controller) syncKubervisorService(bc *kubervisorapi.KubervisorServic
 
 	var bci item.Interface
 	if !exist {
-		ctrl.Logger.Sugar().Debugw("item not found for key:%s", key)
-		if bci, err = ctrl.newKubervisorServiceItem(bc, associatedSvc); err != nil {
+		ctrl.Logger.Sugar().Debugf("item not found for key:%s", key)
+		if bci, err = ctrl.createItem(bc, associatedSvc, now); err != nil {
 			return false, err
 		}
 		ctrl.items.Add(bci)
@@ -294,7 +319,7 @@ func (ctrl *Controller) syncKubervisorService(bc *kubervisorapi.KubervisorServic
 		}
 		if IsSpecUpdated(bc, associatedSvc, bci) {
 			bci.Stop()
-			if bci, err = ctrl.newKubervisorServiceItem(bc, associatedSvc); err != nil {
+			if bci, err = ctrl.createItem(bc, associatedSvc, now); err != nil {
 				return false, err
 			}
 			ctrl.items.Update(bci)
@@ -391,6 +416,25 @@ func (ctrl *Controller) searchNewPods(svc *apiv1.Service) ([]*apiv1.Pod, error) 
 	}
 
 	return outPods, nil
+}
+
+func (ctrl *Controller) createItem(bc *kubervisorapi.KubervisorService, associatedSvc *apiv1.Service, now metav1.Time) (item.Interface, error) {
+	bci, err := ctrl.newKubervisorServiceItem(bc, associatedSvc)
+	if err != nil {
+		msg := fmt.Sprintf("unable to create KubervisorServiceItem, err:%v", err)
+		ctrl.Logger.Sugar().Debugf(msg)
+		newStatus, err2 := UpdateStatusConditionInitFailure(&bc.Status, msg, now)
+		if err2 != nil {
+			return nil, err2
+		}
+		bc.Status = *newStatus
+		ctrl.Logger.Sugar().Errorf(msg)
+		if _, err2 = ctrl.updateHandlerFunc(bc); err2 != nil {
+			return nil, err2
+		}
+		return nil, err
+	}
+	return bci, nil
 }
 
 func (ctrl *Controller) newKubervisorServiceItem(bc *kubervisorapi.KubervisorService, svc *apiv1.Service) (item.Interface, error) {

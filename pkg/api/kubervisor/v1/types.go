@@ -3,6 +3,7 @@ package v1
 import (
 	"time"
 
+	api "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -44,9 +45,59 @@ type KubervisorServiceSpec struct {
 	Service   string            `json:"service,omitempty"`
 }
 
+// KubervisorServiceConditionType KubervisorService Condition Type
+type KubervisorServiceConditionType string
+
+// These are valid conditions of a KubervisorService.
+const (
+	// KubervisorServiceInitFailed means the KubervisorService has completed its execution.
+	KubervisorServiceInitFailed KubervisorServiceConditionType = "InitFailed"
+	// KubervisorServiceRunning means the KubervisorService has completed its execution.
+	KubervisorServiceRunning KubervisorServiceConditionType = "Running"
+	// KubeServiceNotAvailable means the KubervisorService has completed its execution.
+	KubeServiceNotAvailable KubervisorServiceConditionType = "ServiceNotAvailable"
+	// KubervisorServiceFailed means the KubervisorService has failed its execution.
+	KubervisorServiceFailed KubervisorServiceConditionType = "Failed"
+)
+
+// KubervisorServiceCondition represent the condition of the KubervisorService
+type KubervisorServiceCondition struct {
+	// Type of KubervisorService condition
+	Type KubervisorServiceConditionType `json:"type"`
+	// Status of the condition, one of True, False, Unknown.
+	Status api.ConditionStatus `json:"status"`
+	// Last time the condition was checked.
+	LastProbeTime metav1.Time `json:"lastProbeTime,omitempty"`
+	// Last time the condition transited from one status to another.
+	LastTransitionTime metav1.Time `json:"lastTransitionTime,omitempty"`
+	// (brief) reason for the condition's last transition.
+	Reason string `json:"reason,omitempty"`
+	// Human readable message indicating details about last transition.
+	Message string `json:"message,omitempty"`
+}
+
 // KubervisorServiceStatus contains KubervisorService status
 type KubervisorServiceStatus struct {
-	CurrentStatus string `json:"status"`
+	// Conditions represent the latest available observations of an object's current state.
+	Conditions []KubervisorServiceCondition `json:"conditions,omitempty" patchStrategy:"merge" patchMergeKey:"type"`
+
+	// StartTime represents time when the KubervisorService was acknowledged by the Kubervisor controller
+	// It is not guaranteed to be set in happens-before order across separate operations.
+	// It is represented in RFC3339 form and is in UTC.
+	// StartTime doesn't consider startime of `ExternalReference`
+	StartTime *metav1.Time `json:"startTime,omitempty"`
+
+	// Status represent the breaker status: contains status by pods (score, breaked or not, reason)
+	Breaker *BreakerStatus `json:"breaker,omitempty"`
+}
+
+// BreakerStatus contains breaker status
+type BreakerStatus struct {
+	NbPodsManaged uint32 `json:"nbPodsManaged,omitempty"`
+	NbPodsBreaked uint32 `json:"nbPodsBreaked,omitempty"`
+	NbPodsPaused  uint32 `json:"nbPodsPaused,omitempty"`
+	// Last time the condition was checked.
+	LastProbeTime metav1.Time `json:"lastProbeTime,omitempty"`
 }
 
 // BreakerStrategy contains BreakerStrategy definition

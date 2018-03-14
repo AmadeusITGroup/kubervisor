@@ -24,10 +24,11 @@ func NewBreackerConfigItemStore() KubervisorServiceItemStore {
 func keyFunc(obj interface{}) (string, error) {
 	bci, ok := obj.(Interface)
 	if !ok {
+		fmt.Printf("keyFunc obj:%v\n", obj)
 		return "", fmt.Errorf("unable to return the key from obj: %v", obj)
 	}
 
-	return bci.Name(), nil
+	return fmt.Sprintf("%s/%s", bci.Name(), bci.Namespace()), nil
 }
 
 // Interface item interface
