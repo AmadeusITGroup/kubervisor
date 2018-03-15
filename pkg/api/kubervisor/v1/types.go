@@ -108,6 +108,8 @@ type BreakerStrategy struct {
 	MinPodsAvailableRatio *uint         `json:"minPodsAvailableRatio,omitempty"`
 
 	DiscreteValueOutOfList *DiscreteValueOutOfList `json:"discreteValueOutOfList,omitempty"`
+
+	CustomService string `json:"customService,omitempty"`
 }
 
 // DiscreteValueOutOfList detect anomaly when the a value is not in the list with a ratio that exceed the tolerance

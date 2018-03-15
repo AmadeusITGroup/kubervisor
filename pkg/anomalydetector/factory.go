@@ -4,6 +4,8 @@ import (
 	"fmt"
 
 	promClient "github.com/prometheus/client_golang/api"
+
+	"github.com/amadeusitgroup/podkubervisor/pkg/api/kubervisor/v1"
 )
 
 //FactoryConfig parameters extended with factory features
@@ -23,6 +25,8 @@ func New(cfg FactoryConfig) (AnomalyDetector, error) {
 	switch {
 	case cfg.BreakerStrategyConfig.DiscreteValueOutOfList != nil:
 		return newDiscreteValueOutOfListAnalyser(cfg.Config)
+	case cfg.BreakerStrategyConfig.CustomService != "":
+		return newCustomAnalyser(cfg.Config)
 	case cfg.customFactory != nil:
 		return cfg.customFactory(cfg)
 	default:
@@ -30,27 +34,27 @@ func New(cfg FactoryConfig) (AnomalyDetector, error) {
 	}
 }
 
+func newCustomAnalyser(cfg Config) (*CustomAnomalyDetector, error) {
+	c := &CustomAnomalyDetector{
+		serviceURI: cfg.BreakerStrategyConfig.CustomService,
+		selector:   cfg.Selector,
+		logger:     cfg.Logger,
+	}
+	c.init()
+	return c, nil
+}
+
 func newDiscreteValueOutOfListAnalyser(cfg Config) (*DiscreteValueOutOfListAnalyser, error) {
 	analyserCfg := *cfg.BreakerStrategyConfig.DiscreteValueOutOfList
 
+	if err := v1.ValidateDiscreteValueOutOfList(analyserCfg); err != nil {
+		return nil, err
+	}
+
 	good, bad := analyserCfg.GoodValues, analyserCfg.BadValues
-	if len(good) == 0 && len(bad) == 0 {
-		return nil, fmt.Errorf("no good nor bad value defined")
-	}
-	if len(good) != 0 && len(bad) != 0 {
-		return nil, fmt.Errorf("good and bad value defined, only good values will be used to do inclusion")
-	}
 	valueCheckerFunc := func(value string) bool { return ContainsString(good, value) }
 	if len(good) == 0 && len(bad) != 0 {
 		valueCheckerFunc = func(value string) bool { return !ContainsString(bad, value) }
-	}
-
-	if len(analyserCfg.Key) == 0 {
-		return nil, fmt.Errorf("missing metric Key definition")
-	}
-
-	if len(analyserCfg.PodNameKey) == 0 {
-		return nil, fmt.Errorf("missing PodName Key definition")
 	}
 
 	a := &DiscreteValueOutOfListAnalyser{DiscreteValueOutOfList: analyserCfg, selector: cfg.Selector, podLister: cfg.PodLister, logger: cfg.Logger}
@@ -60,17 +64,11 @@ func newDiscreteValueOutOfListAnalyser(cfg Config) (*DiscreteValueOutOfListAnaly
 		podAnalyser := &promDiscreteValueOutOfListAnalyser{config: analyserCfg, logger: cfg.Logger}
 
 		podAnalyser.valueCheckerFunc = valueCheckerFunc
-
-		if analyserCfg.PrometheusService == "" {
-			return nil, fmt.Errorf("missing Prometheus service")
-		}
-
 		promconfig := promClient.Config{Address: "http://" + analyserCfg.PrometheusService}
 		var err error
 		if podAnalyser.prometheusClient, err = promClient.NewClient(promconfig); err != nil {
 			return nil, err
 		}
-
 		a.podAnalyser = podAnalyser
 	default:
 		return nil, fmt.Errorf("missing parameter to create DiscreteValueOutOfListAnalyser")
