@@ -48,7 +48,7 @@ func New(cfg FactoryConfig) (Breaker, error) {
 		logger:                cfg.Logger,
 		podControl:            cfg.PodControl,
 		podLister:             cfg.PodLister,
-		selector:              cfg.Selector,
+		selector:              augmentedSelector,
 		anomalyDetector:       anomalyDetector,
 	}, nil
 }
