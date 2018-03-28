@@ -9,7 +9,7 @@ if [[ $SKIPINIT != 1 ]]; then
     echo "Start minikube with RBAC option"
     minikube start --extra-config=apiserver.Authorization.Mode=RBAC
 
-    printf "Waiting for tiller deployment to complete."
+    printf "Waiting for minikube node to be ready."
     until [ $(kubectl get nodes -ojsonpath="{.items[*].metadata.name}") == "minikube" ] > /dev/null 2>&1; do sleep 1; printf "."; done
     echo
 
@@ -28,6 +28,13 @@ if [[ $SKIPINIT != 1 ]]; then
 fi
 
 eval $(minikube docker-env)
+
+if [[ $SKIPMOCK != 1 ]]; then
+    cd $GIT_ROOT/test/e2e
+    make TAG=latest container
+    cd -
+fi
+
 echo "Install the kubervisor operator"
 
 echo "First build the container"

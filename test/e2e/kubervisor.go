@@ -1,6 +1,7 @@
 package e2e
 
 import (
+	"k8s.io/apimachinery/pkg/labels"
 	clientset "k8s.io/client-go/kubernetes"
 
 	// for test lisibility
@@ -33,7 +34,15 @@ var _ = gink.Describe("KubervisorService CRUD", func() {
 		gom.Eventually(framework.IsKubervisorServiceCreated(kubervisorClient, bc.Name, testNs), "5s", "1s").ShouldNot(gom.HaveOccurred())
 	})
 	gink.It("should run busybox", func() {
+		gom.Eventually(framework.E2ERBAC(kubeClient, testNs), "20s", "1s").ShouldNot(gom.HaveOccurred())
 		gom.Eventually(framework.CreateBusyBox(kubeClient, testNs), "20s", "1s").ShouldNot(gom.HaveOccurred())
 		gom.Eventually(framework.CheckEndpointsCount(kubeClient, "busybox", testNs, 5, 0), "20s", "2s").ShouldNot(gom.HaveOccurred())
+	})
+	gink.It("should run customAnomalyDetector", func() {
+		gom.Eventually(framework.CreateCustomAnamalyDetector(kubeClient, "default", testNs, labels.SelectorFromSet(map[string]string{"app": "busybox", "fail": "true"})), "20s", "1s").ShouldNot(gom.HaveOccurred())
+		gom.Eventually(framework.CheckEndpointsCount(kubeClient, "customanomalydetector", testNs, 1, 0), "20s", "2s").ShouldNot(gom.HaveOccurred())
+	})
+	gink.It("should run mark 2 pods as failing", func() {
+		gom.Eventually(framework.TagPod(kubeClient, testNs, labels.SelectorFromSet(map[string]string{"app": "busybox"}), 2, map[string]string{"fail": "true"}), "20s", "2s").ShouldNot(gom.HaveOccurred())
 	})
 })
