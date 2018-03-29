@@ -4,27 +4,37 @@
 GIT_ROOT=$(git rev-parse --show-toplevel)
 export GOPATH=$GIT_ROOT/../../../../
 
-echo "Start minikube with RBAC option"
-minikube start --extra-config=apiserver.Authorization.Mode=RBAC
+if [[ $SKIPINIT != 1 ]]; then
 
-printf "Waiting for tiller deployment to complete."
-until [ $(kubectl get nodes -ojsonpath="{.items[*].metadata.name}") == "minikube" ] > /dev/null 2>&1; do sleep 1; printf "."; done
-echo
+    echo "Start minikube with RBAC option"
+    minikube start --extra-config=apiserver.Authorization.Mode=RBAC
 
-echo "Create the missing rolebinding for k8s dashboard"
-kubectl create clusterrolebinding add-on-cluster-admin --clusterrole=cluster-admin --serviceaccount=kube-system:default
+    printf "Waiting for minikube node to be ready."
+    until [ $(kubectl get nodes -ojsonpath="{.items[*].metadata.name}") == "minikube" ] > /dev/null 2>&1; do sleep 1; printf "."; done
+    echo
 
-echo "Create the cluster role binding for the helm tiller"
-kubectl create clusterrolebinding tiller-cluster-admin  --clusterrole=cluster-admin --serviceaccount=kube-system:default
+    echo "Create the missing rolebinding for k8s dashboard"
+    kubectl create clusterrolebinding add-on-cluster-admin --clusterrole=cluster-admin --serviceaccount=kube-system:default
 
-echo "Init the helm tiller"
-helm init
+    echo "Create the cluster role binding for the helm tiller"
+    kubectl create clusterrolebinding tiller-cluster-admin  --clusterrole=cluster-admin --serviceaccount=kube-system:default
 
-printf "Waiting for tiller deployment to complete."
-until [ $(kubectl get deployment -n kube-system tiller-deploy -ojsonpath="{.status.conditions[?(@.type=='Available')].status}") == "True" ] > /dev/null 2>&1; do sleep 1; printf "."; done
-echo
+    echo "Init the helm tiller"
+    helm init
+
+    printf "Waiting for tiller deployment to complete."
+    until [ $(kubectl get deployment -n kube-system tiller-deploy -ojsonpath="{.status.conditions[?(@.type=='Available')].status}") == "True" ] > /dev/null 2>&1; do sleep 1; printf "."; done
+    echo
+fi
 
 eval $(minikube docker-env)
+
+if [[ $SKIPMOCK != 1 ]]; then
+    cd $GIT_ROOT/test/e2e
+    make TAG=latest container
+    cd -
+fi
+
 echo "Install the kubervisor operator"
 
 echo "First build the container"
