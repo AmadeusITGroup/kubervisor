@@ -12,7 +12,7 @@ import (
 	"github.com/amadeusitgroup/podkubervisor/pkg/controller"
 )
 
-var kubeClient *clientset.Clientset
+var kubeClient clientset.Interface
 var sugar *zap.SugaredLogger
 var config *controller.Config
 var serverAddr string

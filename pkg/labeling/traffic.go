@@ -21,8 +21,8 @@ const (
 	LabelTrafficKey = "kubervisor/traffic"
 )
 
-//SetTraficLabel create or update the value of the label LabelTrafficKey
-func SetTraficLabel(pod *kv1.Pod, val LabelTraffic) {
+//SetTrafficLabel create or update the value of the label LabelTrafficKey
+func SetTrafficLabel(pod *kv1.Pod, val LabelTraffic) {
 	if pod.Labels == nil {
 		pod.Labels = map[string]string{}
 	}

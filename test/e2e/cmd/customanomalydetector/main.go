@@ -25,14 +25,14 @@ func main() {
 	initGlobals()
 	closeChan = make(chan struct{})
 
-	go prepareResponse()
+	go prepareResponse(time.Second)
 	go runServer(serverAddr, getMux())
 
 	<-closeChan
 }
 
-func prepareResponse() {
-	ticker := time.NewTicker(time.Second)
+func prepareResponse(period time.Duration) {
+	ticker := time.NewTicker(period)
 	defer ticker.Stop()
 	options := meta_v1.ListOptions{
 		LabelSelector: selector,

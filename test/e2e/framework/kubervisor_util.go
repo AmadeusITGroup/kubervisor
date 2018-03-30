@@ -3,6 +3,8 @@ package framework
 import (
 	"fmt"
 
+	"github.com/amadeusitgroup/podkubervisor/pkg/labeling"
+
 	"k8s.io/apimachinery/pkg/util/intstr"
 
 	"k8s.io/apimachinery/pkg/labels"
@@ -60,6 +62,44 @@ func CreateKubervisorService(client versioned.Interface, bc *v1.KubervisorServic
 	}
 }
 
+// DeleteKubervisorService is an higher order func that returns the func to create a KubervisorService
+func DeleteKubervisorService(client versioned.Interface, name, namespace string) func() error {
+	return func() error {
+		if err := client.BreakerV1().KubervisorServices(namespace).Delete(name, nil); err != nil {
+			Warningf("cannot delete KubervisorService %s/%s: %v", namespace, name, err)
+			return err
+		}
+		Logf("KubervisorService created")
+		return nil
+	}
+}
+
+//CheckKubervisorServiceStatus validate the status part of the kubervisor crd
+func CheckKubervisorServiceStatus(client versioned.Interface, name, namespace string, managed, breaked, paused, unknown uint32) func() error {
+	return func() error {
+		bc, err := client.BreakerV1().KubervisorServices(namespace).Get(name, kmetav1.GetOptions{})
+		if err != nil {
+			Warningf("cannot delete KubervisorService %s/%s: %v", namespace, name, err)
+			return err
+		}
+		if bc.Status.Breaker.NbPodsManaged != managed {
+			return fmt.Errorf("Bad managed count: expect %d got %d", managed, bc.Status.Breaker.NbPodsManaged)
+		}
+		if bc.Status.Breaker.NbPodsBreaked != breaked {
+			return fmt.Errorf("Bad breaked count: expect %d got %d", breaked, bc.Status.Breaker.NbPodsBreaked)
+		}
+		if bc.Status.Breaker.NbPodsPaused != paused {
+			return fmt.Errorf("Bad paused count: expect %d got %d", paused, bc.Status.Breaker.NbPodsPaused)
+		}
+		if bc.Status.Breaker.NbPodsUnknown != unknown {
+			return fmt.Errorf("Bad unknown count: expect %d got %d", unknown, bc.Status.Breaker.NbPodsUnknown)
+		}
+
+		return nil
+	}
+
+}
+
 // IsKubervisorServiceCreated is an higher order func that returns the func to create a KubervisorService
 func IsKubervisorServiceCreated(client versioned.Interface, name, namespace string) func() error {
 	return func() error {
@@ -75,6 +115,7 @@ func IsKubervisorServiceCreated(client versioned.Interface, name, namespace stri
 	}
 }
 
+//CheckEndpointsCount count the number of ready / notready endpoints
 func CheckEndpointsCount(client clientset.Interface, name, namespace string, countReadyTarget int32, countNotReadyTarget int32) func() error {
 	return func() error {
 		ep, err := client.CoreV1().Endpoints(namespace).Get(name, kmetav1.GetOptions{})
@@ -97,7 +138,6 @@ func CheckEndpointsCount(client clientset.Interface, name, namespace string, cou
 
 		return fmt.Errorf("Bad endpoint count Ready %d/%d and notReady %d/%d", countReady, countReadyTarget, countNotReady, countNotReadyTarget)
 	}
-
 }
 
 // NewUInt return a pointer to a uint
@@ -144,7 +184,7 @@ func CreateBusyBox(client clientset.Interface, namespace string) func() error {
 				Name: "busybox",
 			},
 			Spec: kv1.ServiceSpec{
-				Selector: map[string]string{"app": "busybox"},
+				Selector: map[string]string{"app": "busybox", labeling.LabelTrafficKey: string(labeling.LabelTrafficYes)},
 				Ports: []kv1.ServicePort{
 					{Port: 80},
 				},
@@ -277,6 +317,22 @@ func DeleteNamespace(client clientset.Interface, namespace string) func() error 
 	return func() error {
 		if err := client.Core().Namespaces().Delete(namespace, nil); err != nil {
 			return err
+		}
+		return nil
+	}
+}
+
+func ExpectCountPod(client clientset.Interface, namespace string, selector labels.Selector, count int) func() error {
+	return func() error {
+		options := kmetav1.ListOptions{
+			LabelSelector: selector.String(),
+		}
+		pods, err := client.Core().Pods(namespace).List(options)
+		if err != nil {
+			return err
+		}
+		if len(pods.Items) != count {
+			return fmt.Errorf("Bad pod count: expect %d got %d", count, len(pods.Items))
 		}
 		return nil
 	}

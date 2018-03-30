@@ -40,7 +40,7 @@ func (c *CustomAnomalyDetector) init() {
 
 //GetPodsOutOfBounds implements the anomaly detector interface
 func (c *CustomAnomalyDetector) GetPodsOutOfBounds() ([]*kapiv1.Pod, error) {
-	response, err := c.client.Get(c.serviceURI)
+	response, err := c.client.Get("http://" + c.serviceURI)
 	if err != nil {
 		return nil, fmt.Errorf("Error while contaction custom server: %v", err)
 	}
@@ -52,17 +52,17 @@ func (c *CustomAnomalyDetector) GetPodsOutOfBounds() ([]*kapiv1.Pod, error) {
 	if err2 != nil {
 		return nil, fmt.Errorf("Can't read response buffer %v", err2)
 	}
+
 	list := &kapiv1.PodList{}
 	gvk := kapiv1.SchemeGroupVersion.WithKind("PodList")
 	if _, _, err = c.decoder.Decode(bodyBytes, &gvk, list); err != nil {
 		return nil, fmt.Errorf("Decoding custom server response failed: %v", err)
 	}
-	fmt.Println(string(bodyBytes))
+
 	result := []*kapiv1.Pod{}
 	for i := range list.Items {
 		result = append(result, &list.Items[i])
 	}
-	fmt.Printf("Result: %v", result)
 	return result, nil
 }
 

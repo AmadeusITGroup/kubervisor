@@ -50,7 +50,7 @@ func TestSetTraficLabel(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			SetTraficLabel(tt.args.pod, tt.args.val)
+			SetTrafficLabel(tt.args.pod, tt.args.val)
 		})
 	}
 }
