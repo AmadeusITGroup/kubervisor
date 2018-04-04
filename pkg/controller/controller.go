@@ -73,6 +73,8 @@ type Controller struct {
 	health healthcheck.Handler
 
 	httpServer *http.Server
+
+	gc *garbageCollector
 }
 
 // New returns new Controller instance
@@ -171,6 +173,11 @@ func New(cfg *Config) *Controller {
 		},
 	)
 
+	ctrl.gc, err = newGarbageCollector(time.Second, ctrl.podControl, ctrl.podLister, ctrl.breakerLister, 2, ctrl.Logger)
+	if err != nil {
+		sugar.Fatalf("Unable to initialize garbage collector: %v", err)
+	}
+
 	return ctrl
 }
 
@@ -181,6 +188,7 @@ func (ctrl *Controller) Run(stop <-chan struct{}) error {
 	ctrl.kubeInformerFactory.Start(stop)
 	ctrl.breakerInformerFactory.Start(stop)
 	go ctrl.runHTTPServer(stop)
+	go ctrl.gc.run(stop)
 	err = ctrl.run(stop)
 
 	return err
