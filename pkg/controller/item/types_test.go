@@ -17,7 +17,6 @@ func TestKubervisorServiceItem_CompareWithSpec(t *testing.T) {
 		activator  activator.Activator
 		breaker    breaker.Breaker
 		cancelFunc context.CancelFunc
-		waitGroup  sync.WaitGroup
 	}
 	type args struct {
 		spec     *v1.KubervisorServiceSpec
@@ -45,7 +44,7 @@ func TestKubervisorServiceItem_CompareWithSpec(t *testing.T) {
 				activator:  tt.fields.activator,
 				breaker:    tt.fields.breaker,
 				cancelFunc: tt.fields.cancelFunc,
-				waitGroup:  tt.fields.waitGroup,
+				waitGroup:  sync.WaitGroup{},
 			}
 			if got := b.CompareWithSpec(tt.args.spec, tt.args.selector); got != tt.want {
 				t.Errorf("KubervisorServiceItem.CompareWithSpec() = %v, want %v", got, tt.want)

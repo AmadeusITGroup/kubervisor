@@ -7,6 +7,7 @@ import (
 	"github.com/amadeusitgroup/podkubervisor/pkg/labeling"
 	"github.com/amadeusitgroup/podkubervisor/pkg/pod"
 	test "github.com/amadeusitgroup/podkubervisor/test"
+	"go.uber.org/zap"
 
 	apiv1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -15,6 +16,7 @@ import (
 )
 
 func TestController_searchNewPods(t *testing.T) {
+	devlogger, _ := zap.NewDevelopment()
 	newPod := test.PodGen("newPod", "test-ns", map[string]string{"app": "test-app"}, true, true, "")
 	pod1 := test.PodGen("pod1", "test-ns", map[string]string{"app": "test-app", labeling.LabelTrafficKey: "yes", labeling.LabelBreakerNameKey: "foo"}, true, true, "")
 	pod2 := test.PodGen("pod2", "test-ns", map[string]string{"app": "test-app", labeling.LabelTrafficKey: "yes", labeling.LabelBreakerNameKey: "foo"}, true, true, "")
@@ -64,6 +66,7 @@ func TestController_searchNewPods(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			ctrl := &Controller{
+				Logger:     devlogger,
 				kubeClient: tt.fields.kubeClient,
 			}
 			got, err := ctrl.searchNewPods(tt.args.svc)
@@ -79,6 +82,7 @@ func TestController_searchNewPods(t *testing.T) {
 }
 
 func TestController_initializePods(t *testing.T) {
+	devlogger, _ := zap.NewDevelopment()
 	newPod := test.PodGen("newPod", "test-ns", map[string]string{"app": "test-app"}, true, true, "")
 	pod1 := test.PodGen("pod1", "test-ns", map[string]string{"app": "test-app", labeling.LabelTrafficKey: "yes", labeling.LabelBreakerNameKey: "foo"}, true, true, "")
 	pod2 := test.PodGen("pod2", "test-ns", map[string]string{"app": "test-app", labeling.LabelTrafficKey: "yes", labeling.LabelBreakerNameKey: "foo"}, true, true, "")
@@ -133,6 +137,7 @@ func TestController_initializePods(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			ctrl := &Controller{
+				Logger:     devlogger,
 				kubeClient: tt.fields.kubeClient,
 				podControl: tt.fields.podControl,
 			}

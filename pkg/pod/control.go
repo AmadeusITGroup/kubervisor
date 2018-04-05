@@ -49,8 +49,7 @@ func (c *Control) InitBreakerAnnotationAndLabel(breakConfigName string, inputPod
 	p := copyAndDefault(inputPod)
 
 	p.Labels[labeling.LabelBreakerNameKey] = breakConfigName
-	p.Labels[labeling.LabelTrafficKey] = string(labeling.LabelTrafficKey)
-
+	labeling.SetTrafficLabel(p, labeling.LabelTrafficYes)
 	return c.kubeClient.Core().Pods(p.Namespace).Update(p)
 }
 
@@ -95,7 +94,6 @@ func (c *Control) UpdatePauseLabelsAndAnnotations(inputPod *kapiv1.Pod) (*kapiv1
 func (c *Control) RemoveBreakerAnnotationAndLabel(inputPod *kapiv1.Pod) (*kapiv1.Pod, error) {
 	p := copyAndDefault(inputPod)
 
-	delete(p.Labels, labeling.LabelTrafficKey)
 	delete(p.Labels, labeling.LabelBreakerNameKey)
 
 	delete(p.Annotations, labeling.AnnotationBreakAtKey)

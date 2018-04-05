@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"net/http"
-	"reflect"
 	"time"
 
 	"github.com/heptiolabs/healthcheck"
@@ -74,6 +73,8 @@ type Controller struct {
 	health healthcheck.Handler
 
 	httpServer *http.Server
+
+	gc *garbageCollector
 }
 
 // New returns new Controller instance
@@ -172,6 +173,11 @@ func New(cfg *Config) *Controller {
 		},
 	)
 
+	ctrl.gc, err = newGarbageCollector(time.Second, ctrl.podControl, ctrl.podLister, ctrl.breakerLister, 2, ctrl.Logger)
+	if err != nil {
+		sugar.Fatalf("Unable to initialize garbage collector: %v", err)
+	}
+
 	return ctrl
 }
 
@@ -182,6 +188,7 @@ func (ctrl *Controller) Run(stop <-chan struct{}) error {
 	ctrl.kubeInformerFactory.Start(stop)
 	ctrl.breakerInformerFactory.Start(stop)
 	go ctrl.runHTTPServer(stop)
+	go ctrl.gc.run(stop)
 	err = ctrl.run(stop)
 
 	return err
@@ -265,11 +272,16 @@ func (ctrl *Controller) sync(key string) (bool, error) {
 	}
 
 	bc := sharedKubervisorService.DeepCopy()
-	return ctrl.syncKubervisorService(bc)
+	retValue, errSync := ctrl.syncKubervisorService(bc)
+	if errSync != nil {
+		ctrl.Logger.Sugar().Debugf("syncKubervisorService return error: %s", errSync)
+	}
+	return retValue, errSync
 }
 
 func (ctrl *Controller) syncKubervisorService(bc *kubervisorapi.KubervisorService) (bool, error) {
 	key := fmt.Sprintf("%s/%s", bc.Namespace, bc.Name)
+	ctrl.Logger.Sugar().Debugf("syncKubervisorService %s", key)
 	now := metav1.Now()
 	// Init status.StartTime
 	if bc.Status.StartTime == nil {
@@ -330,16 +342,18 @@ func (ctrl *Controller) syncKubervisorService(bc *kubervisorapi.KubervisorServic
 	// check if some pods have been removed from the service selector
 	// if it is the case, removed all labels and annotation
 	if _, err = ctrl.podsCleaner(bci.Name(), associatedSvc); err != nil {
+		ctrl.Logger.Sugar().Errorf("podsCleaner failed: %v", err)
 		return false, err
 	}
 
 	// initialize possible new pods (add labels)
 	if _, err = ctrl.initializePods(bci.Name(), associatedSvc); err != nil {
+		ctrl.Logger.Sugar().Errorf("initializePods failed: %v", err)
 		return false, err
 	}
 
 	newStatus := bci.GetStatus()
-	if !reflect.DeepEqual(&newStatus, bc.Status.Breaker) {
+	if bc.Status.Breaker == nil || !equalBreakerStatusCounters(newStatus, *bc.Status.Breaker) {
 		bc.Status.Breaker = &newStatus
 		//update status to running
 		if newStatus, err := UpdateStatusConditionRunning(&bc.Status, "", now); err == nil {
@@ -384,6 +398,7 @@ func (ctrl *Controller) podsCleaner(bciName string, svc *apiv1.Service) (bool, e
 }
 
 func (ctrl *Controller) initializePods(bciName string, svc *apiv1.Service) (bool, error) {
+	ctrl.Logger.Sugar().Debugf("initializePods for %s on service %s", bciName, svc.Name)
 	pods, err := ctrl.searchNewPods(svc)
 	if err != nil {
 		return false, err
@@ -450,9 +465,18 @@ func (ctrl *Controller) createItem(bc *kubervisorapi.KubervisorService, associat
 }
 
 func (ctrl *Controller) newKubervisorServiceItem(bc *kubervisorapi.KubervisorService, svc *apiv1.Service) (item.Interface, error) {
+	//Purge the service selector from kubervisor traffic labels
+	selectorWithoutTrafficKey := labels.NewSelector()
+	requirements, _ := labels.Set(svc.Spec.Selector).AsSelectorPreValidated().Requirements()
+	for _, r := range requirements {
+		if r.Key() != labeling.LabelTrafficKey {
+			selectorWithoutTrafficKey.Add(r)
+		}
+	}
+
 	itemConfig := &item.Config{
 		Logger:     ctrl.Logger,
-		Selector:   labels.Set(svc.Spec.Selector).AsSelectorPreValidated(),
+		Selector:   selectorWithoutTrafficKey,
 		PodLister:  ctrl.podLister,
 		PodControl: ctrl.podControl,
 	}

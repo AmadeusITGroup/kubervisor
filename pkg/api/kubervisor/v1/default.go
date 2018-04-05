@@ -38,13 +38,12 @@ func DefaultBreakerStrategy(item *BreakerStrategy) *BreakerStrategy {
 	if copy.MinPodsAvailableCount == nil {
 		copy.MinPodsAvailableCount = NewUInt(1)
 	}
-	if copy.MinPodsAvailableRatio == nil {
-		copy.MinPodsAvailableRatio = NewUInt(70)
-	}
 	if copy.DiscreteValueOutOfList == nil {
 		copy.DiscreteValueOutOfList = &DiscreteValueOutOfList{}
 	}
-	copy.DiscreteValueOutOfList = DefaultDiscreteValueOutOfList(copy.DiscreteValueOutOfList)
+	if copy.DiscreteValueOutOfList != nil {
+		copy.DiscreteValueOutOfList = DefaultDiscreteValueOutOfList(copy.DiscreteValueOutOfList)
+	}
 
 	return copy
 }
@@ -107,19 +106,14 @@ func isBreakerStrategyDefaulted(item *BreakerStrategy) bool {
 	if item.EvaluationPeriod == time.Duration(0) {
 		return false
 	}
-	if item.MinPodsAvailableCount == nil {
+	if item.MinPodsAvailableCount == nil && item.MinPodsAvailableRatio == nil {
 		return false
 	}
-	if item.MinPodsAvailableRatio == nil {
-		return false
+	if item.DiscreteValueOutOfList != nil {
+		if !isDiscreteValueOutOfListDefaulted(item.DiscreteValueOutOfList) {
+			return false
+		}
 	}
-	if item.DiscreteValueOutOfList == nil {
-		return false
-	}
-	if !isDiscreteValueOutOfListDefaulted(item.DiscreteValueOutOfList) {
-		return false
-	}
-
 	return true
 }
 

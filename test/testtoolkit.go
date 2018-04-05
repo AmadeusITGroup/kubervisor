@@ -241,7 +241,7 @@ func PodGen(name, namespace string, labels map[string]string, running, ready boo
 		if labels == nil {
 			labels = map[string]string{}
 		}
-		labeling.SetTraficLabel(&p, trafficLabel)
+		labeling.SetTrafficLabel(&p, trafficLabel)
 	}
 	if running {
 		p.Status = kapiv1.PodStatus{Phase: kapiv1.PodRunning}
