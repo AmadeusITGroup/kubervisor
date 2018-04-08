@@ -25,7 +25,7 @@ type testHandler struct {
 	badcontent bool
 }
 
-func marshalToJsonForCodecs(obj runtime.Object, gv schema.GroupVersion, codecs serializer.CodecFactory) ([]byte, error) {
+func marshalToJSONForCodecs(obj runtime.Object, gv schema.GroupVersion, codecs serializer.CodecFactory) ([]byte, error) {
 	mediaType := "application/json"
 	info, ok := runtime.SerializerInfoForMediaType(codecs.SupportedMediaTypes(), mediaType)
 	if !ok {
@@ -43,7 +43,7 @@ func (h *testHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	if h.badcontent {
 		p := kapiv1.Pod{}
 		p.SetGroupVersionKind(kapiv1.SchemeGroupVersion.WithKind("Pod"))
-		b, err := marshalToJsonForCodecs(&p, kapiv1.SchemeGroupVersion, serializer.NewCodecFactory(scheme))
+		b, err := marshalToJSONForCodecs(&p, kapiv1.SchemeGroupVersion, serializer.NewCodecFactory(scheme))
 		if err != nil {
 			h.t.Fatalf("%v", err)
 		}
@@ -58,7 +58,7 @@ func (h *testHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	for _, p := range h.pods {
 		l.Items = append(l.Items, *p)
 	}
-	b, err := marshalToJsonForCodecs(&l, kapiv1.SchemeGroupVersion, serializer.NewCodecFactory(scheme))
+	b, err := marshalToJSONForCodecs(&l, kapiv1.SchemeGroupVersion, serializer.NewCodecFactory(scheme))
 	if err != nil {
 		h.t.Fatalf("%v", err)
 	}
