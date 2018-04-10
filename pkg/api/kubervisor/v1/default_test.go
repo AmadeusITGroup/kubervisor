@@ -84,7 +84,6 @@ func Test_isBreakerStrategyDefaulted(t *testing.T) {
 			name: "missing EvaluationPeriod",
 			args: args{
 				item: &BreakerStrategy{
-					//EvaluationPeriod:       time.Duration(time.Second),
 					MinPodsAvailableCount:  NewUInt(1),
 					MinPodsAvailableRatio:  NewUInt(70),
 					DiscreteValueOutOfList: DefaultDiscreteValueOutOfList(&DiscreteValueOutOfList{}),
@@ -96,9 +95,18 @@ func Test_isBreakerStrategyDefaulted(t *testing.T) {
 			name: "missing MinPodsAvailableCount",
 			args: args{
 				item: &BreakerStrategy{
-					EvaluationPeriod: time.Duration(time.Second),
-					//MinPodsAvailableCount:  NewUInt(1),
+					EvaluationPeriod:       time.Duration(time.Second),
 					MinPodsAvailableRatio:  NewUInt(70),
+					DiscreteValueOutOfList: DefaultDiscreteValueOutOfList(&DiscreteValueOutOfList{}),
+				},
+			},
+			want: true,
+		},
+		{
+			name: "missing MinPodsAvailableCount and MinPodsAvailableRatio",
+			args: args{
+				item: &BreakerStrategy{
+					EvaluationPeriod:       time.Duration(time.Second),
 					DiscreteValueOutOfList: DefaultDiscreteValueOutOfList(&DiscreteValueOutOfList{}),
 				},
 			},
@@ -108,16 +116,15 @@ func Test_isBreakerStrategyDefaulted(t *testing.T) {
 			name: "missing MinPodsAvailableRatio",
 			args: args{
 				item: &BreakerStrategy{
-					EvaluationPeriod:      time.Duration(time.Second),
-					MinPodsAvailableCount: NewUInt(1),
-					//MinPodsAvailableRatio:  NewUInt(70),
+					EvaluationPeriod:       time.Duration(time.Second),
+					MinPodsAvailableCount:  NewUInt(1),
 					DiscreteValueOutOfList: DefaultDiscreteValueOutOfList(&DiscreteValueOutOfList{}),
 				},
 			},
-			want: false,
+			want: true,
 		},
 		{
-			name: "missing DiscreteValueOutOfList",
+			name: "missing DiscreteValueOutOfList values",
 			args: args{
 				item: &BreakerStrategy{
 					EvaluationPeriod:       time.Duration(time.Second),
@@ -129,13 +136,13 @@ func Test_isBreakerStrategyDefaulted(t *testing.T) {
 			want: false,
 		},
 		{
-			name: "DiscreteValueOutOfList is nil",
+			name: "missing ContinuousValueDeviation values",
 			args: args{
 				item: &BreakerStrategy{
-					EvaluationPeriod:      time.Duration(time.Second),
-					MinPodsAvailableCount: NewUInt(1),
-					MinPodsAvailableRatio: NewUInt(70),
-					//DiscreteValueOutOfList: &DiscreteValueOutOfList{},
+					EvaluationPeriod:         time.Duration(time.Second),
+					MinPodsAvailableCount:    NewUInt(1),
+					MinPodsAvailableRatio:    NewUInt(70),
+					ContinuousValueDeviation: &ContinuousValueDeviation{},
 				},
 			},
 			want: false,

@@ -29,6 +29,15 @@ func DefaultDiscreteValueOutOfList(item *DiscreteValueOutOfList) *DiscreteValueO
 	return copy
 }
 
+//DefaultContinuousValueDeviation injecting default values for the struct
+func DefaultContinuousValueDeviation(item *ContinuousValueDeviation) *ContinuousValueDeviation {
+	copy := item.DeepCopy()
+	if copy.MaxDeviationPercent == nil {
+		copy.MaxDeviationPercent = NewFloat64(75)
+	}
+	return copy
+}
+
 // DefaultBreakerStrategy injecting default values for the struct
 func DefaultBreakerStrategy(item *BreakerStrategy) *BreakerStrategy {
 	copy := item.DeepCopy()
@@ -38,11 +47,11 @@ func DefaultBreakerStrategy(item *BreakerStrategy) *BreakerStrategy {
 	if copy.MinPodsAvailableCount == nil {
 		copy.MinPodsAvailableCount = NewUInt(1)
 	}
-	if copy.DiscreteValueOutOfList == nil {
-		copy.DiscreteValueOutOfList = &DiscreteValueOutOfList{}
-	}
 	if copy.DiscreteValueOutOfList != nil {
 		copy.DiscreteValueOutOfList = DefaultDiscreteValueOutOfList(copy.DiscreteValueOutOfList)
+	}
+	if copy.ContinuousValueDeviation != nil {
+		copy.ContinuousValueDeviation = DefaultContinuousValueDeviation(copy.ContinuousValueDeviation)
 	}
 
 	return copy
@@ -69,6 +78,13 @@ func DefaultActivatorStrategy(item *ActivatorStrategy) *ActivatorStrategy {
 // NewUInt return a pointer to a uint
 func NewUInt(val uint) *uint {
 	output := new(uint)
+	*output = val
+	return output
+}
+
+// NewFloat64 return a pointer to a float64
+func NewFloat64(val float64) *float64 {
+	output := new(float64)
 	*output = val
 	return output
 }
@@ -114,6 +130,9 @@ func isBreakerStrategyDefaulted(item *BreakerStrategy) bool {
 			return false
 		}
 	}
+	if item.ContinuousValueDeviation != nil {
+		return isContinuousValueDeviationDefaulted(item.ContinuousValueDeviation)
+	}
 	return true
 }
 
@@ -123,6 +142,14 @@ func isDiscreteValueOutOfListDefaulted(item *DiscreteValueOutOfList) bool {
 		return false
 	}
 	if item.TolerancePercent == nil {
+		return false
+	}
+	return true
+}
+
+// isDiscreteValueOutOfListDefaulted used to check if a DiscreteValueOutOfList is already defaulted
+func isContinuousValueDeviationDefaulted(item *ContinuousValueDeviation) bool {
+	if item.MaxDeviationPercent == nil {
 		return false
 	}
 	return true

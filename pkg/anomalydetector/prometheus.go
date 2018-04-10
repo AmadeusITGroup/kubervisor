@@ -21,7 +21,6 @@ type promDiscreteValueOutOfListAnalyser struct {
 }
 
 func (p *promDiscreteValueOutOfListAnalyser) doAnalysis() (okkoByPodName, error) {
-
 	ctx := context.Background()
 	qAPI := promApi.NewAPI(p.prometheusClient)
 	tsNow := time.Now()
@@ -59,4 +58,37 @@ func (p *promDiscreteValueOutOfListAnalyser) buildCounters(vector model.Vector) 
 		countersByPods[podName] = counters
 	}
 	return countersByPods
+}
+
+type promContinuousValueDeviationAnalyser struct {
+	config           v1.ContinuousValueDeviation
+	prometheusClient promClient.Client
+	logger           *zap.Logger
+}
+
+func (p *promContinuousValueDeviationAnalyser) doAnalysis() (deviationByPodName, error) {
+	ctx := context.Background()
+	qAPI := promApi.NewAPI(p.prometheusClient)
+	tsNow := time.Now()
+
+	// promQL example: (rate(solution_price_sum{}[1m])/rate(solution_price_count{}[1m]) and delta(solution_price_count{}[1m])>70) / scalar(sum(rate(solution_price_sum{}[1m]))/sum(rate(solution_price_count{}[1m])))
+	// p.config.PodNameKey should point to the label containing the pod name
+	m, err := qAPI.Query(ctx, p.config.PromQL, tsNow)
+	if err != nil {
+		return nil, fmt.Errorf("error processing prometheus query: %s", err)
+	}
+
+	vector, ok := m.(model.Vector)
+	if !ok {
+		return nil, fmt.Errorf("the prometheus query did not return a result in the form of expected type 'model.Vector': %s", err)
+	}
+
+	result := deviationByPodName{}
+	for _, sample := range vector {
+		metrics := sample.Metric
+		podName := string(metrics[model.LabelName(p.config.PodNameKey)])
+		deviation := sample.Value
+		result[podName] = float64(deviation)
+	}
+	return result, nil
 }

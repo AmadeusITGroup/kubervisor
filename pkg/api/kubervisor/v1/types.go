@@ -107,9 +107,21 @@ type BreakerStrategy struct {
 	MinPodsAvailableCount *uint         `json:"minPodsAvailableCount,omitempty"`
 	MinPodsAvailableRatio *uint         `json:"minPodsAvailableRatio,omitempty"`
 
-	DiscreteValueOutOfList *DiscreteValueOutOfList `json:"discreteValueOutOfList,omitempty"`
+	DiscreteValueOutOfList   *DiscreteValueOutOfList   `json:"discreteValueOutOfList,omitempty"`
+	ContinuousValueDeviation *ContinuousValueDeviation `json:"ContinuousValueDeviation,omitempty"`
 
 	CustomService string `json:"customService,omitempty"`
+}
+
+// ContinuousValueDeviation detect anomaly when the average value for a pod is deviating from the average for the fleet of pods. If a pods does not register enough event it should not be returned by the PromQL
+// The promQL should return value that are grouped by:
+// 1- the podname
+type ContinuousValueDeviation struct {
+	PrometheusService string `json:"prometheusService"`
+	PromQL            string `json:"promQL"` // example deviation compare to global average: (rate(solution_price_sum[1m])/rate(solution_price_count[1m]) and delta(solution_price_count[1m])>70) / scalar(sum(rate(solution_price_sum[1m]))/sum(rate(solution_price_count[1m])))
+	// note the AND close that prevent to return record when there is less that 70 records over the floating time window of 1m
+	PodNameKey          string   `json:"podNamekey"`          // Key to access the podName
+	MaxDeviationPercent *float64 `json:"maxDeviationPercent"` // MaxDeviationPercent maxDeviation computation based on % of the mean
 }
 
 // DiscreteValueOutOfList detect anomaly when the a value is not in the list with a ratio that exceed the tolerance

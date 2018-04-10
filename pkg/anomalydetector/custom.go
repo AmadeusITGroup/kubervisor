@@ -42,7 +42,7 @@ func (c *CustomAnomalyDetector) init() {
 func (c *CustomAnomalyDetector) GetPodsOutOfBounds() ([]*kapiv1.Pod, error) {
 	response, err := c.client.Get("http://" + c.serviceURI)
 	if err != nil {
-		return nil, fmt.Errorf("Error while contaction custom server: %v", err)
+		return nil, fmt.Errorf("Error while contacting custom server: %v", err)
 	}
 	defer response.Body.Close()
 	if response.StatusCode != http.StatusOK {

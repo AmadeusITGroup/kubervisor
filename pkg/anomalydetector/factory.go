@@ -25,6 +25,8 @@ func New(cfg FactoryConfig) (AnomalyDetector, error) {
 	switch {
 	case cfg.BreakerStrategyConfig.DiscreteValueOutOfList != nil:
 		return newDiscreteValueOutOfListAnalyser(cfg.Config)
+	case cfg.BreakerStrategyConfig.ContinuousValueDeviation != nil:
+		return newContinuousValueDeviation(cfg.Config)
 	case cfg.BreakerStrategyConfig.CustomService != "":
 		return newCustomAnalyser(cfg.Config)
 	case cfg.customFactory != nil:
@@ -61,19 +63,43 @@ func newDiscreteValueOutOfListAnalyser(cfg Config) (*DiscreteValueOutOfListAnaly
 	switch {
 	case analyserCfg.PromQL != "":
 
-		podAnalyser := &promDiscreteValueOutOfListAnalyser{config: analyserCfg, logger: cfg.Logger}
+		analyser := &promDiscreteValueOutOfListAnalyser{config: analyserCfg, logger: cfg.Logger}
 
-		podAnalyser.valueCheckerFunc = valueCheckerFunc
+		analyser.valueCheckerFunc = valueCheckerFunc
 		promconfig := promClient.Config{Address: "http://" + analyserCfg.PrometheusService}
 		var err error
-		if podAnalyser.prometheusClient, err = promClient.NewClient(promconfig); err != nil {
+		if analyser.prometheusClient, err = promClient.NewClient(promconfig); err != nil {
 			return nil, err
 		}
-		a.podAnalyser = podAnalyser
+		a.analyser = analyser
 	default:
 		return nil, fmt.Errorf("missing parameter to create DiscreteValueOutOfListAnalyser")
 	}
 	return a, nil
+}
+
+func newContinuousValueDeviation(cfg Config) (*ContinuousValueDeviationAnalyser, error) {
+	analyserCfg := *cfg.BreakerStrategyConfig.ContinuousValueDeviation
+
+	if err := v1.ValidateContinuousValueDeviation(analyserCfg); err != nil {
+		return nil, err
+	}
+	a := &ContinuousValueDeviationAnalyser{ContinuousValueDeviation: analyserCfg, selector: cfg.Selector, podLister: cfg.PodLister, logger: cfg.Logger}
+	switch {
+	case analyserCfg.PromQL != "":
+
+		analyser := &promContinuousValueDeviationAnalyser{config: analyserCfg, logger: cfg.Logger}
+		promconfig := promClient.Config{Address: "http://" + analyserCfg.PrometheusService}
+		var err error
+		if analyser.prometheusClient, err = promClient.NewClient(promconfig); err != nil {
+			return nil, err
+		}
+		a.analyser = analyser
+	default:
+		return nil, fmt.Errorf("missing parameter to create ContinuousValueDeviationAnalyser")
+	}
+	return a, nil
+
 }
 
 // ContainsString checks if the slice has the contains value in it.
