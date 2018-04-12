@@ -14,6 +14,12 @@ func ValidateBreakerStrategy(s BreakerStrategy) error {
 			return fmt.Errorf("Validation of strategy DiscreteValueOutOfList failed: %v", err)
 		}
 	}
+	if s.ContinuousValueDeviation != nil {
+		strategies = append(strategies, "ContinuousValueDeviation")
+		if err := ValidateContinuousValueDeviation(*s.ContinuousValueDeviation); err != nil {
+			return fmt.Errorf("Validation of strategy ContinuousValueDeviation failed: %v", err)
+		}
+	}
 	if s.CustomService != "" {
 		strategies = append(strategies, "CustomService")
 	}
@@ -45,6 +51,30 @@ func ValidateDiscreteValueOutOfList(d DiscreteValueOutOfList) error {
 
 	if len(d.PodNameKey) == 0 {
 		return fmt.Errorf("missing PodName Key definition")
+	}
+
+	switch {
+	case d.PromQL != "" || d.PrometheusService != "":
+		if d.PrometheusService == "" {
+			return fmt.Errorf("missing Prometheus service")
+		}
+		if d.PromQL == "" {
+			return fmt.Errorf("missing PromQL")
+		}
+	default:
+		return fmt.Errorf("missing parameter to create DiscreteValueOutOfListAnalyser")
+	}
+	return nil
+}
+
+//ValidateContinuousValueDeviation validation of input
+func ValidateContinuousValueDeviation(d ContinuousValueDeviation) error {
+	if len(d.PodNameKey) == 0 {
+		return fmt.Errorf("missing PodName Key definition")
+	}
+
+	if d.MaxDeviationPercent == nil {
+		return fmt.Errorf("missing Max Deviation percent")
 	}
 
 	switch {

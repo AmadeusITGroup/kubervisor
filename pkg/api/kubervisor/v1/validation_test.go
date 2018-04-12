@@ -123,6 +123,82 @@ func Test_validateBreakerStrategy(t *testing.T) {
 			wantErr: true,
 		},
 		{
+			name: "ContinuousValueDeviation empty",
+			s: BreakerStrategy{
+				ContinuousValueDeviation: &ContinuousValueDeviation{},
+			},
+			wantErr: true,
+		},
+		{
+			name: "ContinuousValueDeviation missing PodName",
+			s: BreakerStrategy{
+				ContinuousValueDeviation: &ContinuousValueDeviation{},
+			},
+			wantErr: true,
+		},
+		{
+			name: "ContinuousValueDeviation missing PodName",
+			s: BreakerStrategy{
+				ContinuousValueDeviation: &ContinuousValueDeviation{
+					MaxDeviationPercent: NewFloat64(50.0),
+				},
+			},
+			wantErr: true,
+		},
+		{
+			name: "ContinuousValueDeviation missing Deviation Quantity",
+			s: BreakerStrategy{
+				ContinuousValueDeviation: &ContinuousValueDeviation{
+					PodNameKey: "pod",
+				},
+			},
+			wantErr: true,
+		},
+		{
+			name: "ContinuousValueDeviation missing PromQL and PromQlService",
+			s: BreakerStrategy{
+				ContinuousValueDeviation: &ContinuousValueDeviation{
+					PodNameKey:          "pod",
+					MaxDeviationPercent: NewFloat64(50.0),
+				},
+			},
+			wantErr: true,
+		},
+		{
+			name: "ContinuousValueDeviation missing PromQL",
+			s: BreakerStrategy{
+				ContinuousValueDeviation: &ContinuousValueDeviation{
+					PodNameKey:          "pod",
+					MaxDeviationPercent: NewFloat64(50.0),
+					PrometheusService:   "service",
+				},
+			},
+			wantErr: true,
+		},
+		{
+			name: "ContinuousValueDeviation missing Prom service",
+			s: BreakerStrategy{
+				ContinuousValueDeviation: &ContinuousValueDeviation{
+					PodNameKey:          "pod",
+					MaxDeviationPercent: NewFloat64(50.0),
+					PromQL:              "query",
+				},
+			},
+			wantErr: true,
+		},
+		{
+			name: "ContinuousValueDeviation complete",
+			s: BreakerStrategy{
+				ContinuousValueDeviation: &ContinuousValueDeviation{
+					PodNameKey:          "pod",
+					MaxDeviationPercent: NewFloat64(50.0),
+					PromQL:              "query",
+					PrometheusService:   "service",
+				},
+			},
+			wantErr: false,
+		},
+		{
 			name: "CustomService",
 			s: BreakerStrategy{
 				CustomService: "Custo",
