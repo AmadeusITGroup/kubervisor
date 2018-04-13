@@ -85,7 +85,7 @@ func TestBreakerImpl_computeMinAvailablePods(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			b := &BreakerImpl{
+			b := &breakerImpl{
 				breakerStrategyConfig: tt.fields.breakerStrategyConfig,
 			}
 			if got := b.computeMinAvailablePods(tt.podUnderSelectorCount); got != tt.want {
@@ -325,7 +325,7 @@ func TestBreakerImpl_Run(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			defer close(tt.stop)
 			sequence := test.NewTestSequence(t, testprefix+"/"+tt.name, tt.stepCount, tt.sequenceTimeout)
-			b := &BreakerImpl{
+			b := &breakerImpl{
 				breakerStrategyConfig: tt.fields.breakerStrategyConfig,
 				selector:              tt.fields.selector,
 				podLister:             tt.fields.podLister,
@@ -413,7 +413,7 @@ func TestBreakerImpl_CompareConfig(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			b := &BreakerImpl{
+			b := &breakerImpl{
 				KubervisorServiceName: tt.fields.KubervisorServiceName,
 				breakerStrategyConfig: tt.fields.breakerStrategyConfig,
 				selector:              tt.fields.selector,
@@ -491,7 +491,7 @@ func TestBreakerImpl_GetStatus(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			b := &BreakerImpl{
+			b := &breakerImpl{
 				KubervisorServiceName: tt.fields.KubervisorServiceName,
 				breakerStrategyConfig: tt.fields.breakerStrategyConfig,
 				selector:              tt.fields.selector,

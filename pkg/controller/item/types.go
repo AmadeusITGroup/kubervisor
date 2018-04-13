@@ -18,17 +18,18 @@ type KubervisorServiceItemStore kcache.Store
 
 // NewBreackerConfigItemStore returns new instance of a BreackerConfigItemStore
 func NewBreackerConfigItemStore() KubervisorServiceItemStore {
-	return KubervisorServiceItemStore(kcache.NewStore(keyFunc))
+	return KubervisorServiceItemStore(kcache.NewStore(KubervisorServiceItemKeyFunc))
 }
 
-func keyFunc(obj interface{}) (string, error) {
+// KubervisorServiceItemKeyFunc function used to return the key ok a KubervisorServiceItem instance
+func KubervisorServiceItemKeyFunc(obj interface{}) (string, error) {
 	bci, ok := obj.(Interface)
 	if !ok {
 		fmt.Printf("keyFunc obj:%v\n", obj)
 		return "", fmt.Errorf("unable to return the key from obj: %v", obj)
 	}
 
-	return fmt.Sprintf("%s/%s", bci.Name(), bci.Namespace()), nil
+	return fmt.Sprintf("%s/%s", bci.Namespace(), bci.Name()), nil
 }
 
 // Interface item interface

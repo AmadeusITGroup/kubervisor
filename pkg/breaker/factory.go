@@ -42,7 +42,7 @@ func New(cfg FactoryConfig) (Breaker, error) {
 		return nil, fmt.Errorf("can't create breaker: %s", err)
 	}
 
-	return &BreakerImpl{
+	return &breakerImpl{
 		KubervisorServiceName: cfg.KubervisorServiceName,
 		breakerStrategyConfig: cfg.BreakerStrategyConfig,
 		logger:                cfg.Logger,

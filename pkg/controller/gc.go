@@ -86,7 +86,7 @@ func (gc *garbageCollector) updateCounters() {
 		}
 		if _, found := kubervisorServiceName[pod.Namespace+"/"+ksvcName]; !found {
 			key := pod.Namespace + "/" + pod.Name
-			count, _ := gc.counters[key]
+			count := gc.counters[key]
 			count++
 			gc.counters[key] = count
 		}

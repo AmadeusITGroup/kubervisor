@@ -33,10 +33,10 @@ type Config struct {
 	BreakerName           string
 }
 
-var _ Breaker = &BreakerImpl{}
+var _ Breaker = &breakerImpl{}
 
-//BreakerImpl implementation of the breaker interface
-type BreakerImpl struct {
+//breakerImpl implementation of the breaker interface
+type breakerImpl struct {
 	KubervisorServiceName string
 	breakerStrategyConfig v1.BreakerStrategy
 	selector              labels.Selector
@@ -79,7 +79,9 @@ func (b *BreakerImpl) Run(stop <-chan struct{}) {
 			}
 
 			for _, p := range podsToCut[:removeCount] {
-				b.podControl.UpdateBreakerAnnotationAndLabel(b.KubervisorServiceName, p)
+				if _, err := b.podControl.UpdateBreakerAnnotationAndLabel(b.KubervisorServiceName, p); err != nil {
+					b.logger.Sugar().Errorf("can't update Breaker annotation and label: %s", err)
+				}
 			}
 
 		case <-stop:
@@ -89,14 +91,11 @@ func (b *BreakerImpl) Run(stop <-chan struct{}) {
 }
 
 // CompareConfig used to compare the current config with a possible new spec config
-func (b *BreakerImpl) CompareConfig(specConfig *v1.BreakerStrategy) bool {
-	if !reflect.DeepEqual(&b.breakerStrategyConfig, specConfig) {
-		return false
-	}
-	return true
+func (b *breakerImpl) CompareConfig(specConfig *v1.BreakerStrategy) bool {
+	return reflect.DeepEqual(&b.breakerStrategyConfig, specConfig)
 }
 
-func (b *BreakerImpl) computeMinAvailablePods(podUnderSelectorCount int) int {
+func (b *breakerImpl) computeMinAvailablePods(podUnderSelectorCount int) int {
 	count, ratio := 0, 0
 	if b.breakerStrategyConfig.MinPodsAvailableRatio != nil {
 		ratio = int(*b.breakerStrategyConfig.MinPodsAvailableRatio)
@@ -104,7 +103,7 @@ func (b *BreakerImpl) computeMinAvailablePods(podUnderSelectorCount int) int {
 	if b.breakerStrategyConfig.MinPodsAvailableCount != nil {
 		count = int(*b.breakerStrategyConfig.MinPodsAvailableCount)
 	}
-	quota := podUnderSelectorCount * int(ratio) / 100
+	quota := podUnderSelectorCount * ratio / 100
 	if quota > count {
 		return quota
 	}
@@ -112,7 +111,7 @@ func (b *BreakerImpl) computeMinAvailablePods(podUnderSelectorCount int) int {
 }
 
 //GetStatus return the status for the breaker
-func (b *BreakerImpl) GetStatus() v1.BreakerStatus {
+func (b *breakerImpl) GetStatus() v1.BreakerStatus {
 	status := v1.BreakerStatus{}
 	allPods, _ := b.podLister.List(b.selector)
 	status.NbPodsManaged = uint32(len(allPods))

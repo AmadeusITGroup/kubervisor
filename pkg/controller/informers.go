@@ -23,9 +23,6 @@ func (ctrl *Controller) onAddKubervisorService(obj interface{}) {
 			return
 		}
 		// TODO: how to remove a kubervisorservice created with an invalid or even with a valid status. What in case of error for this delete?
-		if err := ctrl.deleteKubervisorService(bc.Namespace, bc.Name); err != nil {
-			ctrl.Logger.Sugar().Errorf("unable to delete non empty status KubervisorService %s/%s: %v. No retry will be performed.", bc.Namespace, bc.Name, err)
-		}
 
 		return
 	}

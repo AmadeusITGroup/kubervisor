@@ -50,7 +50,7 @@ func TestNew(t *testing.T) {
 			},
 			wantErr: false,
 			checkFunc: func(b Breaker) bool {
-				_, ok := b.(*BreakerImpl)
+				_, ok := b.(*breakerImpl)
 				return ok
 			},
 		},

@@ -147,8 +147,5 @@ func isDiscreteValueOutOfListDefaulted(item *DiscreteValueOutOfList) bool {
 
 // isDiscreteValueOutOfListDefaulted used to check if a DiscreteValueOutOfList is already defaulted
 func isContinuousValueDeviationDefaulted(item *ContinuousValueDeviation) bool {
-	if item.MaxDeviationPercent == nil {
-		return false
-	}
-	return true
+	return item.MaxDeviationPercent != nil
 }
