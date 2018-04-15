@@ -1,7 +1,5 @@
 package v1
 
-import "time"
-
 // DefaultKubervisorService injecting default values for the struct
 func DefaultKubervisorService(item *KubervisorService) *KubervisorService {
 	copy := item.DeepCopy()
@@ -41,8 +39,8 @@ func DefaultContinuousValueDeviation(item *ContinuousValueDeviation) *Continuous
 // DefaultBreakerStrategy injecting default values for the struct
 func DefaultBreakerStrategy(item *BreakerStrategy) *BreakerStrategy {
 	copy := item.DeepCopy()
-	if copy.EvaluationPeriod == time.Duration(0) {
-		copy.EvaluationPeriod = time.Duration(5 * time.Second)
+	if copy.EvaluationPeriod == nil {
+		copy.EvaluationPeriod = NewFloat64(5)
 	}
 	if copy.MinPodsAvailableCount == nil {
 		copy.MinPodsAvailableCount = NewUInt(1)
@@ -69,8 +67,8 @@ func DefaultActivatorStrategy(item *ActivatorStrategy) *ActivatorStrategy {
 	if copy.Mode == "" {
 		copy.Mode = ActivatorStrategyModePeriodic
 	}
-	if copy.Period == 0 {
-		copy.Period = time.Duration(10)
+	if copy.Period == nil {
+		copy.Period = NewFloat64(10.0)
 	}
 	return copy
 }
@@ -111,7 +109,7 @@ func isActivatorStrategyDefaulted(item *ActivatorStrategy) bool {
 	if item.Mode == "" {
 		return false
 	}
-	if item.Period == 0 {
+	if item.Period == nil {
 		return false
 	}
 	return true
@@ -119,7 +117,7 @@ func isActivatorStrategyDefaulted(item *ActivatorStrategy) bool {
 
 // isBreakerStrategyDefaulted injecting default values for the struct
 func isBreakerStrategyDefaulted(item *BreakerStrategy) bool {
-	if item.EvaluationPeriod == time.Duration(0) {
+	if item.EvaluationPeriod == nil {
 		return false
 	}
 	if item.MinPodsAvailableCount == nil && item.MinPodsAvailableRatio == nil {

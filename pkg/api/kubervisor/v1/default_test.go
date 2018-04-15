@@ -2,7 +2,6 @@ package v1
 
 import (
 	"testing"
-	"time"
 )
 
 func Test_isDiscreteValueOutOfListDefaulted(t *testing.T) {
@@ -95,7 +94,7 @@ func Test_isBreakerStrategyDefaulted(t *testing.T) {
 			name: "missing MinPodsAvailableCount",
 			args: args{
 				item: &BreakerStrategy{
-					EvaluationPeriod:       time.Duration(time.Second),
+					EvaluationPeriod:       NewFloat64(1.0),
 					MinPodsAvailableRatio:  NewUInt(70),
 					DiscreteValueOutOfList: DefaultDiscreteValueOutOfList(&DiscreteValueOutOfList{}),
 				},
@@ -106,7 +105,7 @@ func Test_isBreakerStrategyDefaulted(t *testing.T) {
 			name: "missing MinPodsAvailableCount and MinPodsAvailableRatio",
 			args: args{
 				item: &BreakerStrategy{
-					EvaluationPeriod:       time.Duration(time.Second),
+					EvaluationPeriod:       NewFloat64(1.0),
 					DiscreteValueOutOfList: DefaultDiscreteValueOutOfList(&DiscreteValueOutOfList{}),
 				},
 			},
@@ -116,7 +115,7 @@ func Test_isBreakerStrategyDefaulted(t *testing.T) {
 			name: "missing MinPodsAvailableRatio",
 			args: args{
 				item: &BreakerStrategy{
-					EvaluationPeriod:       time.Duration(time.Second),
+					EvaluationPeriod:       NewFloat64(1.0),
 					MinPodsAvailableCount:  NewUInt(1),
 					DiscreteValueOutOfList: DefaultDiscreteValueOutOfList(&DiscreteValueOutOfList{}),
 				},
@@ -127,7 +126,7 @@ func Test_isBreakerStrategyDefaulted(t *testing.T) {
 			name: "missing DiscreteValueOutOfList values",
 			args: args{
 				item: &BreakerStrategy{
-					EvaluationPeriod:       time.Duration(time.Second),
+					EvaluationPeriod:       NewFloat64(1.0),
 					MinPodsAvailableCount:  NewUInt(1),
 					MinPodsAvailableRatio:  NewUInt(70),
 					DiscreteValueOutOfList: &DiscreteValueOutOfList{},
@@ -139,7 +138,7 @@ func Test_isBreakerStrategyDefaulted(t *testing.T) {
 			name: "missing ContinuousValueDeviation values",
 			args: args{
 				item: &BreakerStrategy{
-					EvaluationPeriod:         time.Duration(time.Second),
+					EvaluationPeriod:         NewFloat64(1.0),
 					MinPodsAvailableCount:    NewUInt(1),
 					MinPodsAvailableRatio:    NewUInt(70),
 					ContinuousValueDeviation: &ContinuousValueDeviation{},
@@ -180,7 +179,7 @@ func Test_isActivatorStrategyDefaulted(t *testing.T) {
 					//Mode: ActivatorStrategyModePeriodic,
 					MaxRetryCount: NewUInt(2),
 					MaxPauseCount: NewUInt(20),
-					Period:        time.Duration(time.Second),
+					Period:        NewFloat64(1.0),
 				},
 			},
 			want: false,
@@ -192,7 +191,7 @@ func Test_isActivatorStrategyDefaulted(t *testing.T) {
 					Mode: ActivatorStrategyModePeriodic,
 					//MaxRetryCount: NewUInt(2),
 					MaxPauseCount: NewUInt(20),
-					Period:        time.Duration(time.Second),
+					Period:        NewFloat64(1.0),
 				},
 			},
 			want: false,
@@ -204,7 +203,7 @@ func Test_isActivatorStrategyDefaulted(t *testing.T) {
 					Mode:          ActivatorStrategyModePeriodic,
 					MaxRetryCount: NewUInt(2),
 					//MaxPauseCount: NewUInt(20),
-					Period: time.Duration(time.Second),
+					Period: NewFloat64(1.0),
 				},
 			},
 			want: false,
@@ -216,7 +215,7 @@ func Test_isActivatorStrategyDefaulted(t *testing.T) {
 					Mode:          ActivatorStrategyModePeriodic,
 					MaxRetryCount: NewUInt(2),
 					MaxPauseCount: NewUInt(20),
-					//Period:        time.Duration(time.Second),
+					//Period:        NewFloat64(1.0),
 				},
 			},
 			want: false,

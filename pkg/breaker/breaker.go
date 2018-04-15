@@ -49,7 +49,7 @@ type BreakerImpl struct {
 
 //Run implements Breaker run loop ( to launch as goroutine: go Run())
 func (b *BreakerImpl) Run(stop <-chan struct{}) {
-	ticker := time.NewTicker(b.breakerStrategyConfig.EvaluationPeriod)
+	ticker := time.NewTicker(time.Duration(*b.breakerStrategyConfig.EvaluationPeriod*1000) * time.Millisecond)
 	defer ticker.Stop()
 	for {
 		select {

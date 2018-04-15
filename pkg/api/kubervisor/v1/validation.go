@@ -32,6 +32,14 @@ func ValidateBreakerStrategy(s BreakerStrategy) error {
 		return fmt.Errorf("BreakerStrategy is defining multiple anomalies")
 	}
 
+	if s.EvaluationPeriod != nil && *s.EvaluationPeriod <= 0.01 {
+		return fmt.Errorf("BreakerStrategy evaluation period undefined or too small (less than 10 ms)")
+	}
+
+	if s.EvaluationPeriod != nil && *s.EvaluationPeriod > 24*3600.0 {
+		return fmt.Errorf("BreakerStrategy evaluation period undefined or too big (more than 1 day)")
+	}
+
 	return nil
 }
 

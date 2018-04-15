@@ -100,7 +100,7 @@ func (b *ActivatorImpl) applyActivatorStrategy(p *kapiv1.Pod) error {
 		return err
 	}
 
-	retryPeriod := b.activatorStrategyConfig.Period
+	retryPeriod := time.Duration(*b.activatorStrategyConfig.Period*1000) * time.Millisecond
 	now := time.Now()
 
 	switch b.activatorStrategyConfig.Mode {
