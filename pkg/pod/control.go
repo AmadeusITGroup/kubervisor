@@ -8,16 +8,31 @@ import (
 	clientset "k8s.io/client-go/kubernetes"
 
 	"github.com/amadeusitgroup/podkubervisor/pkg/labeling"
+	"github.com/prometheus/client_golang/prometheus"
+)
+
+func init() {
+	prometheus.MustRegister(kubervisorBreakCounters)
+}
+
+var (
+	kubervisorBreakCounters = prometheus.NewCounterVec(
+		prometheus.CounterOpts{
+			Name: "kubervisor_breaker_count",
+			Help: "Count Pod under kubervisor management",
+		},
+		[]string{"breaker", "namespace", "pod", "type"}, // type={managed,breaked,paused,unknown}
+	)
 )
 
 //ControlInterface interface to act on pods
 type ControlInterface interface {
 	InitBreakerAnnotationAndLabel(breakConfigName string, inputPod *kapiv1.Pod) (*kapiv1.Pod, error)
 	UpdateBreakerAnnotationAndLabel(breakConfigName string, p *kapiv1.Pod) (*kapiv1.Pod, error)
-	UpdateActivationLabelsAndAnnotations(p *kapiv1.Pod) (*kapiv1.Pod, error)
-	UpdatePauseLabelsAndAnnotations(p *kapiv1.Pod) (*kapiv1.Pod, error)
+	UpdateActivationLabelsAndAnnotations(breakConfigName string, p *kapiv1.Pod) (*kapiv1.Pod, error)
+	UpdatePauseLabelsAndAnnotations(breakConfigName string, p *kapiv1.Pod) (*kapiv1.Pod, error)
 	RemoveBreakerAnnotationAndLabel(p *kapiv1.Pod) (*kapiv1.Pod, error)
-	KillPod(p *kapiv1.Pod) error
+	KillPod(breakConfigName string, p *kapiv1.Pod) error
 }
 
 var _ ControlInterface = &Control{}
@@ -54,7 +69,7 @@ func (c *Control) InitBreakerAnnotationAndLabel(breakConfigName string, inputPod
 }
 
 //UpdateBreakerAnnotationAndLabel implements pod control
-func (c *Control) UpdateBreakerAnnotationAndLabel(breakConfigName string, inputPod *kapiv1.Pod) (*kapiv1.Pod, error) {
+func (c *Control) UpdateBreakerAnnotationAndLabel(breakConfigName string, inputPod *kapiv1.Pod) (returnPod *kapiv1.Pod, err error) {
 	//Copy to avoid modifying object inside the cache
 	p := copyAndDefault(inputPod)
 
@@ -67,27 +82,39 @@ func (c *Control) UpdateBreakerAnnotationAndLabel(breakConfigName string, inputP
 	p.Annotations[labeling.AnnotationBreakAtKey] = time.Now().Format(time.RFC3339)
 	p.Annotations[labeling.AnnotationRetryCountKey] = strconv.Itoa(retryCount)
 
-	return c.kubeClient.Core().Pods(p.Namespace).Update(p)
+	returnPod, err = c.kubeClient.Core().Pods(p.Namespace).Update(p)
+	if err != nil {
+		kubervisorBreakCounters.WithLabelValues(breakConfigName, p.Namespace, p.Name, "break").Inc()
+	}
+	return
 }
 
 //UpdateActivationLabelsAndAnnotations classic pod reactivation into traffic
-func (c *Control) UpdateActivationLabelsAndAnnotations(inputPod *kapiv1.Pod) (*kapiv1.Pod, error) {
+func (c *Control) UpdateActivationLabelsAndAnnotations(breakerConfigName string, inputPod *kapiv1.Pod) (returnPod *kapiv1.Pod, err error) {
 	//Copy to avoid modifying object inside the cache
 	p := copyAndDefault(inputPod)
 
 	p.Labels[labeling.LabelTrafficKey] = string(labeling.LabelTrafficYes)
 
-	return c.kubeClient.Core().Pods(p.Namespace).Update(p)
+	returnPod, err = c.kubeClient.Core().Pods(p.Namespace).Update(p)
+	if err != nil {
+		kubervisorBreakCounters.WithLabelValues(breakerConfigName, p.Namespace, p.Name, "activate").Inc()
+	}
+	return
 }
 
 //UpdatePauseLabelsAndAnnotations called to put pod on pause when count exceeded
-func (c *Control) UpdatePauseLabelsAndAnnotations(inputPod *kapiv1.Pod) (*kapiv1.Pod, error) {
+func (c *Control) UpdatePauseLabelsAndAnnotations(breakerConfigName string, inputPod *kapiv1.Pod) (returnPod *kapiv1.Pod, err error) {
 	//Copy to avoid modifying object inside the cache
 	p := copyAndDefault(inputPod)
 
 	p.Labels[labeling.LabelTrafficKey] = string(labeling.LabelTrafficPause)
 
-	return c.kubeClient.Core().Pods(p.Namespace).Update(p)
+	returnPod, err = c.kubeClient.Core().Pods(p.Namespace).Update(p)
+	if err != nil {
+		kubervisorBreakCounters.WithLabelValues(breakerConfigName, p.Namespace, p.Name, "pause").Inc()
+	}
+	return
 }
 
 // RemoveBreakerAnnotationAndLabel called to remove all labels and annotations added previously.
@@ -103,6 +130,10 @@ func (c *Control) RemoveBreakerAnnotationAndLabel(inputPod *kapiv1.Pod) (*kapiv1
 }
 
 //KillPod deelte the pod. Called when the number of retry have been exceeded on a retyrAndKill strategy
-func (c *Control) KillPod(inputPod *kapiv1.Pod) error {
-	return c.kubeClient.Core().Pods(inputPod.Namespace).Delete(inputPod.Name, nil)
+func (c *Control) KillPod(breakerConfigName string, inputPod *kapiv1.Pod) error {
+	err := c.kubeClient.Core().Pods(inputPod.Namespace).Delete(inputPod.Name, nil)
+	if err != nil {
+		kubervisorBreakCounters.WithLabelValues(breakerConfigName, inputPod.Namespace, inputPod.Name, "kill").Inc()
+	}
+	return err
 }

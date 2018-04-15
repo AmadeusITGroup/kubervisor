@@ -107,18 +107,18 @@ func (b *ActivatorImpl) applyActivatorStrategy(p *kapiv1.Pod) error {
 	case v1.ActivatorStrategyModePeriodic:
 		retrytime := breakAt.Add(retryPeriod)
 		if retrytime.Before(now) {
-			if _, err := b.podControl.UpdateActivationLabelsAndAnnotations(p); err != nil {
+			if _, err := b.podControl.UpdateActivationLabelsAndAnnotations(b.breakerName, p); err != nil {
 				return err
 			}
 		}
 	case v1.ActivatorStrategyModeRetryAndKill:
 		if retryCount > int(*b.activatorStrategyConfig.MaxRetryCount) {
-			return b.podControl.KillPod(p)
+			return b.podControl.KillPod(b.breakerName, p)
 		}
 
 		retrytime := breakAt.Add(time.Duration(retryCount) * retryPeriod)
 		if retrytime.Before(now) {
-			if _, err := b.podControl.UpdateActivationLabelsAndAnnotations(p); err != nil {
+			if _, err := b.podControl.UpdateActivationLabelsAndAnnotations(b.breakerName, p); err != nil {
 				return err
 			}
 		}
@@ -131,9 +131,9 @@ func (b *ActivatorImpl) applyActivatorStrategy(p *kapiv1.Pod) error {
 				return fmt.Errorf("in activator '%s', can't list paused pods:%s", b.breakerName, err)
 			}
 			if len(list) >= int(*b.activatorStrategyConfig.MaxPauseCount) {
-				return b.podControl.KillPod(p)
+				return b.podControl.KillPod(b.breakerName, p)
 			}
-			if _, err := b.podControl.UpdatePauseLabelsAndAnnotations(p); err != nil {
+			if _, err := b.podControl.UpdatePauseLabelsAndAnnotations(b.breakerName, p); err != nil {
 				return fmt.Errorf("in activator '%s' can't set 'pause' on pod '%s' :%s", b.breakerName, p.Name, err)
 			}
 			return nil
@@ -141,7 +141,7 @@ func (b *ActivatorImpl) applyActivatorStrategy(p *kapiv1.Pod) error {
 
 		retrytime := breakAt.Add(time.Duration(retryCount) * retryPeriod)
 		if retrytime.Before(now) {
-			if _, err := b.podControl.UpdateActivationLabelsAndAnnotations(p); err != nil {
+			if _, err := b.podControl.UpdateActivationLabelsAndAnnotations(b.breakerName, p); err != nil {
 				return fmt.Errorf("can't apply activator '%s' strategy on pod '%s' :%s", b.breakerName, p.Name, err)
 			}
 		}
