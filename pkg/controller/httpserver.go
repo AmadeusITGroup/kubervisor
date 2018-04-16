@@ -3,8 +3,10 @@ package controller
 import (
 	"context"
 	"fmt"
+	"net/http"
 
 	"github.com/heptiolabs/healthcheck"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 )
 
 func (ctrl *Controller) runHTTPServer(stop <-chan struct{}) error {
@@ -22,7 +24,14 @@ func (ctrl *Controller) runHTTPServer(stop <-chan struct{}) error {
 	return ctrl.httpServer.Shutdown(context.Background())
 }
 
-func (ctrl *Controller) configureHealth() {
+func (ctrl *Controller) configureHTTPServer() {
+	mux := http.NewServeMux()
+	mux.Handle("/metrics", promhttp.Handler())
+	mux.Handle("/", ctrl.configureHealth())
+	ctrl.httpServer.Handler = mux
+}
+
+func (ctrl *Controller) configureHealth() http.Handler {
 	ctrl.health = healthcheck.NewHandler()
 	ctrl.health.AddReadinessCheck("KubervisorService_cache_sync", func() error {
 		if ctrl.BreakerSynced() {
@@ -42,5 +51,6 @@ func (ctrl *Controller) configureHealth() {
 		}
 		return fmt.Errorf("Service cache not sync")
 	})
-	ctrl.httpServer.Handler = ctrl.health
+
+	return ctrl.health
 }

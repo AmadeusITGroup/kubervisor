@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/heptiolabs/healthcheck"
+	"github.com/prometheus/client_golang/prometheus"
 	"go.uber.org/zap"
 
 	apiv1 "k8s.io/api/core/v1"
@@ -36,6 +37,20 @@ import (
 	"github.com/amadeusitgroup/podkubervisor/pkg/controller/item"
 	"github.com/amadeusitgroup/podkubervisor/pkg/labeling"
 	"github.com/amadeusitgroup/podkubervisor/pkg/pod"
+)
+
+func init() {
+	prometheus.MustRegister(kubervisorGauges)
+}
+
+var (
+	kubervisorGauges = prometheus.NewGaugeVec(
+		prometheus.GaugeOpts{
+			Name: "kubervisor_breaker_gauge",
+			Help: "Display Pod under kubervisor management",
+		},
+		[]string{"name", "type"}, // type={managed,breaked,paused,unknown}
+	)
 )
 
 // Controller represent the kubervisor controller
@@ -147,7 +162,7 @@ func New(cfg *Config) *Controller {
 	}
 	ctrl.enqueueFunc = ctrl.enqueue
 	ctrl.updateHandlerFunc = ctrl.updateHandler
-	ctrl.configureHealth()
+	ctrl.configureHTTPServer()
 
 	breakerInformer.Informer().AddEventHandler(
 		cache.ResourceEventHandlerFuncs{
@@ -353,6 +368,7 @@ func (ctrl *Controller) syncKubervisorService(bc *kubervisorapi.KubervisorServic
 	}
 
 	newStatus := bci.GetStatus()
+	updateGauge(bci.Name(), newStatus)
 	if bc.Status.Breaker == nil || !equalBreakerStatusCounters(newStatus, *bc.Status.Breaker) {
 		bc.Status.Breaker = &newStatus
 		//update status to running
@@ -366,6 +382,13 @@ func (ctrl *Controller) syncKubervisorService(bc *kubervisorapi.KubervisorServic
 		}
 	}
 	return false, nil
+}
+
+func updateGauge(name string, status kubervisorapi.BreakerStatus) {
+	kubervisorGauges.WithLabelValues(name, "managed").Set(float64(status.NbPodsManaged))
+	kubervisorGauges.WithLabelValues(name, "breaked").Set(float64(status.NbPodsBreaked))
+	kubervisorGauges.WithLabelValues(name, "paused").Set(float64(status.NbPodsPaused))
+	kubervisorGauges.WithLabelValues(name, "unknown").Set(float64(status.NbPodsUnknown))
 }
 
 // Used to select all currently associated to the KubervisorService and check if it is still the case

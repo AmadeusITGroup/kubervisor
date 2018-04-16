@@ -78,7 +78,7 @@ func TestActivatorImpl_Run(t *testing.T) {
 							test.GetTestSequence(t, testprefix+"/2pods").PassAtLeastOnce(0)
 						case "AA":
 							test.GetTestSequence(t, testprefix+"/2pods").PassAtLeastOnce(1)
-							return fmt.Errorf("error case")
+							return fmt.Errorf("error case on purpose for test")
 						default:
 							t.Fatalf("Unexpected pod %s", p.Name)
 						}
@@ -183,7 +183,7 @@ func TestActivatorImpl_applyActivatorStrategy(t *testing.T) {
 				podControl: &test.TestPodControl{
 					T:                   t,
 					FailOnUndefinedFunc: true,
-					UpdateActivationLabelsAndAnnotationsFunc: func(p *kapiv1.Pod) (*kapiv1.Pod, error) {
+					UpdateActivationLabelsAndAnnotationsFunc: func(name string, p *kapiv1.Pod) (*kapiv1.Pod, error) {
 						return nil, fmt.Errorf("Fake Error")
 					},
 				},
@@ -209,7 +209,7 @@ func TestActivatorImpl_applyActivatorStrategy(t *testing.T) {
 				podControl: &test.TestPodControl{
 					T:                   t,
 					FailOnUndefinedFunc: true,
-					UpdateActivationLabelsAndAnnotationsFunc: func(p *kapiv1.Pod) (*kapiv1.Pod, error) {
+					UpdateActivationLabelsAndAnnotationsFunc: func(name string, p *kapiv1.Pod) (*kapiv1.Pod, error) {
 						test.GetTestSequence(t, testprefix+"/periodic_fine").PassAtLeastOnce(0)
 						return p, nil
 					},
@@ -236,7 +236,7 @@ func TestActivatorImpl_applyActivatorStrategy(t *testing.T) {
 				podControl: &test.TestPodControl{
 					T:                   t,
 					FailOnUndefinedFunc: true,
-					KillPodFunc: func(p *kapiv1.Pod) error {
+					KillPodFunc: func(name string, p *kapiv1.Pod) error {
 						return fmt.Errorf("Fake Error")
 					},
 				},
@@ -263,7 +263,7 @@ func TestActivatorImpl_applyActivatorStrategy(t *testing.T) {
 				podControl: &test.TestPodControl{
 					T:                   t,
 					FailOnUndefinedFunc: true,
-					KillPodFunc: func(p *kapiv1.Pod) error {
+					KillPodFunc: func(name string, p *kapiv1.Pod) error {
 						test.GetTestSequence(t, testprefix+"/retryAndKill_kill_fine").PassAtLeastOnce(0)
 						return nil
 					},
@@ -290,7 +290,7 @@ func TestActivatorImpl_applyActivatorStrategy(t *testing.T) {
 				podControl: &test.TestPodControl{
 					T:                   t,
 					FailOnUndefinedFunc: true,
-					UpdateActivationLabelsAndAnnotationsFunc: func(p *kapiv1.Pod) (*kapiv1.Pod, error) {
+					UpdateActivationLabelsAndAnnotationsFunc: func(name string, p *kapiv1.Pod) (*kapiv1.Pod, error) {
 						return nil, fmt.Errorf("fake Error")
 					},
 				},
@@ -317,7 +317,7 @@ func TestActivatorImpl_applyActivatorStrategy(t *testing.T) {
 				podControl: &test.TestPodControl{
 					T:                   t,
 					FailOnUndefinedFunc: true,
-					UpdateActivationLabelsAndAnnotationsFunc: func(p *kapiv1.Pod) (*kapiv1.Pod, error) {
+					UpdateActivationLabelsAndAnnotationsFunc: func(name string, p *kapiv1.Pod) (*kapiv1.Pod, error) {
 						test.GetTestSequence(t, testprefix+"/retryAndKill_retry_fine").PassAtLeastOnce(0)
 						return p, nil
 					},
@@ -345,7 +345,7 @@ func TestActivatorImpl_applyActivatorStrategy(t *testing.T) {
 				podControl: &test.TestPodControl{
 					T:                   t,
 					FailOnUndefinedFunc: true,
-					UpdateActivationLabelsAndAnnotationsFunc: func(p *kapiv1.Pod) (*kapiv1.Pod, error) {
+					UpdateActivationLabelsAndAnnotationsFunc: func(name string, p *kapiv1.Pod) (*kapiv1.Pod, error) {
 						test.GetTestSequence(t, testprefix+"/retryAndPause_retry_fine").PassAtLeastOnce(0)
 						return p, nil
 					},
@@ -373,7 +373,7 @@ func TestActivatorImpl_applyActivatorStrategy(t *testing.T) {
 				podControl: &test.TestPodControl{
 					T:                   t,
 					FailOnUndefinedFunc: true,
-					UpdateActivationLabelsAndAnnotationsFunc: func(p *kapiv1.Pod) (*kapiv1.Pod, error) {
+					UpdateActivationLabelsAndAnnotationsFunc: func(name string, p *kapiv1.Pod) (*kapiv1.Pod, error) {
 						test.GetTestSequence(t, testprefix+"/retryAndPause_retry_error").PassAtLeastOnce(0)
 						return p, fmt.Errorf("Fake error")
 					},
@@ -402,7 +402,7 @@ func TestActivatorImpl_applyActivatorStrategy(t *testing.T) {
 				podControl: &test.TestPodControl{
 					T:                   t,
 					FailOnUndefinedFunc: true,
-					UpdatePauseLabelsAndAnnotationsFunc: func(p *kapiv1.Pod) (*kapiv1.Pod, error) {
+					UpdatePauseLabelsAndAnnotationsFunc: func(name string, p *kapiv1.Pod) (*kapiv1.Pod, error) {
 						test.GetTestSequence(t, testprefix+"/retryAndPause_pause_error").PassAtLeastOnce(0)
 						return p, fmt.Errorf("Fake error")
 					},
@@ -433,7 +433,7 @@ func TestActivatorImpl_applyActivatorStrategy(t *testing.T) {
 				podControl: &test.TestPodControl{
 					T:                   t,
 					FailOnUndefinedFunc: true,
-					UpdatePauseLabelsAndAnnotationsFunc: func(p *kapiv1.Pod) (*kapiv1.Pod, error) {
+					UpdatePauseLabelsAndAnnotationsFunc: func(name string, p *kapiv1.Pod) (*kapiv1.Pod, error) {
 						test.GetTestSequence(t, testprefix+"/retryAndPause_pause_fine").PassAtLeastOnce(0)
 						return p, nil
 					},
@@ -464,7 +464,7 @@ func TestActivatorImpl_applyActivatorStrategy(t *testing.T) {
 				podControl: &test.TestPodControl{
 					T:                   t,
 					FailOnUndefinedFunc: true,
-					KillPodFunc: func(p *kapiv1.Pod) error {
+					KillPodFunc: func(name string, p *kapiv1.Pod) error {
 						test.GetTestSequence(t, testprefix+"/retryAndPause_kill").PassAtLeastOnce(0)
 						return nil
 					},

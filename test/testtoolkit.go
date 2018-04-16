@@ -263,10 +263,10 @@ type TestPodControl struct {
 	FailOnUndefinedFunc                      bool
 	InitBreakerAnnotationAndLabelFunc        func(name string, p *kapiv1.Pod) (*kapiv1.Pod, error)
 	UpdateBreakerAnnotationAndLabelFunc      func(name string, p *kapiv1.Pod) (*kapiv1.Pod, error)
-	UpdateActivationLabelsAndAnnotationsFunc func(p *kapiv1.Pod) (*kapiv1.Pod, error)
-	UpdatePauseLabelsAndAnnotationsFunc      func(p *kapiv1.Pod) (*kapiv1.Pod, error)
+	UpdateActivationLabelsAndAnnotationsFunc func(name string, p *kapiv1.Pod) (*kapiv1.Pod, error)
+	UpdatePauseLabelsAndAnnotationsFunc      func(name string, p *kapiv1.Pod) (*kapiv1.Pod, error)
 	RemoveBreakerAnnotationAndLabelFunc      func(p *kapiv1.Pod) (*kapiv1.Pod, error)
-	KillPodFunc                              func(p *kapiv1.Pod) error
+	KillPodFunc                              func(name string, p *kapiv1.Pod) error
 }
 
 //UpdateBreakerAnnotationAndLabel fake implementation for podcontrol
@@ -292,9 +292,9 @@ func (t *TestPodControl) UpdateBreakerAnnotationAndLabel(name string, p *kapiv1.
 }
 
 //UpdateActivationLabelsAndAnnotations fake implementation for podcontrol
-func (t *TestPodControl) UpdateActivationLabelsAndAnnotations(p *kapiv1.Pod) (*kapiv1.Pod, error) {
+func (t *TestPodControl) UpdateActivationLabelsAndAnnotations(name string, p *kapiv1.Pod) (*kapiv1.Pod, error) {
 	if t.UpdateActivationLabelsAndAnnotationsFunc != nil {
-		return t.UpdateActivationLabelsAndAnnotationsFunc(p)
+		return t.UpdateActivationLabelsAndAnnotationsFunc(name, p)
 	}
 	if t.FailOnUndefinedFunc {
 		t.T.Errorf("UpdateActivationLabelsAndAnnotationsFunc should not be called in %s/%s", t.T.Name(), t.Case)
@@ -303,9 +303,9 @@ func (t *TestPodControl) UpdateActivationLabelsAndAnnotations(p *kapiv1.Pod) (*k
 }
 
 //UpdatePauseLabelsAndAnnotations fake implementation for podcontrol
-func (t *TestPodControl) UpdatePauseLabelsAndAnnotations(p *kapiv1.Pod) (*kapiv1.Pod, error) {
+func (t *TestPodControl) UpdatePauseLabelsAndAnnotations(name string, p *kapiv1.Pod) (*kapiv1.Pod, error) {
 	if t.UpdatePauseLabelsAndAnnotationsFunc != nil {
-		return t.UpdatePauseLabelsAndAnnotationsFunc(p)
+		return t.UpdatePauseLabelsAndAnnotationsFunc(name, p)
 	}
 	if t.FailOnUndefinedFunc {
 		t.T.Errorf("UpdatePauseLabelsAndAnnotationsFunc should not be called in %s/%s", t.T.Name(), t.Case)
@@ -327,9 +327,9 @@ func (t *TestPodControl) RemoveBreakerAnnotationAndLabel(p *kapiv1.Pod) (*kapiv1
 }
 
 //KillPod fake implementation for podcontrol
-func (t *TestPodControl) KillPod(p *kapiv1.Pod) error {
+func (t *TestPodControl) KillPod(name string, p *kapiv1.Pod) error {
 	if t.KillPodFunc != nil {
-		return t.KillPodFunc(p)
+		return t.KillPodFunc(name, p)
 	}
 	if t.FailOnUndefinedFunc {
 		t.T.Errorf("KillPod should not be called in %s/%s", t.T.Name(), t.Case)
