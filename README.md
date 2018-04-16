@@ -10,6 +10,7 @@ Unlike a service mesh circuit breaker, the PodKubervisor can act as a circuit br
 The anomaly detection can be based on analisys done on external data source such as prometheus. It allows to easy build complex analysis by leveraging external system capabilities such as PromQL in the case of Prometheus.
 
 PodKubervisor comes with its own resource (CRD) to configure the system:
+
 - define the service to monitor
 - define the anomaly detection mechanism and configure it
 - define the grace period and retry policies

@@ -83,11 +83,7 @@ func (b *ActivatorImpl) CompareConfig(specStrategy *v1.ActivatorStrategy, specSe
 		return false
 	}
 	s, _ := labeling.SelectorWithBreakerName(specSelector, b.breakerName)
-	if !reflect.DeepEqual(s, b.selectorConfig) {
-		return false
-	}
-
-	return true
+	return reflect.DeepEqual(s, b.selectorConfig)
 }
 
 func (b *ActivatorImpl) applyActivatorStrategy(p *kapiv1.Pod) error {

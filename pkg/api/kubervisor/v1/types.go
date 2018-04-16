@@ -106,7 +106,7 @@ type BreakerStrategy struct {
 	MinPodsAvailableRatio *uint    `json:"minPodsAvailableRatio,omitempty"`
 
 	DiscreteValueOutOfList   *DiscreteValueOutOfList   `json:"discreteValueOutOfList,omitempty"`
-	ContinuousValueDeviation *ContinuousValueDeviation `json:"ContinuousValueDeviation,omitempty"`
+	ContinuousValueDeviation *ContinuousValueDeviation `json:"continuousValueDeviation,omitempty"`
 
 	CustomService string `json:"customService,omitempty"`
 }

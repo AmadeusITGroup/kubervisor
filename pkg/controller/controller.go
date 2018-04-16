@@ -339,6 +339,7 @@ func (ctrl *Controller) syncKubervisorService(bc *kubervisorapi.KubervisorServic
 			return false, err
 		}
 		ctrl.items.Add(bci)
+		bci.Start(ctrl.rootContext)
 	} else {
 		var ok bool
 		bci, ok = obj.(item.Interface)
@@ -351,6 +352,7 @@ func (ctrl *Controller) syncKubervisorService(bc *kubervisorapi.KubervisorServic
 				return false, err
 			}
 			ctrl.items.Update(bci)
+			bci.Start(ctrl.rootContext)
 		}
 	}
 
@@ -508,7 +510,6 @@ func (ctrl *Controller) newKubervisorServiceItem(bc *kubervisorapi.KubervisorSer
 		ctrl.Logger.Sugar().Errorf("unable to create new KubervisorServiceItem, err:%v", err)
 		return nil, err
 	}
-	bci.Start(ctrl.rootContext)
 	return bci, nil
 }
 

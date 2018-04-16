@@ -18,17 +18,18 @@ type KubervisorServiceItemStore kcache.Store
 
 // NewBreackerConfigItemStore returns new instance of a BreackerConfigItemStore
 func NewBreackerConfigItemStore() KubervisorServiceItemStore {
-	return KubervisorServiceItemStore(kcache.NewStore(keyFunc))
+	return KubervisorServiceItemStore(kcache.NewStore(KubervisorServiceItemKeyFunc))
 }
 
-func keyFunc(obj interface{}) (string, error) {
+// KubervisorServiceItemKeyFunc function used to return the key ok a KubervisorServiceItem instance
+func KubervisorServiceItemKeyFunc(obj interface{}) (string, error) {
 	bci, ok := obj.(Interface)
 	if !ok {
 		fmt.Printf("keyFunc obj:%v\n", obj)
 		return "", fmt.Errorf("unable to return the key from obj: %v", obj)
 	}
 
-	return fmt.Sprintf("%s/%s", bci.Name(), bci.Namespace()), nil
+	return fmt.Sprintf("%s/%s", bci.Namespace(), bci.Name()), nil
 }
 
 // Interface item interface
@@ -84,13 +85,13 @@ func (b *KubervisorServiceItem) Stop() error {
 // CompareWithSpec used to compare the current configuration with a new KubervisorServiceSpec
 func (b *KubervisorServiceItem) CompareWithSpec(spec *v1.KubervisorServiceSpec, selector labels.Selector) bool {
 	if !b.activator.CompareConfig(&spec.Activator, selector) {
-		return false
+		return true
 	}
 	if !b.breaker.CompareConfig(&spec.Breaker) {
-		return false
+		return true
 	}
 
-	return true
+	return false
 }
 
 func (b *KubervisorServiceItem) runBreaker(ctx context.Context) {
