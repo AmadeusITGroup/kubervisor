@@ -7,7 +7,7 @@ This guarantees that if all pods (or a majority) are under SLA, the system stabi
 
 
 Unlike a service mesh circuit breaker, the PodKubervisor can act as a circuit breaker triggered by servers internal KPIs.
-The anomaly detection can be based on analisys done on external data source such as prometheus. It allows to easy build complexe analysis by leveraging external system capabilities such as PromQL in the case of Prometheus.
+The anomaly detection can be based on analisys done on external data source such as prometheus. It allows to easy build complex analysis by leveraging external system capabilities such as PromQL in the case of Prometheus.
 
 PodKubervisor comes with its own resource (CRD) to configure the system:
 - define the service to monitor
