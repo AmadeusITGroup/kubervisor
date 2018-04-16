@@ -85,13 +85,13 @@ func (b *KubervisorServiceItem) Stop() error {
 // CompareWithSpec used to compare the current configuration with a new KubervisorServiceSpec
 func (b *KubervisorServiceItem) CompareWithSpec(spec *v1.KubervisorServiceSpec, selector labels.Selector) bool {
 	if !b.activator.CompareConfig(&spec.Activator, selector) {
-		return false
+		return true
 	}
 	if !b.breaker.CompareConfig(&spec.Breaker) {
-		return false
+		return true
 	}
 
-	return true
+	return false
 }
 
 func (b *KubervisorServiceItem) runBreaker(ctx context.Context) {

@@ -142,7 +142,7 @@ func TestControl_UpdateActivationLabelsAndAnnotations(t *testing.T) {
 			c := &Control{
 				kubeClient: tt.fields.kubeClient,
 			}
-			got, err := c.UpdateActivationLabelsAndAnnotations(tt.args.inputPod)
+			got, err := c.UpdateActivationLabelsAndAnnotations("test", tt.args.inputPod)
 
 			if (err != nil) != tt.wantErr {
 				t.Errorf("Control.UpdateActivationLabelsAndAnnotations() error = %v, wantErr %v", err, tt.wantErr)
@@ -206,7 +206,7 @@ func TestControl_UpdatePauseLabelsAndAnnotations(t *testing.T) {
 			c := &Control{
 				kubeClient: tt.fields.kubeClient,
 			}
-			got, err := c.UpdatePauseLabelsAndAnnotations(tt.args.inputPod)
+			got, err := c.UpdatePauseLabelsAndAnnotations("test", tt.args.inputPod)
 
 			if (err != nil) != tt.wantErr {
 				t.Errorf("Control.UpdatePauseLabelsAndAnnotations() error = %v, wantErr %v", err, tt.wantErr)
@@ -259,7 +259,7 @@ func TestControl_KillPod(t *testing.T) {
 			c := &Control{
 				kubeClient: tt.fields.kubeClient,
 			}
-			if err := c.KillPod(tt.args.inputPod); (err != nil) != tt.wantErr {
+			if err := c.KillPod("test", tt.args.inputPod); (err != nil) != tt.wantErr {
 				t.Errorf("Control.KillPod() error = %v, wantErr %v", err, tt.wantErr)
 			}
 			if !tt.checkFunc(t, tt.args.inputPod, tt.fields.kubeClient) {
