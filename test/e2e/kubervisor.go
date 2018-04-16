@@ -51,8 +51,8 @@ var _ = gink.Describe("KubervisorService CRUD", func() {
 		bc.Spec.Breaker.CustomService = "customanomalydetector." + testNs
 		bc.Spec.Breaker.DiscreteValueOutOfList = nil
 		bc.Spec.Breaker.MinPodsAvailableCount = v1.NewUInt(3)
-		bc.Spec.Breaker.EvaluationPeriod = time.Second
-		bc.Spec.Activator.Period = 60 * time.Second
+		bc.Spec.Breaker.EvaluationPeriod = v1.NewFloat64(1.0)
+		bc.Spec.Activator.Period = v1.NewFloat64(60.0)
 		gom.Eventually(framework.CreateKubervisorService(kubervisorClient, bc, testNs), "5s", "1s").ShouldNot(gom.HaveOccurred())
 		gom.Eventually(framework.IsKubervisorServiceCreated(kubervisorClient, bc.Name, testNs), "5s", "1s").ShouldNot(gom.HaveOccurred())
 		time.Sleep(4 * time.Second)

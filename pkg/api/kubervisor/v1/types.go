@@ -1,8 +1,6 @@
 package v1
 
 import (
-	"time"
-
 	api "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
@@ -103,9 +101,9 @@ type BreakerStatus struct {
 
 // BreakerStrategy contains BreakerStrategy definition
 type BreakerStrategy struct {
-	EvaluationPeriod      time.Duration `json:"evaluationPeriod,omitempty"`
-	MinPodsAvailableCount *uint         `json:"minPodsAvailableCount,omitempty"`
-	MinPodsAvailableRatio *uint         `json:"minPodsAvailableRatio,omitempty"`
+	EvaluationPeriod      *float64 `json:"evaluationPeriod,omitempty"`
+	MinPodsAvailableCount *uint    `json:"minPodsAvailableCount,omitempty"`
+	MinPodsAvailableRatio *uint    `json:"minPodsAvailableRatio,omitempty"`
 
 	DiscreteValueOutOfList   *DiscreteValueOutOfList   `json:"discreteValueOutOfList,omitempty"`
 	ContinuousValueDeviation *ContinuousValueDeviation `json:"ContinuousValueDeviation,omitempty"`
@@ -143,7 +141,7 @@ type DiscreteValueOutOfList struct {
 // ActivatorStrategy contains ActivatorStrategy definition
 type ActivatorStrategy struct {
 	Mode          ActivatorStrategyMode `json:"mode"`
-	Period        time.Duration         `json:"period,omitempty"`
+	Period        *float64              `json:"period,omitempty"`
 	MaxRetryCount *uint                 `json:"maxRetryCount,omitempty"`
 	MaxPauseCount *uint                 `json:"maxPauseCount,omitempty"`
 }

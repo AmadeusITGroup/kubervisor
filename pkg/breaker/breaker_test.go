@@ -129,7 +129,7 @@ func TestBreakerImpl_Run(t *testing.T) {
 			name: "ok",
 			fields: fields{
 				breakerStrategyConfig: v1.BreakerStrategy{
-					EvaluationPeriod:      50 * time.Millisecond,
+					EvaluationPeriod:      v1.NewFloat64(0.05),
 					MinPodsAvailableCount: v1.NewUInt(1),
 				},
 				selector: labels.SelectorFromSet(map[string]string{"app": "foo"}),
@@ -167,7 +167,7 @@ func TestBreakerImpl_Run(t *testing.T) {
 			name: "cutall",
 			fields: fields{
 				breakerStrategyConfig: v1.BreakerStrategy{
-					EvaluationPeriod:      50 * time.Millisecond,
+					EvaluationPeriod:      v1.NewFloat64(0.05),
 					MinPodsAvailableCount: v1.NewUInt(0),
 					MinPodsAvailableRatio: v1.NewUInt(0),
 				},
@@ -209,7 +209,7 @@ func TestBreakerImpl_Run(t *testing.T) {
 			name: "bigCount",
 			fields: fields{
 				breakerStrategyConfig: v1.BreakerStrategy{
-					EvaluationPeriod:      50 * time.Millisecond,
+					EvaluationPeriod:      v1.NewFloat64(0.05),
 					MinPodsAvailableCount: v1.NewUInt(10),
 					MinPodsAvailableRatio: v1.NewUInt(0),
 				},
@@ -244,7 +244,7 @@ func TestBreakerImpl_Run(t *testing.T) {
 			name: "0quota1cut2running",
 			fields: fields{
 				breakerStrategyConfig: v1.BreakerStrategy{
-					EvaluationPeriod:      50 * time.Millisecond,
+					EvaluationPeriod:      v1.NewFloat64(0.05),
 					MinPodsAvailableCount: v1.NewUInt(0),
 					MinPodsAvailableRatio: v1.NewUInt(0),
 				},
@@ -284,7 +284,7 @@ func TestBreakerImpl_Run(t *testing.T) {
 			name: "only1",
 			fields: fields{
 				breakerStrategyConfig: v1.BreakerStrategy{
-					EvaluationPeriod:      50 * time.Millisecond,
+					EvaluationPeriod:      v1.NewFloat64(0.05),
 					MinPodsAvailableCount: v1.NewUInt(1),
 					MinPodsAvailableRatio: v1.NewUInt(0),
 				},
@@ -340,7 +340,7 @@ func TestBreakerImpl_Run(t *testing.T) {
 
 			if tt.stepCount == 0 {
 				//Sleep to be sure that the breaker has some time to do several loops
-				time.Sleep(time.Duration(5) * tt.fields.breakerStrategyConfig.EvaluationPeriod)
+				time.Sleep(time.Duration(5000*(*tt.fields.breakerStrategyConfig.EvaluationPeriod)) * time.Millisecond)
 			}
 		})
 	}
@@ -406,7 +406,7 @@ func TestBreakerImpl_CompareConfig(t *testing.T) {
 				breakerStrategyConfig: *v1.DefaultBreakerStrategy(&v1.BreakerStrategy{}),
 			},
 			args: args{
-				specConfig: v1.DefaultBreakerStrategy(&v1.BreakerStrategy{EvaluationPeriod: time.Duration(42)}),
+				specConfig: v1.DefaultBreakerStrategy(&v1.BreakerStrategy{EvaluationPeriod: v1.NewFloat64(42)}),
 			},
 			want: false,
 		},
