@@ -4,13 +4,12 @@ import (
 	"reflect"
 	"time"
 
-	"github.com/amadeusitgroup/podkubervisor/pkg/labeling"
-
 	"go.uber.org/zap"
 	"k8s.io/apimachinery/pkg/labels"
 	kv1 "k8s.io/client-go/listers/core/v1"
 
 	"github.com/amadeusitgroup/podkubervisor/pkg/anomalydetector"
+	"github.com/amadeusitgroup/podkubervisor/pkg/labeling"
 	"github.com/amadeusitgroup/podkubervisor/pkg/api/kubervisor/v1"
 	"github.com/amadeusitgroup/podkubervisor/pkg/pod"
 )
