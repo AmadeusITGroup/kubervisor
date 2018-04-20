@@ -61,7 +61,7 @@ func (gc *garbageCollector) updateCounters() {
 	//Collect and index KubervisorService name
 	kubervisorServices, err := gc.breakerLister.List(labels.Everything())
 	if err != nil {
-		gc.logger.Sugar().Errorf("GC Can't list kubervisor services: %f", err)
+		gc.logger.Sugar().Errorf("GC Can't list kubervisor services: %v", err)
 		return
 	}
 	kubervisorServiceName := map[string]struct{}{}
@@ -73,7 +73,7 @@ func (gc *garbageCollector) updateCounters() {
 	//Check if for each pod with Kubervisor labels, the KubervisorService exist, if not update counter
 	pods, err := gc.podLister.List(labels.Everything())
 	if err != nil {
-		gc.logger.Sugar().Errorf("GC Can't list pods: %f", err)
+		gc.logger.Sugar().Errorf("GC Can't list pods: %v", err)
 		return
 	}
 	for _, pod := range pods {
