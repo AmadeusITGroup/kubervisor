@@ -99,8 +99,7 @@ func (ctrl *Controller) onDeletePod(obj interface{}) {
 	}
 	ctrl.Logger.Sugar().Debugf("onDeletePod %s/%s", pod.Namespace, pod.Name)
 	if ksName, ok := pod.Labels[labeling.LabelBreakerNameKey]; ok {
-		// Pod already handle by a KubervisorService
-		// Pod already handle by a KubervisorService
+		// Pod already handled by a KubervisorService
 		ks, err := ctrl.breakerLister.KubervisorServices(pod.Namespace).Get(ksName)
 		if err != nil {
 			ctrl.Logger.Sugar().Errorf("unable to get KubervisorService:%s, associated in pod:%s/%s err: %v", ksName, pod.Namespace, pod.Name, err)
