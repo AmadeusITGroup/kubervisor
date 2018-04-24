@@ -308,7 +308,7 @@ func (ctrl *Controller) syncKubervisorService(bc *kubervisorapi.KubervisorServic
 		ctrl.Logger.Sugar().Infof("BreakerService %s/%s: startTime updated", bc.Namespace, bc.Name)
 		return true, nil
 	}
-	ctrl.Logger.Sugar().Debugf("BreakerService %s/%s: startTime already setted", bc.Namespace, bc.Name)
+	ctrl.Logger.Sugar().Debugf("BreakerService %s/%s: startTime already set", bc.Namespace, bc.Name)
 
 	associatedSvc, err := ctrl.serviceLister.Services(bc.Namespace).Get(bc.Spec.Service)
 	if err != nil {
