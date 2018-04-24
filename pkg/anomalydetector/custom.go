@@ -46,17 +46,17 @@ func (c *CustomAnomalyDetector) GetPodsOutOfBounds() ([]*kapiv1.Pod, error) {
 	}
 	defer response.Body.Close()
 	if response.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("The custom did not respond Ok (200) but %d", response.StatusCode)
+		return nil, fmt.Errorf("the custom did not respond Ok (200) but %d", response.StatusCode)
 	}
 	bodyBytes, err2 := ioutil.ReadAll(response.Body)
 	if err2 != nil {
-		return nil, fmt.Errorf("Can't read response buffer %v", err2)
+		return nil, fmt.Errorf("can't read response buffer %v", err2)
 	}
 
 	list := &kapiv1.PodList{}
 	gvk := kapiv1.SchemeGroupVersion.WithKind("PodList")
 	if _, _, err = c.decoder.Decode(bodyBytes, &gvk, list); err != nil {
-		return nil, fmt.Errorf("Decoding custom server response failed: %v", err)
+		return nil, fmt.Errorf("decoding custom server response failed: %v", err)
 	}
 
 	result := []*kapiv1.Pod{}
