@@ -28,8 +28,8 @@ package fake
 
 import (
 	clientset "github.com/amadeusitgroup/podkubervisor/pkg/client/clientset/versioned"
-	breakerv1 "github.com/amadeusitgroup/podkubervisor/pkg/client/clientset/versioned/typed/kubervisor/v1"
-	fakebreakerv1 "github.com/amadeusitgroup/podkubervisor/pkg/client/clientset/versioned/typed/kubervisor/v1/fake"
+	kubervisorv1 "github.com/amadeusitgroup/podkubervisor/pkg/client/clientset/versioned/typed/kubervisor/v1"
+	fakekubervisorv1 "github.com/amadeusitgroup/podkubervisor/pkg/client/clientset/versioned/typed/kubervisor/v1/fake"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/watch"
 	"k8s.io/client-go/discovery"
@@ -70,12 +70,12 @@ func (c *Clientset) Discovery() discovery.DiscoveryInterface {
 
 var _ clientset.Interface = &Clientset{}
 
-// BreakerV1 retrieves the BreakerV1Client
-func (c *Clientset) BreakerV1() breakerv1.BreakerV1Interface {
-	return &fakebreakerv1.FakeBreakerV1{Fake: &c.Fake}
+// KubervisorV1 retrieves the KubervisorV1Client
+func (c *Clientset) KubervisorV1() kubervisorv1.KubervisorV1Interface {
+	return &fakekubervisorv1.FakeKubervisorV1{Fake: &c.Fake}
 }
 
-// Breaker retrieves the BreakerV1Client
-func (c *Clientset) Breaker() breakerv1.BreakerV1Interface {
-	return &fakebreakerv1.FakeBreakerV1{Fake: &c.Fake}
+// Kubervisor retrieves the KubervisorV1Client
+func (c *Clientset) Kubervisor() kubervisorv1.KubervisorV1Interface {
+	return &fakekubervisorv1.FakeKubervisorV1{Fake: &c.Fake}
 }

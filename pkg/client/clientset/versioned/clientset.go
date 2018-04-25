@@ -27,7 +27,7 @@ SOFTWARE.
 package versioned
 
 import (
-	breakerv1 "github.com/amadeusitgroup/podkubervisor/pkg/client/clientset/versioned/typed/kubervisor/v1"
+	kubervisorv1 "github.com/amadeusitgroup/podkubervisor/pkg/client/clientset/versioned/typed/kubervisor/v1"
 	glog "github.com/golang/glog"
 	discovery "k8s.io/client-go/discovery"
 	rest "k8s.io/client-go/rest"
@@ -36,27 +36,27 @@ import (
 
 type Interface interface {
 	Discovery() discovery.DiscoveryInterface
-	BreakerV1() breakerv1.BreakerV1Interface
+	KubervisorV1() kubervisorv1.KubervisorV1Interface
 	// Deprecated: please explicitly pick a version if possible.
-	Breaker() breakerv1.BreakerV1Interface
+	Kubervisor() kubervisorv1.KubervisorV1Interface
 }
 
 // Clientset contains the clients for groups. Each group has exactly one
 // version included in a Clientset.
 type Clientset struct {
 	*discovery.DiscoveryClient
-	breakerV1 *breakerv1.BreakerV1Client
+	kubervisorV1 *kubervisorv1.KubervisorV1Client
 }
 
-// BreakerV1 retrieves the BreakerV1Client
-func (c *Clientset) BreakerV1() breakerv1.BreakerV1Interface {
-	return c.breakerV1
+// KubervisorV1 retrieves the KubervisorV1Client
+func (c *Clientset) KubervisorV1() kubervisorv1.KubervisorV1Interface {
+	return c.kubervisorV1
 }
 
-// Deprecated: Breaker retrieves the default version of BreakerClient.
+// Deprecated: Kubervisor retrieves the default version of KubervisorClient.
 // Please explicitly pick a version.
-func (c *Clientset) Breaker() breakerv1.BreakerV1Interface {
-	return c.breakerV1
+func (c *Clientset) Kubervisor() kubervisorv1.KubervisorV1Interface {
+	return c.kubervisorV1
 }
 
 // Discovery retrieves the DiscoveryClient
@@ -75,7 +75,7 @@ func NewForConfig(c *rest.Config) (*Clientset, error) {
 	}
 	var cs Clientset
 	var err error
-	cs.breakerV1, err = breakerv1.NewForConfig(&configShallowCopy)
+	cs.kubervisorV1, err = kubervisorv1.NewForConfig(&configShallowCopy)
 	if err != nil {
 		return nil, err
 	}
@@ -92,7 +92,7 @@ func NewForConfig(c *rest.Config) (*Clientset, error) {
 // panics if there is an error in the config.
 func NewForConfigOrDie(c *rest.Config) *Clientset {
 	var cs Clientset
-	cs.breakerV1 = breakerv1.NewForConfigOrDie(c)
+	cs.kubervisorV1 = kubervisorv1.NewForConfigOrDie(c)
 
 	cs.DiscoveryClient = discovery.NewDiscoveryClientForConfigOrDie(c)
 	return &cs
@@ -101,7 +101,7 @@ func NewForConfigOrDie(c *rest.Config) *Clientset {
 // New creates a new Clientset for the given RESTClient.
 func New(c rest.Interface) *Clientset {
 	var cs Clientset
-	cs.breakerV1 = breakerv1.New(c)
+	cs.kubervisorV1 = kubervisorv1.New(c)
 
 	cs.DiscoveryClient = discovery.NewDiscoveryClient(c)
 	return &cs

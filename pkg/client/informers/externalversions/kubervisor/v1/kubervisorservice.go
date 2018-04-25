@@ -71,13 +71,13 @@ func NewFilteredKubervisorServiceInformer(client versioned.Interface, namespace 
 				if tweakListOptions != nil {
 					tweakListOptions(&options)
 				}
-				return client.BreakerV1().KubervisorServices(namespace).List(options)
+				return client.KubervisorV1().KubervisorServices(namespace).List(options)
 			},
 			WatchFunc: func(options meta_v1.ListOptions) (watch.Interface, error) {
 				if tweakListOptions != nil {
 					tweakListOptions(&options)
 				}
-				return client.BreakerV1().KubervisorServices(namespace).Watch(options)
+				return client.KubervisorV1().KubervisorServices(namespace).Watch(options)
 			},
 		},
 		&kubervisor_v1.KubervisorService{},

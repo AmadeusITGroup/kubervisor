@@ -52,7 +52,7 @@ func Test_newGarbageCollector(t *testing.T) {
 				period:            time.Second,
 				podControl:        &test.TestPodControl{},
 				podLister:         test.NewTestPodLister(nil),
-				breakerLister:     factory.Breaker().V1().KubervisorServices().Lister(),
+				breakerLister:     factory.Kubervisor().V1().KubervisorServices().Lister(),
 				missCountBeforeGC: 1,
 				logger:            devlogger,
 			},
@@ -89,7 +89,7 @@ func Test_garbageCollector_updateCounters(t *testing.T) {
 	factory := externalversions.NewSharedInformerFactory(fakeKubervisorClient, 10*time.Millisecond)
 	devlogger, _ := zap.NewDevelopment()
 
-	informer := factory.Breaker().V1().KubervisorServices()
+	informer := factory.Kubervisor().V1().KubervisorServices()
 	stCh := make(chan struct{})
 	go informer.Informer().Run(stCh)
 	cache.WaitForCacheSync(stCh, informer.Informer().HasSynced)

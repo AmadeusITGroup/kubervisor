@@ -61,7 +61,7 @@ type kubervisorServices struct {
 }
 
 // newKubervisorServices returns a KubervisorServices
-func newKubervisorServices(c *BreakerV1Client, namespace string) *kubervisorServices {
+func newKubervisorServices(c *KubervisorV1Client, namespace string) *kubervisorServices {
 	return &kubervisorServices{
 		client: c.RESTClient(),
 		ns:     namespace,

@@ -62,9 +62,9 @@ func (f *genericInformer) Lister() cache.GenericLister {
 // TODO extend this to unknown resources with a client pool
 func (f *sharedInformerFactory) ForResource(resource schema.GroupVersionResource) (GenericInformer, error) {
 	switch resource {
-	// Group=breaker.kubervisor.io, Version=v1
+	// Group=kubervisor.k8s.io, Version=v1
 	case v1.SchemeGroupVersion.WithResource("kubervisorservices"):
-		return &genericInformer{resource: resource.GroupResource(), informer: f.Breaker().V1().KubervisorServices().Informer()}, nil
+		return &genericInformer{resource: resource.GroupResource(), informer: f.Kubervisor().V1().KubervisorServices().Informer()}, nil
 
 	}
 

@@ -38,13 +38,13 @@ import (
 
 // FakeKubervisorServices implements KubervisorServiceInterface
 type FakeKubervisorServices struct {
-	Fake *FakeBreakerV1
+	Fake *FakeKubervisorV1
 	ns   string
 }
 
-var kubervisorservicesResource = schema.GroupVersionResource{Group: "breaker.kubervisor.io", Version: "v1", Resource: "kubervisorservices"}
+var kubervisorservicesResource = schema.GroupVersionResource{Group: "kubervisor.k8s.io", Version: "v1", Resource: "kubervisorservices"}
 
-var kubervisorservicesKind = schema.GroupVersionKind{Group: "breaker.kubervisor.io", Version: "v1", Kind: "KubervisorService"}
+var kubervisorservicesKind = schema.GroupVersionKind{Group: "kubervisor.k8s.io", Version: "v1", Kind: "KubervisorService"}
 
 // Get takes name of the kubervisorService, and returns the corresponding kubervisorService object, and an error if there is any.
 func (c *FakeKubervisorServices) Get(name string, options v1.GetOptions) (result *kubervisor_v1.KubervisorService, err error) {

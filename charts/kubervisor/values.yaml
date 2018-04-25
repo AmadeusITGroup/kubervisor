@@ -12,7 +12,7 @@ image:
 httpServer:
   port: 8086
 
-apiGroupName: breaker.kubervisor.io
+apiGroupName: kubervisor.k8s.io
 serviceAccount: kubervisor
 debug: true
 

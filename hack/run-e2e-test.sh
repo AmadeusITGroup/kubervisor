@@ -53,4 +53,4 @@ echo "Remove kubervisor helm chart"
 helm del --purge kubervisor
 
 echo "Remove CRD kubervisorservice"
-kubectl delete crd kubervisorservices.breaker.kubervisor.io
+kubectl delete crd kubervisorservices.kubervisor.k8s.io
