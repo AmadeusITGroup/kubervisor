@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/amadeusitgroup/podkubervisor/pkg/labeling"
+	"github.com/amadeusitgroup/kubervisor/pkg/labeling"
 )
 
 //FactoryConfig parameters required for the creation of a Activator

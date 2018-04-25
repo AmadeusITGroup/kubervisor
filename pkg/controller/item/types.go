@@ -8,9 +8,9 @@ import (
 	"k8s.io/apimachinery/pkg/labels"
 	kcache "k8s.io/client-go/tools/cache"
 
-	activator "github.com/amadeusitgroup/podkubervisor/pkg/activate"
-	"github.com/amadeusitgroup/podkubervisor/pkg/api/kubervisor/v1"
-	"github.com/amadeusitgroup/podkubervisor/pkg/breaker"
+	activator "github.com/amadeusitgroup/kubervisor/pkg/activate"
+	"github.com/amadeusitgroup/kubervisor/pkg/api/kubervisor/v1"
+	"github.com/amadeusitgroup/kubervisor/pkg/breaker"
 )
 
 // KubervisorServiceItemStore represent the KubervisorService Item store

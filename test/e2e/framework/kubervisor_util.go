@@ -3,7 +3,7 @@ package framework
 import (
 	"fmt"
 
-	"github.com/amadeusitgroup/podkubervisor/pkg/labeling"
+	"github.com/amadeusitgroup/kubervisor/pkg/labeling"
 
 	"k8s.io/apimachinery/pkg/util/intstr"
 
@@ -16,8 +16,8 @@ import (
 	kmetav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	clientset "k8s.io/client-go/kubernetes"
 
-	"github.com/amadeusitgroup/podkubervisor/pkg/api/kubervisor/v1"
-	"github.com/amadeusitgroup/podkubervisor/pkg/client/clientset/versioned"
+	"github.com/amadeusitgroup/kubervisor/pkg/api/kubervisor/v1"
+	"github.com/amadeusitgroup/kubervisor/pkg/client/clientset/versioned"
 )
 
 // BuildAndSetClients builds and initilize rediscluster and kube client
@@ -268,7 +268,7 @@ func CreateCustomAnamalyDetector(client clientset.Interface, namespace, targetNa
 						Containers: []kv1.Container{
 							{
 								Name:            "customanomalydetector",
-								Image:           "podkubervisor/customanomalydetector",
+								Image:           "kubervisor/customanomalydetector",
 								Args:            []string{"--namespace=" + targetNamespace, "--selector=" + selector.String()},
 								ImagePullPolicy: "IfNotPresent",
 							},

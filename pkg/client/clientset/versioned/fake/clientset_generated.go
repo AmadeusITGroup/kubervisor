@@ -1,7 +1,7 @@
 /*
 MIT License
 
-Copyright (c) 2018 PodKubervisor
+Copyright (c) 2018 Kubervisor
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -27,9 +27,9 @@ SOFTWARE.
 package fake
 
 import (
-	clientset "github.com/amadeusitgroup/podkubervisor/pkg/client/clientset/versioned"
-	kubervisorv1 "github.com/amadeusitgroup/podkubervisor/pkg/client/clientset/versioned/typed/kubervisor/v1"
-	fakekubervisorv1 "github.com/amadeusitgroup/podkubervisor/pkg/client/clientset/versioned/typed/kubervisor/v1/fake"
+	clientset "github.com/amadeusitgroup/kubervisor/pkg/client/clientset/versioned"
+	kubervisorv1 "github.com/amadeusitgroup/kubervisor/pkg/client/clientset/versioned/typed/kubervisor/v1"
+	fakekubervisorv1 "github.com/amadeusitgroup/kubervisor/pkg/client/clientset/versioned/typed/kubervisor/v1/fake"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/watch"
 	"k8s.io/client-go/discovery"

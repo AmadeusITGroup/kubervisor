@@ -8,10 +8,10 @@ import (
 	"k8s.io/apimachinery/pkg/labels"
 	kv1 "k8s.io/client-go/listers/core/v1"
 
-	"github.com/amadeusitgroup/podkubervisor/pkg/anomalydetector"
-	"github.com/amadeusitgroup/podkubervisor/pkg/api/kubervisor/v1"
-	"github.com/amadeusitgroup/podkubervisor/pkg/labeling"
-	"github.com/amadeusitgroup/podkubervisor/pkg/pod"
+	"github.com/amadeusitgroup/kubervisor/pkg/anomalydetector"
+	"github.com/amadeusitgroup/kubervisor/pkg/api/kubervisor/v1"
+	"github.com/amadeusitgroup/kubervisor/pkg/labeling"
+	"github.com/amadeusitgroup/kubervisor/pkg/pod"
 )
 
 //Breaker engine that check anomaly and relabel pods

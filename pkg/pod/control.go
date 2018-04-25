@@ -7,7 +7,7 @@ import (
 	kapiv1 "k8s.io/api/core/v1"
 	clientset "k8s.io/client-go/kubernetes"
 
-	"github.com/amadeusitgroup/podkubervisor/pkg/labeling"
+	"github.com/amadeusitgroup/kubervisor/pkg/labeling"
 	"github.com/prometheus/client_golang/prometheus"
 )
 

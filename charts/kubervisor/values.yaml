@@ -5,7 +5,7 @@
 replicaCount: 1
 
 image:
-  repository: podkubervisor/kubervisor
+  repository: kubervisor/kubervisor
   tag: latest
   pullPolicy: IfNotPresent
 

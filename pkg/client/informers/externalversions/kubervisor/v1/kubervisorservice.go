@@ -1,7 +1,7 @@
 /*
 MIT License
 
-Copyright (c) 2018 PodKubervisor
+Copyright (c) 2018 Kubervisor
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -31,10 +31,10 @@ package v1
 import (
 	time "time"
 
-	kubervisor_v1 "github.com/amadeusitgroup/podkubervisor/pkg/api/kubervisor/v1"
-	versioned "github.com/amadeusitgroup/podkubervisor/pkg/client/clientset/versioned"
-	internalinterfaces "github.com/amadeusitgroup/podkubervisor/pkg/client/informers/externalversions/internalinterfaces"
-	v1 "github.com/amadeusitgroup/podkubervisor/pkg/client/listers/kubervisor/v1"
+	kubervisor_v1 "github.com/amadeusitgroup/kubervisor/pkg/api/kubervisor/v1"
+	versioned "github.com/amadeusitgroup/kubervisor/pkg/client/clientset/versioned"
+	internalinterfaces "github.com/amadeusitgroup/kubervisor/pkg/client/informers/externalversions/internalinterfaces"
+	v1 "github.com/amadeusitgroup/kubervisor/pkg/client/listers/kubervisor/v1"
 	meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	runtime "k8s.io/apimachinery/pkg/runtime"
 	watch "k8s.io/apimachinery/pkg/watch"

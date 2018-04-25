@@ -29,14 +29,14 @@ import (
 	"k8s.io/client-go/tools/record"
 	"k8s.io/client-go/util/workqueue"
 
-	kubervisorapi "github.com/amadeusitgroup/podkubervisor/pkg/api/kubervisor/v1"
-	kubervisorclient "github.com/amadeusitgroup/podkubervisor/pkg/client"
-	bclient "github.com/amadeusitgroup/podkubervisor/pkg/client/clientset/versioned"
-	binformers "github.com/amadeusitgroup/podkubervisor/pkg/client/informers/externalversions"
-	blisters "github.com/amadeusitgroup/podkubervisor/pkg/client/listers/kubervisor/v1"
-	"github.com/amadeusitgroup/podkubervisor/pkg/controller/item"
-	"github.com/amadeusitgroup/podkubervisor/pkg/labeling"
-	"github.com/amadeusitgroup/podkubervisor/pkg/pod"
+	kubervisorapi "github.com/amadeusitgroup/kubervisor/pkg/api/kubervisor/v1"
+	kubervisorclient "github.com/amadeusitgroup/kubervisor/pkg/client"
+	bclient "github.com/amadeusitgroup/kubervisor/pkg/client/clientset/versioned"
+	binformers "github.com/amadeusitgroup/kubervisor/pkg/client/informers/externalversions"
+	blisters "github.com/amadeusitgroup/kubervisor/pkg/client/listers/kubervisor/v1"
+	"github.com/amadeusitgroup/kubervisor/pkg/controller/item"
+	"github.com/amadeusitgroup/kubervisor/pkg/labeling"
+	"github.com/amadeusitgroup/kubervisor/pkg/pod"
 )
 
 func init() {

@@ -3,8 +3,8 @@ package framework
 import (
 	"fmt"
 
-	"github.com/amadeusitgroup/podkubervisor/pkg/client"
-	"github.com/amadeusitgroup/podkubervisor/pkg/client/clientset/versioned"
+	"github.com/amadeusitgroup/kubervisor/pkg/client"
+	"github.com/amadeusitgroup/kubervisor/pkg/client/clientset/versioned"
 
 	clientset "k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"

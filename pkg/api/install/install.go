@@ -6,7 +6,7 @@ import (
 	"k8s.io/apimachinery/pkg/apimachinery/registered"
 	"k8s.io/apimachinery/pkg/runtime"
 
-	"github.com/amadeusitgroup/podkubervisor/pkg/api/kubervisor"
+	"github.com/amadeusitgroup/kubervisor/pkg/api/kubervisor"
 )
 
 // Install registers the API group and adds types to a scheme

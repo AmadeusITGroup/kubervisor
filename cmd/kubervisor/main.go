@@ -9,9 +9,9 @@ import (
 	"github.com/spf13/pflag"
 	"go.uber.org/zap"
 
-	"github.com/amadeusitgroup/podkubervisor/pkg/controller"
-	"github.com/amadeusitgroup/podkubervisor/pkg/signal"
-	"github.com/amadeusitgroup/podkubervisor/pkg/utils"
+	"github.com/amadeusitgroup/kubervisor/pkg/controller"
+	"github.com/amadeusitgroup/kubervisor/pkg/signal"
+	"github.com/amadeusitgroup/kubervisor/pkg/utils"
 )
 
 func main() {

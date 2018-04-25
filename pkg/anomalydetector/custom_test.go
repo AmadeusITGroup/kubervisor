@@ -14,8 +14,8 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/runtime/serializer"
 
-	"github.com/amadeusitgroup/podkubervisor/pkg/labeling"
-	test "github.com/amadeusitgroup/podkubervisor/test"
+	"github.com/amadeusitgroup/kubervisor/pkg/labeling"
+	test "github.com/amadeusitgroup/kubervisor/test"
 )
 
 type testHandler struct {

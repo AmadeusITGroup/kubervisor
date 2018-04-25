@@ -1,7 +1,7 @@
 /*
 MIT License
 
-Copyright (c) 2018 PodKubervisor
+Copyright (c) 2018 Kubervisor
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -29,7 +29,7 @@ SOFTWARE.
 package v1
 
 import (
-	internalinterfaces "github.com/amadeusitgroup/podkubervisor/pkg/client/informers/externalversions/internalinterfaces"
+	internalinterfaces "github.com/amadeusitgroup/kubervisor/pkg/client/informers/externalversions/internalinterfaces"
 )
 
 // Interface provides access to all the informers in this group version.

@@ -5,7 +5,7 @@ import (
 	apiequality "k8s.io/apimachinery/pkg/api/equality"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
-	apiv1 "github.com/amadeusitgroup/podkubervisor/pkg/api/kubervisor/v1"
+	apiv1 "github.com/amadeusitgroup/kubervisor/pkg/api/kubervisor/v1"
 )
 
 // newStatusCondition used to create a new newStatusCondition

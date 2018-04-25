@@ -4,8 +4,8 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/amadeusitgroup/podkubervisor/pkg/labeling"
-	test "github.com/amadeusitgroup/podkubervisor/test"
+	"github.com/amadeusitgroup/kubervisor/pkg/labeling"
+	test "github.com/amadeusitgroup/kubervisor/test"
 	kapiv1 "k8s.io/api/core/v1"
 )
 

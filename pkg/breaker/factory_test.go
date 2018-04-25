@@ -3,7 +3,7 @@ package breaker
 import (
 	"testing"
 
-	"github.com/amadeusitgroup/podkubervisor/pkg/api/kubervisor/v1"
+	"github.com/amadeusitgroup/kubervisor/pkg/api/kubervisor/v1"
 )
 
 type emptyCustomBreakerT struct {

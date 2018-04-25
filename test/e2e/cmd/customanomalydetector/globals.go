@@ -9,7 +9,7 @@ import (
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
 
-	"github.com/amadeusitgroup/podkubervisor/pkg/controller"
+	"github.com/amadeusitgroup/kubervisor/pkg/controller"
 )
 
 var kubeClient clientset.Interface
