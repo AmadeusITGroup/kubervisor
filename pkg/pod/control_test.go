@@ -8,8 +8,8 @@ import (
 	clientset "k8s.io/client-go/kubernetes"
 	kfakeclient "k8s.io/client-go/kubernetes/fake"
 
-	"github.com/amadeusitgroup/podkubervisor/pkg/labeling"
-	test "github.com/amadeusitgroup/podkubervisor/test"
+	"github.com/amadeusitgroup/kubervisor/pkg/labeling"
+	test "github.com/amadeusitgroup/kubervisor/test"
 )
 
 func TestControl_UpdateBreakerAnnotationAndLabel(t *testing.T) {

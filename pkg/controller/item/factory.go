@@ -5,11 +5,11 @@ import (
 	"k8s.io/apimachinery/pkg/labels"
 	kv1 "k8s.io/client-go/listers/core/v1"
 
-	"github.com/amadeusitgroup/podkubervisor/pkg/pod"
+	"github.com/amadeusitgroup/kubervisor/pkg/pod"
 
-	activator "github.com/amadeusitgroup/podkubervisor/pkg/activate"
-	apiv1 "github.com/amadeusitgroup/podkubervisor/pkg/api/kubervisor/v1"
-	"github.com/amadeusitgroup/podkubervisor/pkg/breaker"
+	activator "github.com/amadeusitgroup/kubervisor/pkg/activate"
+	apiv1 "github.com/amadeusitgroup/kubervisor/pkg/api/kubervisor/v1"
+	"github.com/amadeusitgroup/kubervisor/pkg/breaker"
 )
 
 // New return new KubervisorServiceItem instance

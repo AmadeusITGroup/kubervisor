@@ -1,4 +1,4 @@
-PREFIX=podkubervisor/
+PREFIX=kubervisor/
 
 SOURCES := $(shell find $(SOURCEDIR) ! -name "*_test.go" -name '*.go')
 
@@ -8,7 +8,7 @@ TAG?=$(shell git tag|tail -1)
 COMMIT=$(shell git rev-parse HEAD)
 BRANCH=$(shell git rev-parse --abbrev-ref HEAD)
 DATE=$(shell date +%Y-%m-%d/%H:%M:%S )
-BUILDINFOPKG=github.com/amadeusitgroup/podkubervisor/pkg/utils
+BUILDINFOPKG=github.com/amadeusitgroup/kubervisor/pkg/utils
 LDFLAGS = -ldflags "-w -X ${BUILDINFOPKG}.TAG=${TAG} -X ${BUILDINFOPKG}.COMMIT=${COMMIT} -X ${BUILDINFOPKG}.BRANCH=${BRANCH} -X ${BUILDINFOPKG}.BUILDTIME=${DATE} -s"
 
 all: build

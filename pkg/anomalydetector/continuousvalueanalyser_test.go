@@ -10,9 +10,9 @@ import (
 	"k8s.io/apimachinery/pkg/labels"
 	kv1 "k8s.io/client-go/listers/core/v1"
 
-	"github.com/amadeusitgroup/podkubervisor/pkg/api/kubervisor/v1"
-	"github.com/amadeusitgroup/podkubervisor/pkg/labeling"
-	test "github.com/amadeusitgroup/podkubervisor/test"
+	"github.com/amadeusitgroup/kubervisor/pkg/api/kubervisor/v1"
+	"github.com/amadeusitgroup/kubervisor/pkg/labeling"
+	test "github.com/amadeusitgroup/kubervisor/test"
 )
 
 func TestContinuousValueDeviationAnalyser_GetPodsOutOfBounds(t *testing.T) {

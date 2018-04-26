@@ -15,9 +15,9 @@ import (
 
 	"github.com/golang/glog"
 
-	kubervisor "github.com/amadeusitgroup/podkubervisor/pkg/api/kubervisor"
-	v1 "github.com/amadeusitgroup/podkubervisor/pkg/api/kubervisor/v1"
-	"github.com/amadeusitgroup/podkubervisor/pkg/client/clientset/versioned"
+	kubervisor "github.com/amadeusitgroup/kubervisor/pkg/api/kubervisor"
+	v1 "github.com/amadeusitgroup/kubervisor/pkg/api/kubervisor/v1"
+	"github.com/amadeusitgroup/kubervisor/pkg/client/clientset/versioned"
 )
 
 // DefineKubervisorResources defines the  DefineKubervisor Resources as a k8s CR

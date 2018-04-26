@@ -14,7 +14,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/serializer"
 	"k8s.io/client-go/kubernetes/scheme"
 
-	"github.com/amadeusitgroup/podkubervisor/pkg/utils"
+	"github.com/amadeusitgroup/kubervisor/pkg/utils"
 )
 
 var closeChan chan struct{}

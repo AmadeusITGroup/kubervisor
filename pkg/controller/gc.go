@@ -10,9 +10,9 @@ import (
 	"k8s.io/apimachinery/pkg/labels"
 	corev1listers "k8s.io/client-go/listers/core/v1"
 
-	blisters "github.com/amadeusitgroup/podkubervisor/pkg/client/listers/kubervisor/v1"
-	"github.com/amadeusitgroup/podkubervisor/pkg/labeling"
-	"github.com/amadeusitgroup/podkubervisor/pkg/pod"
+	blisters "github.com/amadeusitgroup/kubervisor/pkg/client/listers/kubervisor/v1"
+	"github.com/amadeusitgroup/kubervisor/pkg/labeling"
+	"github.com/amadeusitgroup/kubervisor/pkg/pod"
 )
 
 //garbageCollector runs against pods and kubervisorServices. If pods refers a KubervisorService that does not exist anymore then the labels on that pod are cleaned.

@@ -4,9 +4,9 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/amadeusitgroup/podkubervisor/pkg/labeling"
-	"github.com/amadeusitgroup/podkubervisor/pkg/pod"
-	test "github.com/amadeusitgroup/podkubervisor/test"
+	"github.com/amadeusitgroup/kubervisor/pkg/labeling"
+	"github.com/amadeusitgroup/kubervisor/pkg/pod"
+	test "github.com/amadeusitgroup/kubervisor/test"
 	"go.uber.org/zap"
 
 	apiv1 "k8s.io/api/core/v1"

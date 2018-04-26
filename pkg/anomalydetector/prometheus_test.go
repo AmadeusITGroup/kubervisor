@@ -8,7 +8,7 @@ import (
 	"github.com/prometheus/common/model"
 	"go.uber.org/zap"
 
-	"github.com/amadeusitgroup/podkubervisor/pkg/api/kubervisor/v1"
+	"github.com/amadeusitgroup/kubervisor/pkg/api/kubervisor/v1"
 )
 
 func Test_promDiscreteValueOutOfListAnalyser_buildCounters(t *testing.T) {

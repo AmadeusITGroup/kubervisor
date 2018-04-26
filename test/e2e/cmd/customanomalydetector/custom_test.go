@@ -5,12 +5,12 @@ import (
 	"testing"
 	"time"
 
-	"github.com/amadeusitgroup/podkubervisor/pkg/anomalydetector"
-	"github.com/amadeusitgroup/podkubervisor/pkg/api/kubervisor/v1"
-	"github.com/amadeusitgroup/podkubervisor/pkg/labeling"
+	"github.com/amadeusitgroup/kubervisor/pkg/anomalydetector"
+	"github.com/amadeusitgroup/kubervisor/pkg/api/kubervisor/v1"
+	"github.com/amadeusitgroup/kubervisor/pkg/labeling"
 	"go.uber.org/zap"
 
-	test "github.com/amadeusitgroup/podkubervisor/test"
+	test "github.com/amadeusitgroup/kubervisor/test"
 	kfakeclient "k8s.io/client-go/kubernetes/fake"
 )
 

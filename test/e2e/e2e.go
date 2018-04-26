@@ -7,7 +7,7 @@ import (
 	"github.com/onsi/gomega"
 
 	// register framework
-	_ "github.com/amadeusitgroup/podkubervisor/test/e2e/framework"
+	_ "github.com/amadeusitgroup/kubervisor/test/e2e/framework"
 )
 
 // RunE2ETests runs e2e test

@@ -2,6 +2,7 @@ package activate
 
 import (
 	"fmt"
+	"reflect"
 	"time"
 
 	"go.uber.org/zap"
@@ -11,9 +12,9 @@ import (
 	"k8s.io/apimachinery/pkg/selection"
 	kv1 "k8s.io/client-go/listers/core/v1"
 
-	"github.com/amadeusitgroup/podkubervisor/pkg/api/kubervisor/v1"
-	"github.com/amadeusitgroup/podkubervisor/pkg/labeling"
-	"github.com/amadeusitgroup/podkubervisor/pkg/pod"
+	"github.com/amadeusitgroup/kubervisor/pkg/api/kubervisor/v1"
+	"github.com/amadeusitgroup/kubervisor/pkg/labeling"
+	"github.com/amadeusitgroup/kubervisor/pkg/pod"
 )
 
 //Activator engine that check anomaly and relabel pods
@@ -83,7 +84,7 @@ func (b *ActivatorImpl) CompareConfig(specStrategy *v1.ActivatorStrategy, specSe
 		return false
 	}
 	s, _ := labeling.SelectorWithBreakerName(specSelector, b.breakerName)
-	return apiequality.Semantic.DeepEqual(s, b.selectorConfig)
+	return reflect.DeepEqual(s, b.selectorConfig)
 }
 
 func (b *ActivatorImpl) applyActivatorStrategy(p *kapiv1.Pod) error {

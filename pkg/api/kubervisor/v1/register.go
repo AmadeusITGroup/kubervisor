@@ -5,7 +5,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
-	"github.com/amadeusitgroup/podkubervisor/pkg/api/kubervisor"
+	"github.com/amadeusitgroup/kubervisor/pkg/api/kubervisor"
 )
 
 // SchemeGroupVersion is group version used to register these objects

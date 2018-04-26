@@ -5,7 +5,7 @@ import (
 
 	promClient "github.com/prometheus/client_golang/api"
 
-	"github.com/amadeusitgroup/podkubervisor/pkg/api/kubervisor/v1"
+	"github.com/amadeusitgroup/kubervisor/pkg/api/kubervisor/v1"
 )
 
 //FactoryConfig parameters extended with factory features

@@ -7,7 +7,7 @@ import (
 
 	"github.com/spf13/pflag"
 
-	"github.com/amadeusitgroup/podkubervisor/test/e2e/framework"
+	"github.com/amadeusitgroup/kubervisor/test/e2e/framework"
 )
 
 func TestE2E(t *testing.T) {

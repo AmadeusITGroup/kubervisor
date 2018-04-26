@@ -3,7 +3,7 @@ package e2e
 import (
 	"time"
 
-	"github.com/amadeusitgroup/podkubervisor/pkg/labeling"
+	"github.com/amadeusitgroup/kubervisor/pkg/labeling"
 
 	"k8s.io/apimachinery/pkg/labels"
 	clientset "k8s.io/client-go/kubernetes"
@@ -13,9 +13,9 @@ import (
 	// for test lisibility
 	gom "github.com/onsi/gomega"
 
-	"github.com/amadeusitgroup/podkubervisor/pkg/api/kubervisor/v1"
-	"github.com/amadeusitgroup/podkubervisor/pkg/client/clientset/versioned"
-	"github.com/amadeusitgroup/podkubervisor/test/e2e/framework"
+	"github.com/amadeusitgroup/kubervisor/pkg/api/kubervisor/v1"
+	"github.com/amadeusitgroup/kubervisor/pkg/client/clientset/versioned"
+	"github.com/amadeusitgroup/kubervisor/test/e2e/framework"
 )
 
 var kubervisorClient versioned.Interface

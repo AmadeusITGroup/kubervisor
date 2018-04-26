@@ -5,7 +5,7 @@ import (
 	apiequality "k8s.io/apimachinery/pkg/api/equality"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
-	apiv1 "github.com/amadeusitgroup/podkubervisor/pkg/api/kubervisor/v1"
+	apiv1 "github.com/amadeusitgroup/kubervisor/pkg/api/kubervisor/v1"
 )
 
 // newStatusCondition used to create a new newStatusCondition
@@ -36,7 +36,6 @@ func updateStatusCondition(old *apiv1.KubervisorServiceCondition, status kapiv1.
 
 // UpdateStatusConditionServiceError used to udpate or create a KubervisorServiceCondition for Kubernetes service not found
 func UpdateStatusConditionServiceError(status *apiv1.KubervisorServiceStatus, msg string, updatetime metav1.Time) (*apiv1.KubervisorServiceStatus, error) {
-
 	newFunc := func() apiv1.KubervisorServiceCondition {
 		return newStatusConditionServiceError(msg, updatetime)
 	}
