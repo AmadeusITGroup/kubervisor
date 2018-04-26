@@ -2,11 +2,11 @@ package activate
 
 import (
 	"fmt"
-	"reflect"
 	"time"
 
 	"go.uber.org/zap"
 	kapiv1 "k8s.io/api/core/v1"
+	apiequality "k8s.io/apimachinery/pkg/api/equality"
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/selection"
 	kv1 "k8s.io/client-go/listers/core/v1"
@@ -79,11 +79,11 @@ func (b *ActivatorImpl) Run(stop <-chan struct{}) {
 
 // CompareConfig used to compare the current config with the possible new spec
 func (b *ActivatorImpl) CompareConfig(specStrategy *v1.ActivatorStrategy, specSelector labels.Selector) bool {
-	if !reflect.DeepEqual(&b.activatorStrategyConfig, specStrategy) {
+	if !apiequality.Semantic.DeepEqual(&b.activatorStrategyConfig, specStrategy) {
 		return false
 	}
 	s, _ := labeling.SelectorWithBreakerName(specSelector, b.breakerName)
-	return reflect.DeepEqual(s, b.selectorConfig)
+	return apiequality.Semantic.DeepEqual(s, b.selectorConfig)
 }
 
 func (b *ActivatorImpl) applyActivatorStrategy(p *kapiv1.Pod) error {
