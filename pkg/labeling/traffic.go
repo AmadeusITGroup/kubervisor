@@ -35,12 +35,11 @@ func IsPodTrafficLabelOkOrPause(pod *kv1.Pod) (bool, bool, error) {
 	if !ok {
 		return false, false, fmt.Errorf("No traffic label ")
 	}
-	if l, err := ToLabelTraffic(trafficLabel); err != nil {
+	l, err := ToLabelTraffic(trafficLabel)
+	if err != nil {
 		return false, false, err
-	} else {
-		return l == LabelTrafficYes, l == LabelTrafficPause, nil
 	}
-
+	return l == LabelTrafficYes, l == LabelTrafficPause, nil
 }
 
 //ToLabelTraffic check and convert to LabelTraffic

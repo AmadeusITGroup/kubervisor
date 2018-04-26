@@ -1,5 +1,14 @@
 # kubervisor
 
+## Build Status
+
+[![Build Status](https://travis-ci.org/AmadeusITGroup/kubervisor.svg?branch=master)](https://travis-ci.org/AmadeusITGroup/kubervisor)
+[![Go Report Card](https://goreportcard.com/badge/github.com/amadeusitgroup/kubervisor)](https://goreportcard.com/report/github.com/amadeusitgroup/kubervisor)
+[![codecov](https://codecov.io/gh/amadeusitgroup/kubervisor/branch/master/graph/badge.svg)](https://codecov.io/gh/amadeusitgroup/kubervisor)
+
+
+## Presentation
+
 The Kubervisor allow you to control which pods should receive traffic or not based on anomaly detection.It is a new kind of health check system.
 
 Unlike readyness probe, the Kubervisor can be configured to remove pods from endpoints based on a global view of the health of the pod fleet.
