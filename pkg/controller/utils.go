@@ -36,7 +36,6 @@ func updateStatusCondition(old *apiv1.KubervisorServiceCondition, status kapiv1.
 
 // UpdateStatusConditionServiceError used to udpate or create a KubervisorServiceCondition for Kubernetes service not found
 func UpdateStatusConditionServiceError(status *apiv1.KubervisorServiceStatus, msg string, updatetime metav1.Time) (*apiv1.KubervisorServiceStatus, error) {
-
 	newFunc := func() apiv1.KubervisorServiceCondition {
 		return newStatusConditionServiceError(msg, updatetime)
 	}

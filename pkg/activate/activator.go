@@ -2,6 +2,7 @@ package activate
 
 import (
 	"fmt"
+	"reflect"
 	"time"
 
 	"go.uber.org/zap"
@@ -83,7 +84,7 @@ func (b *ActivatorImpl) CompareConfig(specStrategy *v1.ActivatorStrategy, specSe
 		return false
 	}
 	s, _ := labeling.SelectorWithBreakerName(specSelector, b.breakerName)
-	return apiequality.Semantic.DeepEqual(s, b.selectorConfig)
+	return reflect.DeepEqual(s, b.selectorConfig)
 }
 
 func (b *ActivatorImpl) applyActivatorStrategy(p *kapiv1.Pod) error {
