@@ -1,9 +1,8 @@
 package controller
 
 import (
-	"reflect"
-
 	kapiv1 "k8s.io/api/core/v1"
+	apiequality "k8s.io/apimachinery/pkg/api/equality"
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/client-go/tools/cache"
 
@@ -18,7 +17,7 @@ func (ctrl *Controller) onAddKubervisorService(obj interface{}) {
 		return
 	}
 	ctrl.Logger.Sugar().Debugf("onAddKubervisorService %s/%s", bc.Namespace, bc.Name)
-	if !reflect.DeepEqual(bc.Status, kubervisorapi.KubervisorServiceStatus{}) {
+	if !apiequality.Semantic.DeepEqual(bc.Status, kubervisorapi.KubervisorServiceStatus{}) {
 		ctrl.Logger.Sugar().Errorf("KubervisorService %s/%s created with non empty status. Going to be removed", bc.Namespace, bc.Name)
 
 		if _, err := cache.MetaNamespaceKeyFunc(bc); err != nil {

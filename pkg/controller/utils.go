@@ -1,11 +1,11 @@
 package controller
 
 import (
-	"reflect"
+	kapiv1 "k8s.io/api/core/v1"
+	apiequality "k8s.io/apimachinery/pkg/api/equality"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	apiv1 "github.com/amadeusitgroup/podkubervisor/pkg/api/kubervisor/v1"
-	kapiv1 "k8s.io/api/core/v1"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 // newStatusCondition used to create a new newStatusCondition
@@ -104,5 +104,5 @@ func UpdateStatusCondition(status *apiv1.KubervisorServiceStatus, conditionType 
 func equalBreakerStatusCounters(a, b apiv1.BreakerStatus) bool {
 	t0 := metav1.Time{}
 	a.LastProbeTime, b.LastProbeTime = t0, t0
-	return reflect.DeepEqual(a, b)
+	return apiequality.Semantic.DeepEqual(a, b)
 }

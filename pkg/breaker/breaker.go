@@ -1,16 +1,16 @@
 package breaker
 
 import (
-	"reflect"
 	"time"
 
 	"go.uber.org/zap"
+	apiequality "k8s.io/apimachinery/pkg/api/equality"
 	"k8s.io/apimachinery/pkg/labels"
 	kv1 "k8s.io/client-go/listers/core/v1"
 
 	"github.com/amadeusitgroup/podkubervisor/pkg/anomalydetector"
-	"github.com/amadeusitgroup/podkubervisor/pkg/labeling"
 	"github.com/amadeusitgroup/podkubervisor/pkg/api/kubervisor/v1"
+	"github.com/amadeusitgroup/podkubervisor/pkg/labeling"
 	"github.com/amadeusitgroup/podkubervisor/pkg/pod"
 )
 
@@ -91,7 +91,7 @@ func (b *breakerImpl) Run(stop <-chan struct{}) {
 
 // CompareConfig used to compare the current config with a possible new spec config
 func (b *breakerImpl) CompareConfig(specConfig *v1.BreakerStrategy) bool {
-	return reflect.DeepEqual(&b.breakerStrategyConfig, specConfig)
+	return apiequality.Semantic.DeepEqual(&b.breakerStrategyConfig, specConfig)
 }
 
 func (b *breakerImpl) computeMinAvailablePods(podUnderSelectorCount int) int {
