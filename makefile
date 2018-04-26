@@ -56,7 +56,7 @@ fmt:
 
 # Run all the linters
 lint:
-	gometalinter --vendor ./... -e pkg/client -e _generated -e test --deadline 2m
+	gometalinter --fast --vendor ./... -e pkg/client -e _generated -e test --deadline 9m -D gocyclo -D gas
 .PHONY: lint
 
 .PHONY: build push clean test
