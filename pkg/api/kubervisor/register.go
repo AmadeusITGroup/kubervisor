@@ -2,5 +2,5 @@ package kubervisor
 
 const (
 	// GroupName is the API group for the kubervisor
-	GroupName = "breaker.kubervisor.io"
+	GroupName = "kubervisor.k8s.io"
 )

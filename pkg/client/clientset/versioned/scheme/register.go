@@ -27,7 +27,7 @@ SOFTWARE.
 package scheme
 
 import (
-	breakerv1 "github.com/amadeusitgroup/podkubervisor/pkg/api/kubervisor/v1"
+	kubervisorv1 "github.com/amadeusitgroup/podkubervisor/pkg/api/kubervisor/v1"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	runtime "k8s.io/apimachinery/pkg/runtime"
 	schema "k8s.io/apimachinery/pkg/runtime/schema"
@@ -58,6 +58,6 @@ func init() {
 // After this, RawExtensions in Kubernetes types will serialize kube-aggregator types
 // correctly.
 func AddToScheme(scheme *runtime.Scheme) {
-	breakerv1.AddToScheme(scheme)
+	kubervisorv1.AddToScheme(scheme)
 
 }

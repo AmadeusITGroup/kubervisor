@@ -130,7 +130,7 @@ func New(cfg *Config) *Controller {
 
 	podInformer := kubeInformerFactory.Core().V1().Pods()
 	serviceInformer := kubeInformerFactory.Core().V1().Services()
-	breakerInformer := breakerInformerFactory.Breaker().V1().KubervisorServices()
+	breakerInformer := breakerInformerFactory.Kubervisor().V1().KubervisorServices()
 
 	ctx, ctxCancel := context.WithCancel(context.Background())
 
@@ -521,11 +521,11 @@ func initKubeConfig(c *Config) (*rest.Config, error) {
 }
 
 func (ctrl *Controller) deleteKubervisorService(ns, name string) error {
-	return ctrl.breakerClient.Breaker().KubervisorServices(ns).Delete(name, &metav1.DeleteOptions{})
+	return ctrl.breakerClient.Kubervisor().KubervisorServices(ns).Delete(name, &metav1.DeleteOptions{})
 }
 
 func (ctrl *Controller) updateHandler(bc *kubervisorapi.KubervisorService) (*kubervisorapi.KubervisorService, error) {
-	return ctrl.breakerClient.Breaker().KubervisorServices(bc.Namespace).Update(bc)
+	return ctrl.breakerClient.Kubervisor().KubervisorServices(bc.Namespace).Update(bc)
 }
 
 // enqueue adds key in the controller queue

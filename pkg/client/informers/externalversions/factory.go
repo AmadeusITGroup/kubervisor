@@ -133,9 +133,9 @@ type SharedInformerFactory interface {
 	ForResource(resource schema.GroupVersionResource) (GenericInformer, error)
 	WaitForCacheSync(stopCh <-chan struct{}) map[reflect.Type]bool
 
-	Breaker() kubervisor.Interface
+	Kubervisor() kubervisor.Interface
 }
 
-func (f *sharedInformerFactory) Breaker() kubervisor.Interface {
+func (f *sharedInformerFactory) Kubervisor() kubervisor.Interface {
 	return kubervisor.New(f, f.namespace, f.tweakListOptions)
 }

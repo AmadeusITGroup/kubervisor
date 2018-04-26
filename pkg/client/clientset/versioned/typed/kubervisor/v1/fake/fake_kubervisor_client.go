@@ -32,17 +32,17 @@ import (
 	testing "k8s.io/client-go/testing"
 )
 
-type FakeBreakerV1 struct {
+type FakeKubervisorV1 struct {
 	*testing.Fake
 }
 
-func (c *FakeBreakerV1) KubervisorServices(namespace string) v1.KubervisorServiceInterface {
+func (c *FakeKubervisorV1) KubervisorServices(namespace string) v1.KubervisorServiceInterface {
 	return &FakeKubervisorServices{c, namespace}
 }
 
 // RESTClient returns a RESTClient that is used to communicate
 // with API server by this client implementation.
-func (c *FakeBreakerV1) RESTClient() rest.Interface {
+func (c *FakeKubervisorV1) RESTClient() rest.Interface {
 	var ret *rest.RESTClient
 	return ret
 }

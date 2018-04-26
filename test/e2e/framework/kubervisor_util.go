@@ -53,7 +53,7 @@ func NewKubervisorService(name string) *v1.KubervisorService {
 // CreateKubervisorService is an higher order func that returns the func to create a KubervisorService
 func CreateKubervisorService(client versioned.Interface, bc *v1.KubervisorService, namespace string) func() error {
 	return func() error {
-		if _, err := client.BreakerV1().KubervisorServices(namespace).Create(bc); err != nil {
+		if _, err := client.KubervisorV1().KubervisorServices(namespace).Create(bc); err != nil {
 			Warningf("cannot create KubervisorService %s/%s: %v", namespace, bc.Name, err)
 			return err
 		}
@@ -65,7 +65,7 @@ func CreateKubervisorService(client versioned.Interface, bc *v1.KubervisorServic
 // DeleteKubervisorService is an higher order func that returns the func to create a KubervisorService
 func DeleteKubervisorService(client versioned.Interface, name, namespace string) func() error {
 	return func() error {
-		if err := client.BreakerV1().KubervisorServices(namespace).Delete(name, nil); err != nil {
+		if err := client.KubervisorV1().KubervisorServices(namespace).Delete(name, nil); err != nil {
 			Warningf("cannot delete KubervisorService %s/%s: %v", namespace, name, err)
 			return err
 		}
@@ -77,7 +77,7 @@ func DeleteKubervisorService(client versioned.Interface, name, namespace string)
 //CheckKubervisorServiceStatus validate the status part of the kubervisor crd
 func CheckKubervisorServiceStatus(client versioned.Interface, name, namespace string, managed, breaked, paused, unknown uint32) func() error {
 	return func() error {
-		bc, err := client.BreakerV1().KubervisorServices(namespace).Get(name, kmetav1.GetOptions{})
+		bc, err := client.KubervisorV1().KubervisorServices(namespace).Get(name, kmetav1.GetOptions{})
 		if err != nil {
 			Warningf("cannot delete KubervisorService %s/%s: %v", namespace, name, err)
 			return err
@@ -103,7 +103,7 @@ func CheckKubervisorServiceStatus(client versioned.Interface, name, namespace st
 // IsKubervisorServiceCreated is an higher order func that returns the func to create a KubervisorService
 func IsKubervisorServiceCreated(client versioned.Interface, name, namespace string) func() error {
 	return func() error {
-		bc, err := client.BreakerV1().KubervisorServices(namespace).Get(name, kmetav1.GetOptions{})
+		bc, err := client.KubervisorV1().KubervisorServices(namespace).Get(name, kmetav1.GetOptions{})
 		if err != nil {
 			Warningf("cannot get KubervisorService %s/%s: %v", namespace, name, err)
 			return err
