@@ -21,6 +21,7 @@ var COMMIT string
 //with for example BRANCH=$(shell git rev-parse --abbrev-ref HEAD)
 var BRANCH string
 
+// BuildInfos returns binary build information
 func BuildInfos() {
 	fmt.Println("Program started at: " + time.Now().String())
 	fmt.Println("BUILDTIME=" + BUILDTIME)
