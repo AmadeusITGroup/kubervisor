@@ -52,25 +52,22 @@ var _ = gink.Describe("KubervisorService CRUD", func() {
 		bc.Spec.Breaker.DiscreteValueOutOfList = nil
 		bc.Spec.Breaker.MinPodsAvailableCount = v1.NewUInt(3)
 		bc.Spec.Breaker.EvaluationPeriod = v1.NewFloat64(1.0)
-		bc.Spec.Activator.Period = v1.NewFloat64(60.0)
-		gom.Eventually(framework.CreateKubervisorService(kubervisorClient, bc, testNs), "5s", "1s").ShouldNot(gom.HaveOccurred())
-		gom.Eventually(framework.IsKubervisorServiceCreated(kubervisorClient, bc.Name, testNs), "5s", "1s").ShouldNot(gom.HaveOccurred())
-		time.Sleep(4 * time.Second)
+		bc.Spec.Activator.Period = v1.NewFloat64(600.0)
+		gom.Eventually(framework.CreateKubervisorService(kubervisorClient, bc, testNs), "10s", "1s").ShouldNot(gom.HaveOccurred())
+		gom.Eventually(framework.IsKubervisorServiceCreated(kubervisorClient, bc.Name, testNs), "10s", "1s").ShouldNot(gom.HaveOccurred())
+		time.Sleep(10 * time.Second)
 		// check breaked pods looking at labels
-		gom.Eventually(framework.ExpectCountPod(kubeClient, testNs, labels.SelectorFromSet(map[string]string{"app": "busybox", labeling.LabelTrafficKey: string(labeling.LabelTrafficNo)}), 2), "15s", "1s").ShouldNot(gom.HaveOccurred())
-		gom.Eventually(framework.ExpectCountPod(kubeClient, testNs, labels.SelectorFromSet(map[string]string{"app": "busybox", labeling.LabelTrafficKey: string(labeling.LabelTrafficYes)}), 3), "3s", "1s").ShouldNot(gom.HaveOccurred())
+		gom.Eventually(framework.ExpectCountPod(kubeClient, testNs, labels.SelectorFromSet(map[string]string{"app": "busybox", labeling.LabelTrafficKey: string(labeling.LabelTrafficNo)}), 2), "30s", "1s").ShouldNot(gom.HaveOccurred())
+		gom.Eventually(framework.ExpectCountPod(kubeClient, testNs, labels.SelectorFromSet(map[string]string{"app": "busybox", labeling.LabelTrafficKey: string(labeling.LabelTrafficYes)}), 3), "10s", "1s").ShouldNot(gom.HaveOccurred())
 		// check breaked pods looking at endpoints
-		gom.Eventually(framework.CheckEndpointsCount(kubeClient, "busybox", testNs, 3, 0), "3s", "1s").ShouldNot(gom.HaveOccurred())
+		gom.Eventually(framework.CheckEndpointsCount(kubeClient, "busybox", testNs, 3, 0), "10s", "1s").ShouldNot(gom.HaveOccurred())
 		// check the status of the CRD
-		time.Sleep(2 * time.Second)
-		gom.Eventually(framework.CheckKubervisorServiceStatus(kubervisorClient, "busybreak", testNs, 5, 2, 0, 0), "15s", "1s").ShouldNot(gom.HaveOccurred())
+		time.Sleep(5 * time.Second)
+		gom.Eventually(framework.CheckKubervisorServiceStatus(kubervisorClient, "busybreak", testNs, 5, 2, 0, 0), "30s", "1s").ShouldNot(gom.HaveOccurred())
 		// delete the CRD and check labels
-		gom.Eventually(framework.ExpectCountPod(kubeClient, testNs, labels.SelectorFromSet(map[string]string{labeling.LabelBreakerNameKey: "busybreak"}), 5), "5s", "1s").ShouldNot(gom.HaveOccurred())
-		gom.Eventually(framework.DeleteKubervisorService(kubervisorClient, "busybreak", testNs), "5s", "1s").ShouldNot(gom.HaveOccurred())
-
-		// THE FOLLOW TEST DOES NOT WORK: missing label cleaning on Delete ?
-		//gom.Eventually(framework.ExpectCountPod(kubeClient, testNs, labels.SelectorFromSet(map[string]string{labeling.LabelBreakerNameKey: "busybreak"}), 0), "5s", "1s").ShouldNot(gom.HaveOccurred())
-
+		gom.Eventually(framework.ExpectCountPod(kubeClient, testNs, labels.SelectorFromSet(map[string]string{labeling.LabelBreakerNameKey: "busybreak"}), 5), "30s", "1s").ShouldNot(gom.HaveOccurred())
+		gom.Eventually(framework.DeleteKubervisorService(kubervisorClient, "busybreak", testNs), "10s", "1s").ShouldNot(gom.HaveOccurred())
+		gom.Eventually(framework.ExpectCountPod(kubeClient, testNs, labels.SelectorFromSet(map[string]string{labeling.LabelBreakerNameKey: "busybreak"}), 0), "30s", "1s").ShouldNot(gom.HaveOccurred())
 	})
 
 })
