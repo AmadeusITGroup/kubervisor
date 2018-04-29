@@ -67,6 +67,63 @@ func TestNew(t *testing.T) {
 			want:    nil,
 		},
 		{
+			name: "continuousValueDeviation",
+			args: args{
+				cfg: FactoryConfig{
+					Config: Config{
+						Logger:    devLogger,
+						PodLister: nil,
+						BreakerStrategyConfig: v1.BreakerStrategy{
+							ContinuousValueDeviation: &v1.ContinuousValueDeviation{
+								MaxDeviationPercent: v1.NewFloat64(30.0),
+								PodNameKey:          "pod",
+								PrometheusService:   "PrometheusService",
+								PromQL:              "fakeQuery",
+							},
+						},
+					},
+				},
+			},
+			wantErr: false,
+			want:    nil,
+		},
+		{
+			name: "continuousValueDeviation_ErrorNoQuery",
+			args: args{
+				cfg: FactoryConfig{
+					Config: Config{
+						Logger:    devLogger,
+						PodLister: nil,
+						BreakerStrategyConfig: v1.BreakerStrategy{
+							ContinuousValueDeviation: &v1.ContinuousValueDeviation{
+								MaxDeviationPercent: v1.NewFloat64(30.0),
+								PodNameKey:          "pod",
+								PrometheusService:   "PrometheusService",
+							},
+						},
+					},
+				},
+			},
+			wantErr: true,
+			want:    nil,
+		},
+		{
+			name: "continuousValueDeviation_ValidationError",
+			args: args{
+				cfg: FactoryConfig{
+					Config: Config{
+						Logger:    devLogger,
+						PodLister: nil,
+						BreakerStrategyConfig: v1.BreakerStrategy{
+							ContinuousValueDeviation: &v1.ContinuousValueDeviation{},
+						},
+					},
+				},
+			},
+			wantErr: true,
+			want:    nil,
+		},
+		{
 			name: "good value only",
 			args: args{
 				cfg: FactoryConfig{

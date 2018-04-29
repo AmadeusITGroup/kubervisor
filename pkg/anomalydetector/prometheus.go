@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"time"
 
-	promClient "github.com/prometheus/client_golang/api"
 	promApi "github.com/prometheus/client_golang/api/prometheus/v1"
 	"github.com/prometheus/common/model"
 	"go.uber.org/zap"
@@ -15,20 +14,19 @@ import (
 
 type promDiscreteValueOutOfListAnalyser struct {
 	config           v1.DiscreteValueOutOfList
-	prometheusClient promClient.Client
+	queyrAPI         promApi.API
 	logger           *zap.Logger
 	valueCheckerFunc func(value string) (ok bool)
 }
 
 func (p *promDiscreteValueOutOfListAnalyser) doAnalysis() (okkoByPodName, error) {
 	ctx := context.Background()
-	qAPI := promApi.NewAPI(p.prometheusClient)
 	tsNow := time.Now()
 
 	// promQL example: sum(delta(ms_rpc_count{job=\"kubernetes-pods\",run=\"foo\"}[10s])) by (code,kubernetes_pod_name)
 	// p.config.PodNameKey should be "kubernetes_pod_name"
 	// p.config.Key should be "code"
-	m, err := qAPI.Query(ctx, p.config.PromQL, tsNow)
+	m, err := p.queyrAPI.Query(ctx, p.config.PromQL, tsNow)
 	if err != nil {
 		return nil, fmt.Errorf("error processing prometheus query: %s", err)
 	}
@@ -61,19 +59,18 @@ func (p *promDiscreteValueOutOfListAnalyser) buildCounters(vector model.Vector) 
 }
 
 type promContinuousValueDeviationAnalyser struct {
-	config           v1.ContinuousValueDeviation
-	prometheusClient promClient.Client
-	logger           *zap.Logger
+	config   v1.ContinuousValueDeviation
+	queryAPI promApi.API
+	logger   *zap.Logger
 }
 
 func (p *promContinuousValueDeviationAnalyser) doAnalysis() (deviationByPodName, error) {
 	ctx := context.Background()
-	qAPI := promApi.NewAPI(p.prometheusClient)
 	tsNow := time.Now()
 
 	// promQL example: (rate(solution_price_sum{}[1m])/rate(solution_price_count{}[1m]) and delta(solution_price_count{}[1m])>70) / scalar(sum(rate(solution_price_sum{}[1m]))/sum(rate(solution_price_count{}[1m])))
 	// p.config.PodNameKey should point to the label containing the pod name
-	m, err := qAPI.Query(ctx, p.config.PromQL, tsNow)
+	m, err := p.queryAPI.Query(ctx, p.config.PromQL, tsNow)
 	if err != nil {
 		return nil, fmt.Errorf("error processing prometheus query: %s", err)
 	}
