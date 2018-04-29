@@ -26,11 +26,8 @@ type processCollector struct {
 }
 
 // NewProcessCollector returns a collector which exports the current state of
-// process metrics including CPU, memory and file descriptor usage as well as
-// the process start time for the given process ID under the given namespace.
-//
-// Currently, the collector depends on a Linux-style proc filesystem and
-// therefore only exports metrics for Linux.
+// process metrics including cpu, memory and file descriptor usage as well as
+// the process start time for the given process id under the given namespace.
 func NewProcessCollector(pid int, namespace string) Collector {
 	return NewProcessCollectorPIDFn(
 		func() (int, error) { return pid, nil },
@@ -38,8 +35,11 @@ func NewProcessCollector(pid int, namespace string) Collector {
 	)
 }
 
-// NewProcessCollectorPIDFn works like NewProcessCollector but the process ID is
-// determined on each collect anew by calling the given pidFn function.
+// NewProcessCollectorPIDFn returns a collector which exports the current state
+// of process metrics including cpu, memory and file descriptor usage as well
+// as the process start time under the given namespace. The given pidFn is
+// called on each collect and is used to determine the process to export
+// metrics for.
 func NewProcessCollectorPIDFn(
 	pidFn func() (int, error),
 	namespace string,

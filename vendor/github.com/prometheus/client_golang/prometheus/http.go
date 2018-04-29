@@ -61,8 +61,9 @@ func giveBuf(buf *bytes.Buffer) {
 // name).
 //
 // Deprecated: Please note the issues described in the doc comment of
-// InstrumentHandler. You might want to consider using
-// promhttp.InstrumentedHandler instead.
+// InstrumentHandler. You might want to consider using promhttp.Handler instead
+// (which is not instrumented, but can be instrumented with the tooling provided
+// in package promhttp).
 func Handler() http.Handler {
 	return InstrumentHandler("prometheus", UninstrumentedHandler())
 }

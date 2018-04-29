@@ -47,13 +47,14 @@ more information in the developper [documentation page](./docs/developper_docs.m
 
 #### CRD
 
-TODO
+When the ```Kubervisor controller``` starts it register automatically the ```kubervisorservices.kubervisor.k8s.io``` CRD.
 
 #### Scope
 
 The Kubervisor is an operator that can run in a dedicated namespace and cover the resource of that namespace only, or as a global operator taking action in all namespace that it had been granted access. The used service account will determine the scope on which the Kubervisor will work.
 
 It requires to be given the following roles:
+
 - get:          pod, service
 - list:         pod, service
 - update:       pod, service
@@ -62,7 +63,43 @@ It requires to be given the following roles:
 
 #### Deployment
 
-TODO (Helm ?)
+An easy way to install the ```Kubervisor``` controller, in your Kubernetes cluster, is to use the ```helm chart``` present in this repository
+
+```console
+$ helm intall -n kubervisor --wait charts/kubervisor
+NAME:   kubervisor
+LAST DEPLOYED: Fri Apr 27 21:35:03 2018
+NAMESPACE: default
+STATUS: DEPLOYED
+
+RESOURCES:
+==> v1beta2/Deployment
+NAME        DESIRED  CURRENT  UP-TO-DATE  AVAILABLE  AGE
+kubervisor  1        1        1           0          3s
+
+==> v1beta1/ClusterRole
+NAME        AGE
+kubervisor  3s
+
+==> v1beta1/ClusterRoleBinding
+NAME        AGE
+kubervisor  2s
+
+==> v1/ServiceAccount
+NAME        SECRETS  AGE
+kubervisor  1        2s
+```
+
+#### kubectl plugin
+
+kubervisor provides a kubectl plugin in order to show in a nice way the KubervisorService status information
+
+To install the plugin juste run: ```make plugin```
+
+To run the plugin:
+
+- ```kubectl plugin kubervisor``` will list all the ```KubervisorService``` present in the current namespace.
+- ```kubectl plugin kubervisor -k <kubervisorservice-name>``` will display only the ```KubervisorService``` corresponding to the ```-k``` argument.
 
 ### User side
 

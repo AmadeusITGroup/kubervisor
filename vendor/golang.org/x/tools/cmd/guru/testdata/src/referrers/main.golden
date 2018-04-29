@@ -54,7 +54,11 @@ references to field f int
 	_ = s{}.f // @referrers ref-field "f"
 	s2.f = 1
 
+-------- @referrers unexported-from-test --------
+references to var notexported int
+	_ = notexported
+
 -------- @referrers ref-type-U --------
 references to type U int
-open testdata/src/referrers/nosuchfile.y: no such file or directory (+ 1 more refs in this file)
+open nosuchfile.y: no such file or directory (+ 1 more refs in this file)
 

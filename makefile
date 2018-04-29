@@ -17,6 +17,11 @@ LDFLAGS = -ldflags "-w -X ${BUILDINFOPKG}.TAG=${TAG} -X ${BUILDINFOPKG}.COMMIT=$
 
 all: build
 
+plugin: build-kubectl-plugin install-plugin
+
+install-plugin:
+	./hack/install-plugin.sh
+
 build-%:
 	CGO_ENABLED=0 go build -i -installsuffix cgo ${LDFLAGS} -o bin/$* ./cmd/$*
 
