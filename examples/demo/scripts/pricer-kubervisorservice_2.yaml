@@ -1,0 +1,21 @@
+apiVersion: kubervisor.k8s.io/v1
+kind: KubervisorService
+metadata:
+  name: pricer-1a 
+  labels:
+    app: pricer
+spec:
+  service: pricer-1a 
+  breaker:
+    minPodsAvailableCount: 2
+    minPodsAvailableRatio: 50
+    continuousValueDeviation: 
+      prometheusService: kube-prometheus-prometheus.demo:9090
+      promQL: "(rate(pricer_price_sum[30s])/rate(pricer_price_count[30s]) and delta(pricer_price_count[30s])>3 ) / scalar(sum(rate(pricer_price_sum[30s]))/sum(rate(pricer_price_count[30s])))"
+      podNamekey: pod
+      maxDeviationPercent: 30
+  activator:
+    mode: retryAndPause
+    period: 15
+    maxRetryCount: 2
+    maxPauseCount: 2

@@ -1,0 +1,17 @@
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: pricer-1a
+  labels:
+    prometheus: kube-prometheus
+spec:
+  endpoints:
+  - interval: 5s
+    port: http
+  jobLabel: pricer-1a
+  namespaceSelector:
+    matchNames:
+    - demo
+  selector:
+    matchLabels:
+      app: pricer
