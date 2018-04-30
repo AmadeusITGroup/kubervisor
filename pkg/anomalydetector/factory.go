@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	promClient "github.com/prometheus/client_golang/api"
+	promApi "github.com/prometheus/client_golang/api/prometheus/v1"
 
 	"github.com/amadeusitgroup/kubervisor/pkg/api/kubervisor/v1"
 )
@@ -21,7 +22,6 @@ var _ Factory = New
 
 //New Factory for AnomalyDetection
 func New(cfg FactoryConfig) (AnomalyDetector, error) {
-
 	switch {
 	case cfg.BreakerStrategyConfig.DiscreteValueOutOfList != nil:
 		return newDiscreteValueOutOfListAnalyser(cfg.Config)
@@ -67,10 +67,11 @@ func newDiscreteValueOutOfListAnalyser(cfg Config) (*DiscreteValueOutOfListAnaly
 
 		analyser.valueCheckerFunc = valueCheckerFunc
 		promconfig := promClient.Config{Address: "http://" + analyserCfg.PrometheusService}
-		var err error
-		if analyser.prometheusClient, err = promClient.NewClient(promconfig); err != nil {
+		prometheusClient, err := promClient.NewClient(promconfig)
+		if err != nil {
 			return nil, err
 		}
+		analyser.queyrAPI = promApi.NewAPI(prometheusClient)
 		a.analyser = analyser
 	default:
 		return nil, fmt.Errorf("missing parameter to create DiscreteValueOutOfListAnalyser")
@@ -90,10 +91,11 @@ func newContinuousValueDeviation(cfg Config) (*ContinuousValueDeviationAnalyser,
 
 		analyser := &promContinuousValueDeviationAnalyser{config: analyserCfg, logger: cfg.Logger}
 		promconfig := promClient.Config{Address: "http://" + analyserCfg.PrometheusService}
-		var err error
-		if analyser.prometheusClient, err = promClient.NewClient(promconfig); err != nil {
+		prometheusClient, err := promClient.NewClient(promconfig)
+		if err != nil {
 			return nil, err
 		}
+		analyser.queryAPI = promApi.NewAPI(prometheusClient)
 		a.analyser = analyser
 	default:
 		return nil, fmt.Errorf("missing parameter to create ContinuousValueDeviationAnalyser")
