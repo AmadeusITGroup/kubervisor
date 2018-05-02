@@ -197,3 +197,58 @@ func TestUpdateStatusConditionRunning(t *testing.T) {
 		})
 	}
 }
+
+func Test_equalBreakerStatusCounters(t *testing.T) {
+	t0 := metav1.Time{}
+	t1 := metav1.Time{Time: time.Now()}
+
+	type args struct {
+		a apiv1.BreakerStatus
+		b apiv1.BreakerStatus
+	}
+	tests := []struct {
+		name string
+		args args
+		want bool
+	}{
+		{
+			name: "equal",
+			args: args{
+				a: apiv1.BreakerStatus{
+					LastProbeTime: t0,
+					NbPodsBreaked: 1,
+					NbPodsManaged: 10,
+				},
+				b: apiv1.BreakerStatus{
+					LastProbeTime: t1,
+					NbPodsBreaked: 1,
+					NbPodsManaged: 10,
+				},
+			},
+			want: true,
+		},
+		{
+			name: "diff",
+			args: args{
+				a: apiv1.BreakerStatus{
+					LastProbeTime: t0,
+					NbPodsBreaked: 1,
+					NbPodsManaged: 10,
+				},
+				b: apiv1.BreakerStatus{
+					LastProbeTime: t1,
+					NbPodsBreaked: 0,
+					NbPodsManaged: 10,
+				},
+			},
+			want: false,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := equalBreakerStatusCounters(tt.args.a, tt.args.b); got != tt.want {
+				t.Errorf("equalBreakerStatusCounters() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}

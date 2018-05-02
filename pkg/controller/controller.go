@@ -12,7 +12,6 @@ import (
 	"go.uber.org/zap"
 
 	apiv1 "k8s.io/api/core/v1"
-	apiextensionsclient "k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
@@ -25,7 +24,6 @@ import (
 	v1core "k8s.io/client-go/kubernetes/typed/core/v1"
 	corev1listers "k8s.io/client-go/listers/core/v1"
 	"k8s.io/client-go/rest"
-	restclientset "k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/cache"
 	"k8s.io/client-go/tools/clientcmd"
 
@@ -34,9 +32,9 @@ import (
 	"k8s.io/client-go/util/workqueue"
 
 	kubervisorapi "github.com/amadeusitgroup/kubervisor/pkg/api/kubervisor/v1"
-	kubervisorclient "github.com/amadeusitgroup/kubervisor/pkg/client"
 	bclient "github.com/amadeusitgroup/kubervisor/pkg/client/clientset/versioned"
 	binformers "github.com/amadeusitgroup/kubervisor/pkg/client/informers/externalversions"
+	"github.com/amadeusitgroup/kubervisor/pkg/client/informers/externalversions/kubervisor/v1"
 	blisters "github.com/amadeusitgroup/kubervisor/pkg/client/listers/kubervisor/v1"
 	"github.com/amadeusitgroup/kubervisor/pkg/controller/item"
 	"github.com/amadeusitgroup/kubervisor/pkg/labeling"
@@ -76,9 +74,9 @@ type Controller struct {
 
 	kubeInformerFactory    kubeinformers.SharedInformerFactory
 	breakerInformerFactory binformers.SharedInformerFactory
-
-	kubeClient    clientset.Interface
-	breakerClient bclient.Interface
+	breakerInformer        v1.KubervisorServiceInformer
+	kubeClient             clientset.Interface
+	breakerClient          bclient.Interface
 
 	breakerLister blisters.KubervisorServiceLister
 	BreakerSynced cache.InformerSynced
@@ -106,38 +104,24 @@ type Controller struct {
 	gc *garbageCollector
 }
 
+//Initializer prepare/return all dependencies for controller creation
+type Initializer interface {
+	InitClients() (clientset.Interface, bclient.Interface, clientset.Interface, error)
+	RegisterAPI() error
+	Logger() *zap.Logger
+	NbWorker() uint32
+	HTTPServer() *http.Server
+}
+
 // New returns new Controller instance
-func New(cfg *Config) *Controller {
-	sugar := cfg.Logger.Sugar()
-	kubeConfig, err := initKubeConfig(cfg)
-	if err != nil {
-		sugar.Fatalf("Unable to init kubervisor controller: %v", err)
+func New(initializer Initializer) *Controller {
+	sugar := initializer.Logger().Sugar()
+	if err := initializer.RegisterAPI(); err != nil {
+		return nil
 	}
-
-	// apiextensionsclientset, err :=
-	extClient, err := apiextensionsclient.NewForConfig(kubeConfig)
+	kubeClient, breakerClient, leaderElectionClient, err := initializer.InitClients()
 	if err != nil {
-		sugar.Fatalf("Unable to init clientset from kubeconfig:%v", err)
-	}
-
-	_, err = kubervisorclient.DefineKubervisorResources(extClient)
-	if err != nil && !apierrors.IsAlreadyExists(err) {
-		sugar.Fatalf("Unable to define KubervisorService resource:%v", err)
-	}
-
-	kubeClient, err := clientset.NewForConfig(restclientset.AddUserAgent(kubeConfig, "kubervisor"))
-	if err != nil {
-		sugar.Fatalf("Unable to initialize kubeClient:%v", err)
-	}
-
-	leaderElectionClient, err := clientset.NewForConfig(restclientset.AddUserAgent(kubeConfig, "leader-election"))
-	if err != nil {
-		sugar.Fatalf("Unable to initialize leaderElectionClient:%v", err)
-	}
-
-	breakerClient, err := kubervisorclient.NewClient(kubeConfig)
-	if err != nil {
-		sugar.Fatalf("Unable to init kubervisor.clientset from kubeconfig:%v", err)
+		return nil
 	}
 
 	kubeInformerFactory := kubeinformers.NewSharedInformerFactory(kubeClient, time.Second*30)
@@ -157,27 +141,31 @@ func New(cfg *Config) *Controller {
 		sugar.Fatalf("Failed to get hostname: %v", err)
 	}
 
-	lockLeader := &resourcelock.EndpointsLock{
-		EndpointsMeta: metav1.ObjectMeta{
-			Namespace: "default", // TODO retrieve current Namespaces
-			Name:      "kubervisor",
-		},
-		Client: leaderElectionClient.CoreV1(),
-		LockConfig: resourcelock.ResourceLockConfig{
-			Identity:      id,
-			EventRecorder: recorder,
-		},
+	var lockLeader *resourcelock.EndpointsLock
+	if leaderElectionClient != nil {
+		lockLeader = &resourcelock.EndpointsLock{
+			EndpointsMeta: metav1.ObjectMeta{
+				Namespace: "default", // TODO retrieve current Namespaces
+				Name:      "kubervisor",
+			},
+			Client: leaderElectionClient.CoreV1(),
+			LockConfig: resourcelock.ResourceLockConfig{
+				Identity:      id,
+				EventRecorder: recorder,
+			},
+		}
 	}
 
 	ctx, ctxCancel := context.WithCancel(context.Background())
 
 	ctrl := &Controller{
-		nbWorker: cfg.NbWorker,
-		Logger:   cfg.Logger,
+		nbWorker: initializer.NbWorker(),
+		Logger:   initializer.Logger(),
 
 		kubeInformerFactory:    kubeInformerFactory,
 		kubeClient:             kubeClient,
 		breakerInformerFactory: breakerInformerFactory,
+		breakerInformer:        breakerInformer,
 		breakerClient:          breakerClient,
 		podLister:              podInformer.Lister(),
 		PodSynced:              podInformer.Informer().HasSynced,
@@ -192,7 +180,7 @@ func New(cfg *Config) *Controller {
 
 		items: item.NewBreackerConfigItemStore(),
 
-		httpServer: &http.Server{Addr: cfg.ListenAddr},
+		httpServer: initializer.HTTPServer(),
 
 		queue:    workqueue.NewNamedRateLimitingQueue(workqueue.DefaultControllerRateLimiter(), "kubervisorservice"),
 		recorder: recorder,
@@ -241,6 +229,11 @@ func (ctrl *Controller) Run(stop <-chan struct{}) error {
 	ctrl.breakerInformerFactory.Start(stop)
 	go ctrl.runHTTPServer(stop)
 	go ctrl.gc.run(stop)
+
+	// Simple run if no leader election
+	if ctrl.locker == nil {
+		return ctrl.run(stop)
+	}
 
 	// Start leader election.
 	return election.Run(election.Config{

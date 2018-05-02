@@ -35,10 +35,11 @@ func initGlobals() {
 	goflag.CommandLine.Parse([]string{})
 
 	if config.Debug {
-		config.Logger, _ = zap.NewDevelopment()
+		l, _ := zap.NewDevelopment()
+		config.SetLogger(l)
 	}
 
-	sugar = config.Logger.Sugar()
+	sugar = config.Logger().Sugar()
 
 	initKubeClient()
 }

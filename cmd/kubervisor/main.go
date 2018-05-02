@@ -29,7 +29,8 @@ func main() {
 	}
 
 	if config.Debug {
-		config.Logger, _ = zap.NewDevelopment()
+		l, _ := zap.NewDevelopment()
+		config.SetLogger(l)
 	}
 	ctrl := controller.New(config)
 
