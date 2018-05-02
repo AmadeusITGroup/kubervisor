@@ -1,0 +1,28 @@
+apiVersion: extensions/v1beta1
+kind: Ingress
+metadata:
+  name: kube-prometheus
+  annotations:
+    nginx.ingress.kubernetes.io/rewrite-target: /
+spec:
+  rules:
+  - host: alertmanager.demo.mk
+    http:
+      paths:
+      - backend:
+          serviceName: kube-prometheus-alertmanager
+          servicePort: 9093
+  - host: prometheus.demo.mk
+    http:
+      paths:
+      - backend:
+          serviceName: kube-prometheus-prometheus
+          servicePort: 9090
+  - host: grafana.demo.mk
+    http:
+      paths:
+      - backend:
+          serviceName: kube-prometheus-grafana
+          servicePort: 80
+
+        

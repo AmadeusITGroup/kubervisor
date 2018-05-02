@@ -1,5 +1,5 @@
-hash: 55b1617370d8427806ff43ee8c083addb037ea4279f2dc9001e5a734bbfe109c
-updated: 2018-04-26T20:16:12.279040845-07:00
+hash: 0e87b8462f86ec8d13cc025b45c0891243a6f7fdf39a93025f6a4c476756f63e
+updated: 2018-04-30T11:29:06.971068052+02:00
 imports:
 - name: github.com/beorn7/perks
   version: 3a771d992973f24aa725d07868b467d1ddfceafb
@@ -52,6 +52,10 @@ imports:
   - OpenAPIv2
   - compiler
   - extensions
+- name: github.com/gorilla/context
+  version: 08b5f424b9271eedf6f9f0ce86cb9396ed337a42
+- name: github.com/gorilla/mux
+  version: 53c1911da2b537f792e7cafcb446b05ffe33b996
 - name: github.com/gregjones/httpcache
   version: 787624de3eb7bd915c329cba748687a3b22666a6
   subpackages:
@@ -205,7 +209,7 @@ imports:
   - unicode/norm
   - width
 - name: golang.org/x/tools
-  version: 0b5ca0b0400f3828340b1302bc811fa777cb5958
+  version: 8e070db38e5c55da6a85c81878ab769bf5667848
   subpackages:
   - imports
 - name: gopkg.in/inf.v0
@@ -233,6 +237,7 @@ imports:
   - core/v1
   - events/v1beta1
   - extensions/v1beta1
+  - imagepolicy/v1alpha1
   - networking/v1
   - policy/v1beta1
   - rbac/v1
@@ -244,7 +249,7 @@ imports:
   - storage/v1alpha1
   - storage/v1beta1
 - name: k8s.io/apiextensions-apiserver
-  version: ea00cb6becd27ecde3f2e147acd41234da9881fd
+  version: 3944812f8ec186cf57dbabd6de029c5420e39572
   subpackages:
   - pkg/apis/apiextensions
   - pkg/apis/apiextensions/v1beta1
