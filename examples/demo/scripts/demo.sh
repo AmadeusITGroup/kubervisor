@@ -40,9 +40,6 @@ run "kubectl exec -t $(kubectl get pod -l app=pricer --output=jsonpath={.items[0
 desc "lets see the KubervisorService status"
 run "watch kubectl plugin kubervisor"
 
-desc "kill the pod with anomaly"
-run "kubectl delete pod $(kubectl get pod -l app=pricer --output=jsonpath={.items[0].metadata.name})"
-
 desc "change again the KubervisorService configuration"
 run "cat scripts/pricer-kubervisorservice_3.yaml"
 run "kubectl apply -f scripts/pricer-kubervisorservice_3.yaml"
@@ -52,3 +49,15 @@ run "kubectl exec -t $(kubectl get pod -l app=pricer --output=jsonpath={.items[0
 
 desc "lets see the KubervisorService status"
 run "watch kubectl plugin kubervisor"
+
+#desc "kill the pod with anomaly"
+#run "kubectl delete pod $(kubectl get pod -l app=pricer --output=jsonpath={.items[0].metadata.name})"
+
+#desc "inject anomaly in all pods"
+#run "kubectl exec -t $(kubectl get pod -l app=pricer --output=jsonpath={.items[0].metadata.name}) -- curl -X POST http://localhost:8080/setconfig?kmprice=0"
+#run "kubectl exec -t $(kubectl get pod -l app=pricer --output=jsonpath={.items[1].metadata.name}) -- curl -X POST http://localhost:8080/setconfig?kmprice=0"
+#run "kubectl exec -t $(kubectl get pod -l app=pricer --output=jsonpath={.items[2].metadata.name}) -- curl -X POST http://localhost:8080/setconfig?kmprice=0"
+#run "kubectl exec -t $(kubectl get pod -l app=pricer --output=jsonpath={.items[3].metadata.name}) -- curl -X POST http://localhost:8080/setconfig?kmprice=0"
+
+#desc "lets see the KubervisorService status"
+#run "watch kubectl plugin kubervisor"

@@ -43,10 +43,12 @@ make TAG=latest container
 # deploy the Pricer application in version v0.1.0
 helm install --wait -n prod-pricer-1a --set deployAppService=true --set config.provider=1a charts/pricer --namespace=$DEMO_NS
 # create servicemonitor for the Pricer app
-kubectl apply -f scripts/servicemonitor.yaml -n $DEMO_NS
+kubectl apply -f $GIT_ROOT/examples/demo/scripts/servicemonitor.yaml -n $DEMO_NS
+kubectl apply -f $GIT_ROOT/examples/demo/scripts/servicemonitor.kubervisor.yaml -n $DEMO_NS
 
 
 # install kubervisor
 cd $GIT_ROOT && make TAG=latest container
 cd $DEMO_ROOT
-helm install --wait -n kubervisor $GIT_ROOT/charts/kubervisor -n $DEMO_NS
+helm install --wait -n kubervisor $GIT_ROOT/charts/kubervisor --namespace=$DEMO_NS
+

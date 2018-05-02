@@ -1,0 +1,17 @@
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: kubervisor
+  labels:
+    prometheus: kube-prometheus
+spec:
+  endpoints:
+  - interval: 5s
+    port: http
+  jobLabel: kubervisor
+  namespaceSelector:
+    matchNames:
+    - demo
+  selector:
+    matchLabels:
+      app: kubervisor

@@ -7,7 +7,6 @@ metadata:
 spec:
   service: pricer-1a 
   breaker:
-    minPodsAvailableCount: 2
     minPodsAvailableRatio: 50
     continuousValueDeviation: 
       prometheusService: kube-prometheus-prometheus.demo:9090
@@ -15,7 +14,7 @@ spec:
       podNamekey: pod
       maxDeviationPercent: 30
   activator:
-    mode: retryAndPause
+    mode: retryAndKill
     period: 15
-    maxRetryCount: 2
-    maxPauseCount: 2
+    maxRetryCount: 1
+
