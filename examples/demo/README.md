@@ -9,7 +9,7 @@
 
 ```shell
 export GOPATH=$(git rev-parse --show-toplevel)/../../../../
-./scripts/init.sh <kubervisor_git_clone_path>
+./scripts/init.sh
 ```
 
 ## Demo
