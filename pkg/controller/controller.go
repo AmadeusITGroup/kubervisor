@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"os"
 	"time"
 
 	"github.com/heptiolabs/healthcheck"
@@ -24,8 +25,11 @@ import (
 	v1core "k8s.io/client-go/kubernetes/typed/core/v1"
 	corev1listers "k8s.io/client-go/listers/core/v1"
 	"k8s.io/client-go/rest"
+	restclientset "k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/cache"
 	"k8s.io/client-go/tools/clientcmd"
+
+	"k8s.io/client-go/tools/leaderelection/resourcelock"
 	"k8s.io/client-go/tools/record"
 	"k8s.io/client-go/util/workqueue"
 
@@ -36,12 +40,20 @@ import (
 	blisters "github.com/amadeusitgroup/kubervisor/pkg/client/listers/kubervisor/v1"
 	"github.com/amadeusitgroup/kubervisor/pkg/controller/item"
 	"github.com/amadeusitgroup/kubervisor/pkg/labeling"
+	election "github.com/amadeusitgroup/kubervisor/pkg/leaderelection"
 	"github.com/amadeusitgroup/kubervisor/pkg/pod"
 )
 
 func init() {
 	prometheus.MustRegister(kubervisorGauges)
 }
+
+var (
+	// leader election config
+	leaseDuration = 15 * time.Second
+	renewDuration = 5 * time.Second
+	retryPeriod   = 3 * time.Second
+)
 
 var (
 	kubervisorGauges = prometheus.NewGaugeVec(
@@ -59,6 +71,8 @@ type Controller struct {
 	Logger   *zap.Logger
 
 	recorder record.EventRecorder
+
+	locker *resourcelock.EndpointsLock
 
 	kubeInformerFactory    kubeinformers.SharedInformerFactory
 	breakerInformerFactory binformers.SharedInformerFactory
@@ -111,9 +125,14 @@ func New(cfg *Config) *Controller {
 		sugar.Fatalf("Unable to define KubervisorService resource:%v", err)
 	}
 
-	kubeClient, err := clientset.NewForConfig(kubeConfig)
+	kubeClient, err := clientset.NewForConfig(restclientset.AddUserAgent(kubeConfig, "kubervisor"))
 	if err != nil {
 		sugar.Fatalf("Unable to initialize kubeClient:%v", err)
+	}
+
+	leaderElectionClient, err := clientset.NewForConfig(restclientset.AddUserAgent(kubeConfig, "leader-election"))
+	if err != nil {
+		sugar.Fatalf("Unable to initialize leaderElectionClient:%v", err)
 	}
 
 	breakerClient, err := kubervisorclient.NewClient(kubeConfig)
@@ -127,10 +146,28 @@ func New(cfg *Config) *Controller {
 	eventBroadcaster := record.NewBroadcaster()
 	eventBroadcaster.StartLogging(sugar.Infof)
 	eventBroadcaster.StartRecordingToSink(&v1core.EventSinkImpl{Interface: v1core.New(kubeClient.Core().RESTClient()).Events("")})
+	recorder := eventBroadcaster.NewRecorder(scheme.Scheme, apiv1.EventSource{Component: "kubervisor-controller"})
 
 	podInformer := kubeInformerFactory.Core().V1().Pods()
 	serviceInformer := kubeInformerFactory.Core().V1().Services()
 	breakerInformer := breakerInformerFactory.Kubervisor().V1().KubervisorServices()
+
+	id, err := os.Hostname()
+	if err != nil {
+		sugar.Fatalf("Failed to get hostname: %v", err)
+	}
+
+	lockLeader := &resourcelock.EndpointsLock{
+		EndpointsMeta: metav1.ObjectMeta{
+			Namespace: "default", // TODO retrieve current Namespaces
+			Name:      "kubervisor",
+		},
+		Client: leaderElectionClient.CoreV1(),
+		LockConfig: resourcelock.ResourceLockConfig{
+			Identity:      id,
+			EventRecorder: recorder,
+		},
+	}
 
 	ctx, ctxCancel := context.WithCancel(context.Background())
 
@@ -158,7 +195,8 @@ func New(cfg *Config) *Controller {
 		httpServer: &http.Server{Addr: cfg.ListenAddr},
 
 		queue:    workqueue.NewNamedRateLimitingQueue(workqueue.DefaultControllerRateLimiter(), "kubervisorservice"),
-		recorder: eventBroadcaster.NewRecorder(scheme.Scheme, apiv1.EventSource{Component: "kubervisor-controller"}),
+		recorder: recorder,
+		locker:   lockLeader,
 	}
 	ctrl.enqueueFunc = ctrl.enqueue
 	ctrl.updateHandlerFunc = ctrl.updateHandler
@@ -199,14 +237,26 @@ func New(cfg *Config) *Controller {
 // Run start the Controller
 func (ctrl *Controller) Run(stop <-chan struct{}) error {
 	defer ctrl.rootContextCancelFunc()
-	var err error
 	ctrl.kubeInformerFactory.Start(stop)
 	ctrl.breakerInformerFactory.Start(stop)
 	go ctrl.runHTTPServer(stop)
 	go ctrl.gc.run(stop)
-	err = ctrl.run(stop)
 
-	return err
+	// Start leader election.
+	return election.Run(election.Config{
+		Lock:          ctrl.locker,
+		LeaseDuration: leaseDuration,
+		RenewDeadline: renewDuration,
+		RetryPeriod:   retryPeriod,
+		Callbacks: election.LeaderCallbacks{
+			OnStartedLeading: ctrl.run,
+			OnStoppedLeading: func() error {
+				ctrl.Logger.Sugar().Errorf("leader election lost")
+				return nil
+			},
+		},
+		Logger: ctrl.Logger,
+	}, stop)
 }
 
 func (ctrl *Controller) run(stop <-chan struct{}) error {

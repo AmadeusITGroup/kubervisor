@@ -19,6 +19,7 @@ items:
     resources:
     - pods
     - services
+    - endpoints
     verbs: ["*"]
   - apiGroups: [""]
     resources:
