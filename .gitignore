@@ -17,3 +17,5 @@
 /.vscode
 /bin
 coverage.txt
+/CHANGELOG.md.bak
+/dist

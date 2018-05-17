@@ -1,0 +1,33 @@
+project_name: kubervisor
+release:
+  github:
+    owner: amadeusitgroup
+    name: kubervisor
+builds:
+- goos:
+  - linux
+  goarch:
+  - amd64
+  main: ./cmd/kubervisor/main.go
+  ldflags: -s -w -X github.com/amadeusitgroup/kubervisor/pkg/utils.TAG={{.Version}} -X github.com/amadeusitgroup/kubervisor/pkg/utils.COMMIT={{.Commit}} -X github.com/amadeusitgroup/kubervisor/pkg/utils.DATE={{.Date}}
+  binary: kubervisor
+- goos:
+  - linux
+  goarch:
+  - amd64
+  main: ./cmd/kubectl-plugin/main.go
+  ldflags: -s -w -X github.com/amadeusitgroup/kubervisor/pkg/utils.TAG={{.Version}} -X github.com/amadeusitgroup/kubervisor/pkg/utils.COMMIT={{.Commit}} -X github.com/amadeusitgroup/kubervisor/pkg/utils.DATE={{.Date}}
+  binary: kubectl-plugin
+dockers:
+  - name: kubervisor
+    image: kubervisor/kubervisor
+    dockerfile: docker/kubervisor/Dockerfile
+    goos: linux
+    goarch: amd64
+    goarm: ''
+    binary: kubervisor
+    latest: true
+snapshot:
+  name_template: SNAPSHOT-{{ .Commit }}
+checksum:
+  name_template: '{{ .ProjectName }}_{{ .Version }}_checksums.txt'
