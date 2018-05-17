@@ -353,29 +353,43 @@ func (ctrl *Controller) syncKubervisorService(bc *kubervisorapi.KubervisorServic
 	}
 	ctrl.Logger.Sugar().Debugf("BreakerService %s/%s: startTime already set", bc.Namespace, bc.Name)
 
+	var bci item.Interface
+	obj, exist, err := ctrl.items.GetByKey(key)
+	if err != nil {
+		return false, err
+	}
+	if exist {
+		var ok bool
+		bci, ok = obj.(item.Interface)
+		if !ok {
+			return false, fmt.Errorf("unable to case the obj to a KubervisorServiceItem")
+		}
+	}
+
 	associatedSvc, err := ctrl.serviceLister.Services(bc.Namespace).Get(bc.Spec.Service)
 	if err != nil {
 		if !apierrors.IsNotFound(err) {
 			return false, err
 		}
-		msg := fmt.Sprintf("associated service %s/%s didn't exist, error:", bc.Namespace, bc.Spec.Service)
-		newStatus, err2 := UpdateStatusConditionServiceError(&bc.Status, msg, now)
-		if err2 != nil {
+		var msg string
+		if exist {
+			bci.Stop()
+			if err2 := ctrl.items.Delete(bci); err != nil {
+				return false, err2
+			}
+			msg = fmt.Sprintf("associated service %s/%s was deleted", bc.Namespace, bc.Spec.Service)
+			ctrl.Logger.Sugar().Errorf(msg)
+		} else {
+			msg = fmt.Sprintf("associated service %s/%s doesn't exist, error:", bc.Namespace, bc.Spec.Service)
+			ctrl.Logger.Sugar().Errorf(msg)
+		}
+
+		if err2 := ctrl.updateStatusCondition(bc, UpdateStatusConditionServiceError, msg, now); err != nil {
 			return false, err2
 		}
-		bc.Status = *newStatus
-		ctrl.Logger.Sugar().Errorf(msg)
-		if _, err2 = ctrl.updateHandlerFunc(bc); err2 != nil {
-			return false, err2
-		}
-		return false, err
-	}
-	obj, exist, err := ctrl.items.GetByKey(key)
-	if err != nil {
-		return false, err
+		return false, nil
 	}
 
-	var bci item.Interface
 	if !exist {
 		ctrl.Logger.Sugar().Debugf("item not found for key:%s", key)
 		if bci, err = ctrl.createItem(bc, associatedSvc, now); err != nil {
@@ -384,11 +398,6 @@ func (ctrl *Controller) syncKubervisorService(bc *kubervisorapi.KubervisorServic
 		ctrl.items.Add(bci)
 		bci.Start(ctrl.rootContext)
 	} else {
-		var ok bool
-		bci, ok = obj.(item.Interface)
-		if !ok {
-			return false, fmt.Errorf("unable to case the obj to a KubervisorServiceItem")
-		}
 		if IsSpecUpdated(bc, associatedSvc, bci) {
 			bci.Stop()
 			if bci, err = ctrl.createItem(bc, associatedSvc, now); err != nil {
@@ -417,14 +426,7 @@ func (ctrl *Controller) syncKubervisorService(bc *kubervisorapi.KubervisorServic
 	if bc.Status.Breaker == nil || !equalBreakerStatusCounters(newStatus, *bc.Status.Breaker) {
 		bc.Status.Breaker = &newStatus
 		//update status to running
-		if newStatus, err := UpdateStatusConditionRunning(&bc.Status, "", now); err == nil {
-			bc.Status = *newStatus
-		}
-
-		ctrl.Logger.Sugar().Debugf("BreakerService %s/%s: breaker status updated", bc.Namespace, bc.Name)
-		if _, err := ctrl.updateHandlerFunc(bc); err != nil {
-			return false, err
-		}
+		ctrl.updateStatusCondition(bc, UpdateStatusConditionRunning, "", now)
 	}
 	return false, nil
 }
@@ -506,28 +508,30 @@ func (ctrl *Controller) searchNewPods(svc *apiv1.Service) ([]*apiv1.Pod, error) 
 	return outPods, nil
 }
 
+func (ctrl *Controller) updateStatusCondition(bc *kubervisorapi.KubervisorService, statusUdapteFct statusUpdateFunc, msg string, now metav1.Time) error {
+	ctrl.Logger.Sugar().Debugf(msg)
+	newStatus, err2 := statusUdapteFct(&bc.Status, msg, now)
+	if err2 != nil {
+		ctrl.Logger.Sugar().Errorf("Unable to update status for CRD %s/%s", bc.Namespace, bc.Name)
+		return err2
+	}
+	bc.Status = *newStatus
+	if _, err2 = ctrl.updateHandlerFunc(bc); err2 != nil {
+		ctrl.Logger.Sugar().Errorf("Unable to update status for CRD %s/%s", bc.Namespace, bc.Name)
+		return err2
+	}
+	return nil
+}
+
 func (ctrl *Controller) createItem(bc *kubervisorapi.KubervisorService, associatedSvc *apiv1.Service, now metav1.Time) (item.Interface, error) {
 	bci, err := ctrl.newKubervisorServiceItem(bc, associatedSvc)
 	if err != nil {
-		msg := fmt.Sprintf("unable to create KubervisorServiceItem, err:%v", err)
-		ctrl.Logger.Sugar().Debugf(msg)
-		newStatus, err2 := UpdateStatusConditionInitFailure(&bc.Status, msg, now)
-		if err2 != nil {
-			return nil, err2
-		}
-		bc.Status = *newStatus
-		ctrl.Logger.Sugar().Errorf(msg)
-		if _, err2 = ctrl.updateHandlerFunc(bc); err2 != nil {
-			return nil, err2
-		}
+		ctrl.updateStatusCondition(bc, UpdateStatusConditionInitFailure, fmt.Sprintf("unable to create KubervisorServiceItem, err:%v", err), now)
 		return nil, err
 	}
 
 	//update status to running
-	if newStatus, err := UpdateStatusConditionRunning(&bc.Status, "", now); err == nil {
-		bc.Status = *newStatus
-		ctrl.updateHandlerFunc(bc)
-	}
+	ctrl.updateStatusCondition(bc, UpdateStatusConditionRunning, "", now)
 
 	return bci, nil
 }
