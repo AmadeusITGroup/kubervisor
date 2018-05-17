@@ -40,6 +40,8 @@ install:
 - go get -u github.com/alecthomas/gometalinter && gometalinter --install
 stages:
 - name: build
+- name: release
+  if: tag IS present
 jobs:
   include:
   - stage: build
@@ -53,5 +55,22 @@ jobs:
     - helm install --wait --version latest -n end2end-test charts/kubervisor
     - cd ./test/e2e && go test -c && ./e2e.test --kubeconfig=$HOME/.kube/config --ginkgo.slowSpecThreshold 200
     - helm delete end2end-test
+  - stage: release
+    script:
+      - docker login -u "$DOCKER_USERNAME" p "$DOCKER_PASSWORD"
+      - curl -sL https://git.io/goreleaser | bash
+    deploy:
+    - provider: releases
+      api_key:
+        secure: $GITHUB_TOKEN
+      skip_cleanup: true
+      file:
+      - docs/helm-kubervisor-$TAG.tgz
+      on:
+        tags: true
+        branches:
+          only:
+          - master
+          - /^v\d+(\.\d+)+$/
 after_success:
 - bash <(curl -s https://codecov.io/bash) -f $TRAVIS_BUILD_DIR/coverage.txt
