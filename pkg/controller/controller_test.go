@@ -301,12 +301,21 @@ func TestController_Run(t *testing.T) {
 			},
 			Spec: apiv1.ServiceSpec{Selector: map[string]string{"app": "test-app"}},
 		}
-
+		svc2 := &apiv1.Service{
+			ObjectMeta: metav1.ObjectMeta{
+				Namespace: "test-ns",
+				Name:      "svc2",
+			},
+			Spec: apiv1.ServiceSpec{Selector: map[string]string{"app": "test-app"}},
+		}
 		if _, err := ctrl.kubeClient.CoreV1().Services("test-ns").Create(svc1); err != nil {
 			t.Fatalf("Can't create service, err: %v", err)
 			return
 		}
-
+		if _, err := ctrl.kubeClient.CoreV1().Services("test-ns").Create(svc2); err != nil {
+			t.Fatalf("Can't create service, err: %v", err)
+			return
+		}
 		if _, err := ctrl.kubeClient.CoreV1().Pods("test-ns").Create(pod1); err != nil {
 			t.Fatalf("Can't create pods, err: %v", err)
 			return
@@ -366,8 +375,55 @@ func TestController_Run(t *testing.T) {
 		}
 
 		if len(ctrl.items.List()) != 1 {
-			t.Fatalf("bad count for items 1!=%d", len(ret))
+			t.Fatalf("bad count for items 1!=%d", len(ctrl.items.List()))
 		}
+
+		//update spec
+		{
+			ksvcToUpdate, err := ctrl.breakerClient.KubervisorV1().KubervisorServices("test-ns").Get("test-bc", metav1.GetOptions{})
+			if err != nil {
+				t.Fatalf("Can't retrieve kubervisor service, err: %v", err)
+				return
+			}
+			oldkvs := ksvcToUpdate.DeepCopy()
+			ksvcToUpdate.Spec.Breaker.MinPodsAvailableCount = kubervisorapiv1.NewUInt(100)
+			ksvcToUpdate.Spec.Service = "svc2"
+			ksvcUpdated, err := ctrl.breakerClient.KubervisorV1().KubervisorServices("test-ns").Update(ksvcToUpdate)
+			if err != nil {
+				t.Fatalf("Can't update kubervisor service, err: %v", err)
+				return
+			}
+			ctrl.breakerInformer.Informer().GetStore().Update(ksvcUpdated)
+			ctrl.onUpdateKubervisorService(oldkvs, ksvcUpdated)
+			time.Sleep(1 * time.Second)
+		}
+		if len(ctrl.items.List()) != 1 {
+			t.Fatalf("bad count for items (svc2) 1!=%d", len(ctrl.items.List()))
+		}
+
+		//change service
+		{
+			ksvcToUpdate, err := ctrl.breakerClient.KubervisorV1().KubervisorServices("test-ns").Get("test-bc", metav1.GetOptions{})
+			if err != nil {
+				t.Fatalf("Can't retrieve kubervisor service, err: %v", err)
+				return
+			}
+			oldkvs := ksvcToUpdate.DeepCopy()
+			ksvcToUpdate.Spec.Service = "unknownService"
+			ksvcUpdated, err := ctrl.breakerClient.KubervisorV1().KubervisorServices("test-ns").Update(ksvcToUpdate)
+			if err != nil {
+				t.Fatalf("Can't update kubervisor service, err: %v", err)
+				return
+			}
+			ctrl.breakerInformer.Informer().GetStore().Update(ksvcUpdated)
+			ctrl.onUpdateKubervisorService(oldkvs, ksvcUpdated)
+			time.Sleep(1 * time.Second)
+		}
+		//check that items has been removed
+		if len(ctrl.items.List()) != 0 {
+			t.Fatalf("bad count for items 0!=%d", len(ctrl.items.List()))
+		}
+
 	}()
 	if err := ctrl.Run(stop); err != nil {
 		t.Fatalf("Blank run fail with error: %s", err)

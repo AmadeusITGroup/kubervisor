@@ -8,6 +8,8 @@ import (
 	apiv1 "github.com/amadeusitgroup/kubervisor/pkg/api/kubervisor/v1"
 )
 
+type statusUpdateFunc func(*apiv1.KubervisorServiceStatus, string, metav1.Time) (*apiv1.KubervisorServiceStatus, error)
+
 // newStatusCondition used to create a new newStatusCondition
 func newStatusCondition(conditionType apiv1.KubervisorServiceConditionType, status kapiv1.ConditionStatus, msg, reason string, creationTime metav1.Time) apiv1.KubervisorServiceCondition {
 	return apiv1.KubervisorServiceCondition{
