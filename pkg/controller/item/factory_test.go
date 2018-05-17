@@ -21,6 +21,7 @@ func TestNew(t *testing.T) {
 			PodNameKey:        "podname",
 		},
 	})
+	emptyBreakerStrategyConfig := apiv1.DefaultBreakerStrategy(&apiv1.BreakerStrategy{})
 
 	type args struct {
 		bc  *apiv1.KubervisorService
@@ -31,6 +32,16 @@ func TestNew(t *testing.T) {
 		args    args
 		wantErr bool
 	}{
+		{
+			name: "custom",
+			args: args{
+				cfg: &Config{
+					customFactory: func(bc *apiv1.KubervisorService, cfg *Config) (Interface, error) {
+						return nil, nil
+					},
+				},
+			},
+		},
 		{
 			name: "create simple KubervisorServiceItem",
 			args: args{
@@ -47,6 +58,40 @@ func TestNew(t *testing.T) {
 				},
 			},
 			wantErr: false,
+		},
+		{
+			name: "error with activator factory",
+			args: args{
+				bc: &apiv1.KubervisorService{
+					ObjectMeta: metav1.ObjectMeta{Name: "test-!@#$%^&*()\nbc", Namespace: "test-ns"},
+					Spec: apiv1.KubervisorServiceSpec{
+						Activator: *activatorStrategyConfig,
+						Breaker:   *breakerStrategyConfig,
+					},
+				},
+				cfg: &Config{
+					PodLister: test.NewTestPodLister([]*kapiv1.Pod{}),
+					Selector:  labels.Set(map[string]string{"app": "foo"}).AsSelector(),
+				},
+			},
+			wantErr: true,
+		},
+		{
+			name: "error with breaker factory",
+			args: args{
+				bc: &apiv1.KubervisorService{
+					ObjectMeta: metav1.ObjectMeta{Name: "test-bc", Namespace: "test-ns"},
+					Spec: apiv1.KubervisorServiceSpec{
+						Activator: *activatorStrategyConfig,
+						Breaker:   *emptyBreakerStrategyConfig,
+					},
+				},
+				cfg: &Config{
+					PodLister: test.NewTestPodLister([]*kapiv1.Pod{}),
+					Selector:  labels.Set(map[string]string{"app": "foo"}).AsSelector(),
+				},
+			},
+			wantErr: true,
 		},
 	}
 	for _, tt := range tests {
