@@ -3,9 +3,10 @@ package v1
 // DefaultKubervisorService injecting default values for the struct
 func DefaultKubervisorService(item *KubervisorService) *KubervisorService {
 	copy := item.DeepCopy()
-	copy.Spec.Activator = *DefaultActivatorStrategy(&copy.Spec.Activator)
-	copy.Spec.Breaker = *DefaultBreakerStrategy(&copy.Spec.Breaker)
-
+	copy.Spec.DefaultActivator = *DefaultActivatorStrategy(&copy.Spec.DefaultActivator)
+	for i := range copy.Spec.Breakers {
+		copy.Spec.Breakers[i] = *DefaultBreakerStrategy(&copy.Spec.Breakers[i])
+	}
 	return copy
 }
 
@@ -51,7 +52,6 @@ func DefaultBreakerStrategy(item *BreakerStrategy) *BreakerStrategy {
 	if copy.ContinuousValueDeviation != nil {
 		copy.ContinuousValueDeviation = DefaultContinuousValueDeviation(copy.ContinuousValueDeviation)
 	}
-
 	return copy
 }
 
@@ -89,11 +89,13 @@ func NewFloat64(val float64) *float64 {
 
 // IsKubervisorServiceDefaulted used to check if a KubervisorService is already defaulted
 func IsKubervisorServiceDefaulted(bc *KubervisorService) bool {
-	if !isActivatorStrategyDefaulted(&bc.Spec.Activator) {
+	if !isActivatorStrategyDefaulted(&bc.Spec.DefaultActivator) {
 		return false
 	}
-	if !isBreakerStrategyDefaulted(&bc.Spec.Breaker) {
-		return false
+	for i := range bc.Spec.Breakers {
+		if !isBreakerStrategyDefaulted(&bc.Spec.Breakers[i]) {
+			return false
+		}
 	}
 	return true
 }
@@ -130,6 +132,9 @@ func isBreakerStrategyDefaulted(item *BreakerStrategy) bool {
 	}
 	if item.ContinuousValueDeviation != nil {
 		return isContinuousValueDeviationDefaulted(item.ContinuousValueDeviation)
+	}
+	if item.Activator != nil {
+		return isActivatorStrategyDefaulted(item.Activator)
 	}
 	return true
 }

@@ -2,10 +2,43 @@ package v1
 
 import (
 	"fmt"
+
+	"k8s.io/apimachinery/pkg/api/validation"
 )
+
+func ValidateKubervisorServiceSpec(s KubervisorServiceSpec) error {
+	valStr := validation.NameIsDNS1035Label(s.Service, false)
+	if len(valStr) != 0 {
+		return fmt.Errorf("Validation of kubervisor service specification, service: %s", valStr[0])
+	}
+
+	if s.Breakers == nil || len(s.Breakers) == 0 {
+		return fmt.Errorf("Validation of kubervisor service specification failed: no BreakerStrategy defined")
+	}
+
+	for i := range s.Breakers {
+		if err := ValidateBreakerStrategy(s.Breakers[i]); err != nil {
+			return fmt.Errorf("Validation of kubervisor service specification failed for breaker strategy %d: %v", i, err)
+		}
+	}
+
+	if err := ValidateActivatorStrategy(s.DefaultActivator); err != nil {
+		return fmt.Errorf("Validation of kubervisor service specification failed for default activator strategy %d: %v", err)
+	}
+	return nil
+}
+
+//ValidateActivatorStrategy validation of input
+func ValidateActivatorStrategy(s ActivatorStrategy) error {
+	return nil // TODO #20
+}
 
 //ValidateBreakerStrategy validation of input
 func ValidateBreakerStrategy(s BreakerStrategy) error {
+	valStr := validation.NameIsDNS1035Label(s.Name, false)
+	if len(valStr) != 0 {
+		return fmt.Errorf("bad strategy name name: %s", valStr[0])
+	}
 
 	strategies := []string{}
 	if s.DiscreteValueOutOfList != nil {
@@ -25,7 +58,7 @@ func ValidateBreakerStrategy(s BreakerStrategy) error {
 	}
 
 	if len(strategies) == 0 {
-		return fmt.Errorf("BreakerStrategy is missing anomaly detection specification (DiscreteValueOutOfList or CustomService)")
+		return fmt.Errorf("BreakerStrategy is missing anomaly detection specification (DiscreteValueOutOfList or CustomService or ...)")
 	}
 
 	if len(strategies) > 1 {
@@ -38,6 +71,12 @@ func ValidateBreakerStrategy(s BreakerStrategy) error {
 
 	if s.EvaluationPeriod != nil && *s.EvaluationPeriod > 24*3600.0 {
 		return fmt.Errorf("BreakerStrategy evaluation period undefined or too big (more than 1 day)")
+	}
+
+	if s.Activator != nil {
+		if err := ValidateActivatorStrategy(*s.Activator); err != nil {
+			return fmt.Errorf("BreakerStrategy activator is invalid: %v", err)
+		}
 	}
 
 	return nil
