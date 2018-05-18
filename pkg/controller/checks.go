@@ -4,7 +4,7 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/labels"
 
-	kubervisorapi "github.com/amadeusitgroup/kubervisor/pkg/api/kubervisor/v1"
+	kubervisorapi "github.com/amadeusitgroup/kubervisor/pkg/api/kubervisor/v1alpha1"
 	"github.com/amadeusitgroup/kubervisor/pkg/controller/item"
 )
 

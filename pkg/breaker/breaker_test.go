@@ -12,7 +12,7 @@ import (
 	kv1 "k8s.io/client-go/listers/core/v1"
 
 	"github.com/amadeusitgroup/kubervisor/pkg/anomalydetector"
-	"github.com/amadeusitgroup/kubervisor/pkg/api/kubervisor/v1"
+	v1 "github.com/amadeusitgroup/kubervisor/pkg/api/kubervisor/v1alpha1"
 	"github.com/amadeusitgroup/kubervisor/pkg/labeling"
 	"github.com/amadeusitgroup/kubervisor/pkg/pod"
 	test "github.com/amadeusitgroup/kubervisor/test"

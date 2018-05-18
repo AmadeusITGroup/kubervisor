@@ -11,7 +11,7 @@ import (
 
 	"k8s.io/apimachinery/pkg/labels"
 
-	kubervisorapiv1 "github.com/amadeusitgroup/kubervisor/pkg/api/kubervisor/v1"
+	kubervisorapiv1 "github.com/amadeusitgroup/kubervisor/pkg/api/kubervisor/v1alpha1"
 	bclient "github.com/amadeusitgroup/kubervisor/pkg/client/clientset/versioned"
 	"github.com/amadeusitgroup/kubervisor/pkg/client/clientset/versioned/fake"
 	"github.com/amadeusitgroup/kubervisor/pkg/labeling"
@@ -349,12 +349,12 @@ func TestController_Run(t *testing.T) {
 			},
 		}
 
-		ksvc, err := ctrl.breakerClient.KubervisorV1().KubervisorServices("test-ns").Create(bc)
+		ksvc, err := ctrl.breakerClient.KubervisorV1alpha1().KubervisorServices("test-ns").Create(bc)
 		if err != nil {
 			t.Fatalf("Can't create kubervisor service, err: %v", err)
 			return
 		}
-		ksvcnoService, err := ctrl.breakerClient.KubervisorV1().KubervisorServices("test-ns").Create(bcNoService)
+		ksvcnoService, err := ctrl.breakerClient.KubervisorV1alpha1().KubervisorServices("test-ns").Create(bcNoService)
 		if err != nil {
 			t.Fatalf("Can't create kubervisor service (with no service associated), err: %v", err)
 			return
@@ -381,7 +381,7 @@ func TestController_Run(t *testing.T) {
 
 		//update spec
 		{
-			ksvcToUpdate, err := ctrl.breakerClient.KubervisorV1().KubervisorServices("test-ns").Get("test-bc", metav1.GetOptions{})
+			ksvcToUpdate, err := ctrl.breakerClient.KubervisorV1alpha1().KubervisorServices("test-ns").Get("test-bc", metav1.GetOptions{})
 			if err != nil {
 				t.Fatalf("Can't retrieve kubervisor service, err: %v", err)
 				return
@@ -389,7 +389,7 @@ func TestController_Run(t *testing.T) {
 			oldkvs := ksvcToUpdate.DeepCopy()
 			ksvcToUpdate.Spec.Breakers[0].MinPodsAvailableCount = kubervisorapiv1.NewUInt(100)
 			ksvcToUpdate.Spec.Service = "svc2"
-			ksvcUpdated, err := ctrl.breakerClient.KubervisorV1().KubervisorServices("test-ns").Update(ksvcToUpdate)
+			ksvcUpdated, err := ctrl.breakerClient.KubervisorV1alpha1().KubervisorServices("test-ns").Update(ksvcToUpdate)
 			if err != nil {
 				t.Fatalf("Can't update kubervisor service, err: %v", err)
 				return
@@ -404,14 +404,14 @@ func TestController_Run(t *testing.T) {
 
 		//change service
 		{
-			ksvcToUpdate, err := ctrl.breakerClient.KubervisorV1().KubervisorServices("test-ns").Get("test-bc", metav1.GetOptions{})
+			ksvcToUpdate, err := ctrl.breakerClient.KubervisorV1alpha1().KubervisorServices("test-ns").Get("test-bc", metav1.GetOptions{})
 			if err != nil {
 				t.Fatalf("Can't retrieve kubervisor service, err: %v", err)
 				return
 			}
 			oldkvs := ksvcToUpdate.DeepCopy()
 			ksvcToUpdate.Spec.Service = "unknown-service"
-			ksvcUpdated, err := ctrl.breakerClient.KubervisorV1().KubervisorServices("test-ns").Update(ksvcToUpdate)
+			ksvcUpdated, err := ctrl.breakerClient.KubervisorV1alpha1().KubervisorServices("test-ns").Update(ksvcToUpdate)
 			if err != nil {
 				t.Fatalf("Can't update kubervisor service, err: %v", err)
 				return

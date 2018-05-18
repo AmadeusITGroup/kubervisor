@@ -5,16 +5,16 @@ import (
 
 	"k8s.io/apimachinery/pkg/labels"
 
-	"github.com/amadeusitgroup/kubervisor/pkg/api/kubervisor/v1"
+	"github.com/amadeusitgroup/kubervisor/pkg/api/kubervisor/v1alpha1"
 )
 
 type emptyCustomActivatorT struct {
 	SimilarConfig bool
 }
 
-func (e *emptyCustomActivatorT) Run(stop <-chan struct{})     {}
-func (e *emptyCustomActivatorT) GetStatus() v1.PodCountStatus { return v1.PodCountStatus{} }
-func (e *emptyCustomActivatorT) CompareConfig(specStrategy *v1.ActivatorStrategy, specSelector labels.Selector) bool {
+func (e *emptyCustomActivatorT) Run(stop <-chan struct{})           {}
+func (e *emptyCustomActivatorT) GetStatus() v1alpha1.PodCountStatus { return v1alpha1.PodCountStatus{} }
+func (e *emptyCustomActivatorT) CompareConfig(specStrategy *v1alpha1.ActivatorStrategy, specSelector labels.Selector) bool {
 	return e.SimilarConfig
 }
 
@@ -36,7 +36,7 @@ func TestNew(t *testing.T) {
 			args: args{
 				cfg: FactoryConfig{
 					Config: Config{
-						ActivatorStrategyConfig: v1.ActivatorStrategy{},
+						ActivatorStrategyConfig: v1alpha1.ActivatorStrategy{},
 					},
 				},
 			},
@@ -51,7 +51,7 @@ func TestNew(t *testing.T) {
 			args: args{
 				cfg: FactoryConfig{
 					Config: Config{
-						ActivatorStrategyConfig: v1.ActivatorStrategy{},
+						ActivatorStrategyConfig: v1alpha1.ActivatorStrategy{},
 						Selector:                labels.SelectorFromSet(map[string]string{"app": "foo"}),
 					},
 				},

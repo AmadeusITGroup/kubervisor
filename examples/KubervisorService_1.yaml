@@ -13,7 +13,7 @@ items:
       name: http
     selector:
       app: foo
-- apiVersion: kubervisor.k8s.io/v1
+- apiVersion: kubervisor.k8s.io/v1alpha1
   kind: KubervisorService
   metadata:
     name: foo-bc

@@ -11,7 +11,7 @@ import (
 	"k8s.io/apimachinery/pkg/labels"
 	kv1 "k8s.io/client-go/listers/core/v1"
 
-	"github.com/amadeusitgroup/kubervisor/pkg/api/kubervisor/v1"
+	"github.com/amadeusitgroup/kubervisor/pkg/api/kubervisor/v1alpha1"
 	"github.com/amadeusitgroup/kubervisor/pkg/labeling"
 
 	test "github.com/amadeusitgroup/kubervisor/test"
@@ -22,7 +22,7 @@ func TestDiscreteValueOutOfListAnalyser_GetPodsOutOfBounds(t *testing.T) {
 	devlogger, _ := zap.NewDevelopment()
 
 	type fields struct {
-		DiscreteValueOutOfList v1.DiscreteValueOutOfList
+		DiscreteValueOutOfList v1alpha1.DiscreteValueOutOfList
 		selector               labels.Selector
 		analyser               discreteValueAnalyser
 		podLister              kv1.PodNamespaceLister
@@ -36,7 +36,7 @@ func TestDiscreteValueOutOfListAnalyser_GetPodsOutOfBounds(t *testing.T) {
 		{
 			name: "analysis error",
 			fields: fields{
-				DiscreteValueOutOfList: *v1.DefaultDiscreteValueOutOfList(&v1.DiscreteValueOutOfList{}),
+				DiscreteValueOutOfList: *v1alpha1.DefaultDiscreteValueOutOfList(&v1alpha1.DiscreteValueOutOfList{}),
 				selector:               nil,
 				analyser:               &testErrorDiscreateValueAnalyser{},
 				podLister:              test.NewTestPodNamespaceLister(nil, "test-ns"),
@@ -47,7 +47,7 @@ func TestDiscreteValueOutOfListAnalyser_GetPodsOutOfBounds(t *testing.T) {
 		{
 			name: "no pod, no error",
 			fields: fields{
-				DiscreteValueOutOfList: *v1.DefaultDiscreteValueOutOfList(&v1.DiscreteValueOutOfList{}),
+				DiscreteValueOutOfList: *v1alpha1.DefaultDiscreteValueOutOfList(&v1alpha1.DiscreteValueOutOfList{}),
 				selector:               labels.Everything(),
 				analyser:               &testDiscreateValueAnalyser{okkoByPodName: okkoByPodName{}},
 				podLister:              test.NewTestPodNamespaceLister(nil, "test-ns"),
@@ -58,7 +58,7 @@ func TestDiscreteValueOutOfListAnalyser_GetPodsOutOfBounds(t *testing.T) {
 		{
 			name: "bad selector",
 			fields: fields{
-				DiscreteValueOutOfList: *v1.DefaultDiscreteValueOutOfList(&v1.DiscreteValueOutOfList{}),
+				DiscreteValueOutOfList: *v1alpha1.DefaultDiscreteValueOutOfList(&v1alpha1.DiscreteValueOutOfList{}),
 				selector:               labels.Nothing(),
 				analyser:               &testDiscreateValueAnalyser{okkoByPodName: okkoByPodName{"A": {10, 0}, "B": {10, 8}, "C": {0, 10}}},
 				podLister: test.NewTestPodNamespaceLister(
@@ -74,7 +74,7 @@ func TestDiscreteValueOutOfListAnalyser_GetPodsOutOfBounds(t *testing.T) {
 		{
 			name: "no traffic label",
 			fields: fields{
-				DiscreteValueOutOfList: *v1.DefaultDiscreteValueOutOfList(&v1.DiscreteValueOutOfList{}),
+				DiscreteValueOutOfList: *v1alpha1.DefaultDiscreteValueOutOfList(&v1alpha1.DiscreteValueOutOfList{}),
 				selector:               labels.Everything(),
 				analyser:               &testDiscreateValueAnalyser{okkoByPodName: okkoByPodName{"A": {10, 0}, "B": {10, 8}, "C": {0, 10}}},
 				podLister: test.NewTestPodNamespaceLister(
@@ -90,7 +90,7 @@ func TestDiscreteValueOutOfListAnalyser_GetPodsOutOfBounds(t *testing.T) {
 		{
 			name: "50%",
 			fields: fields{
-				DiscreteValueOutOfList: *v1.DefaultDiscreteValueOutOfList(&v1.DiscreteValueOutOfList{TolerancePercent: v1.NewUInt(50)}),
+				DiscreteValueOutOfList: *v1alpha1.DefaultDiscreteValueOutOfList(&v1alpha1.DiscreteValueOutOfList{TolerancePercent: v1alpha1.NewUInt(50)}),
 				selector:               labels.Everything(),
 				analyser:               &testDiscreateValueAnalyser{okkoByPodName: okkoByPodName{"A": {10, 0}, "B": {10, 8}, "C": {0, 10}}},
 				podLister: test.NewTestPodNamespaceLister(
@@ -106,7 +106,7 @@ func TestDiscreteValueOutOfListAnalyser_GetPodsOutOfBounds(t *testing.T) {
 		{
 			name: "10%",
 			fields: fields{
-				DiscreteValueOutOfList: *v1.DefaultDiscreteValueOutOfList(&v1.DiscreteValueOutOfList{TolerancePercent: v1.NewUInt(10)}),
+				DiscreteValueOutOfList: *v1alpha1.DefaultDiscreteValueOutOfList(&v1alpha1.DiscreteValueOutOfList{TolerancePercent: v1alpha1.NewUInt(10)}),
 				selector:               labels.Everything(),
 				analyser:               &testDiscreateValueAnalyser{okkoByPodName: okkoByPodName{"A": {10, 0}, "B": {10, 8}, "C": {0, 10}}},
 				podLister: test.NewTestPodNamespaceLister(
@@ -124,7 +124,7 @@ func TestDiscreteValueOutOfListAnalyser_GetPodsOutOfBounds(t *testing.T) {
 		{
 			name: "10% filter prd",
 			fields: fields{
-				DiscreteValueOutOfList: *v1.DefaultDiscreteValueOutOfList(&v1.DiscreteValueOutOfList{TolerancePercent: v1.NewUInt(10)}),
+				DiscreteValueOutOfList: *v1alpha1.DefaultDiscreteValueOutOfList(&v1alpha1.DiscreteValueOutOfList{TolerancePercent: v1alpha1.NewUInt(10)}),
 				selector:               labels.SelectorFromSet(map[string]string{"phase": "prd"}),
 				analyser:               &testDiscreateValueAnalyser{okkoByPodName: okkoByPodName{"A": {10, 0}, "B": {10, 8}, "C": {0, 10}}},
 				podLister: test.NewTestPodNamespaceLister(
@@ -140,7 +140,7 @@ func TestDiscreteValueOutOfListAnalyser_GetPodsOutOfBounds(t *testing.T) {
 		{
 			name: "Not Ready pod C",
 			fields: fields{
-				DiscreteValueOutOfList: *v1.DefaultDiscreteValueOutOfList(&v1.DiscreteValueOutOfList{TolerancePercent: v1.NewUInt(10)}),
+				DiscreteValueOutOfList: *v1alpha1.DefaultDiscreteValueOutOfList(&v1alpha1.DiscreteValueOutOfList{TolerancePercent: v1alpha1.NewUInt(10)}),
 				selector:               labels.Everything(),
 				analyser:               &testDiscreateValueAnalyser{okkoByPodName: okkoByPodName{"A": {10, 0}, "B": {10, 8}, "C": {0, 10}}},
 				podLister: test.NewTestPodNamespaceLister(
@@ -157,7 +157,7 @@ func TestDiscreteValueOutOfListAnalyser_GetPodsOutOfBounds(t *testing.T) {
 		{
 			name: "Not Running pod C",
 			fields: fields{
-				DiscreteValueOutOfList: *v1.DefaultDiscreteValueOutOfList(&v1.DiscreteValueOutOfList{TolerancePercent: v1.NewUInt(10)}),
+				DiscreteValueOutOfList: *v1alpha1.DefaultDiscreteValueOutOfList(&v1alpha1.DiscreteValueOutOfList{TolerancePercent: v1alpha1.NewUInt(10)}),
 				selector:               labels.Everything(),
 				analyser:               &testDiscreateValueAnalyser{okkoByPodName: okkoByPodName{"A": {10, 0}, "B": {10, 8}, "C": {0, 10}}},
 				podLister: test.NewTestPodNamespaceLister(

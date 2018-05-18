@@ -9,15 +9,14 @@ import (
 	"go.uber.org/zap"
 
 	kapiv1 "k8s.io/api/core/v1"
-	"k8s.io/api/rbac/v1alpha1"
 	corev1listers "k8s.io/client-go/listers/core/v1"
 	"k8s.io/client-go/tools/cache"
 
 	"github.com/amadeusitgroup/kubervisor/pkg/api/kubervisor"
-	"github.com/amadeusitgroup/kubervisor/pkg/api/kubervisor/v1"
+	v1 "github.com/amadeusitgroup/kubervisor/pkg/api/kubervisor/v1alpha1"
 	"github.com/amadeusitgroup/kubervisor/pkg/client/clientset/versioned/fake"
 	"github.com/amadeusitgroup/kubervisor/pkg/client/informers/externalversions"
-	blisters "github.com/amadeusitgroup/kubervisor/pkg/client/listers/kubervisor/v1"
+	blisters "github.com/amadeusitgroup/kubervisor/pkg/client/listers/kubervisor/v1alpha1"
 	"github.com/amadeusitgroup/kubervisor/pkg/labeling"
 	"github.com/amadeusitgroup/kubervisor/pkg/pod"
 	test "github.com/amadeusitgroup/kubervisor/test"
@@ -52,7 +51,7 @@ func Test_newGarbageCollector(t *testing.T) {
 				period:            time.Second,
 				podControl:        &test.TestPodControl{},
 				podLister:         test.NewTestPodLister(nil),
-				breakerLister:     factory.Kubervisor().V1().KubervisorServices().Lister(),
+				breakerLister:     factory.Kubervisor().V1alpha1().KubervisorServices().Lister(),
 				missCountBeforeGC: 1,
 				logger:            devlogger,
 			},
@@ -81,7 +80,7 @@ func Test_garbageCollector_updateCounters(t *testing.T) {
 
 	ksvc := &v1.KubervisorService{}
 	ksvc.Kind = "KubervisorService"
-	ksvc.APIVersion = kubervisor.GroupName + "/" + v1alpha1.SchemeGroupVersion.Version
+	ksvc.APIVersion = kubervisor.GroupName + "/" + v1.SchemeGroupVersion.Version
 	ksvc.Name = "kkk"
 	ksvc.Namespace = "test-ns"
 
@@ -89,7 +88,7 @@ func Test_garbageCollector_updateCounters(t *testing.T) {
 	factory := externalversions.NewSharedInformerFactory(fakeKubervisorClient, 10*time.Millisecond)
 	devlogger, _ := zap.NewDevelopment()
 
-	informer := factory.Kubervisor().V1().KubervisorServices()
+	informer := factory.Kubervisor().V1alpha1().KubervisorServices()
 	stCh := make(chan struct{})
 	go informer.Informer().Run(stCh)
 	cache.WaitForCacheSync(stCh, informer.Informer().HasSynced)

@@ -7,7 +7,7 @@ import (
 	"go.uber.org/zap"
 	kapiv1 "k8s.io/api/core/v1"
 
-	"github.com/amadeusitgroup/kubervisor/pkg/api/kubervisor/v1"
+	v1 "github.com/amadeusitgroup/kubervisor/pkg/api/kubervisor/v1alpha1"
 )
 
 type emptyCustomAnomalyDetectorT struct {

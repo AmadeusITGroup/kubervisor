@@ -6,7 +6,7 @@ import (
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/client-go/tools/cache"
 
-	kubervisorapi "github.com/amadeusitgroup/kubervisor/pkg/api/kubervisor/v1"
+	kubervisorapi "github.com/amadeusitgroup/kubervisor/pkg/api/kubervisor/v1alpha1"
 	"github.com/amadeusitgroup/kubervisor/pkg/labeling"
 )
 

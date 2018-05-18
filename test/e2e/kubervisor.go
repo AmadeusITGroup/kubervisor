@@ -13,7 +13,7 @@ import (
 	// for test lisibility
 	gom "github.com/onsi/gomega"
 
-	"github.com/amadeusitgroup/kubervisor/pkg/api/kubervisor/v1"
+	v1 "github.com/amadeusitgroup/kubervisor/pkg/api/kubervisor/v1alpha1"
 	"github.com/amadeusitgroup/kubervisor/pkg/client/clientset/versioned"
 	"github.com/amadeusitgroup/kubervisor/test/e2e/framework"
 )

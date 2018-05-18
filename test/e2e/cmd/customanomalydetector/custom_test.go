@@ -6,7 +6,7 @@ import (
 	"time"
 
 	"github.com/amadeusitgroup/kubervisor/pkg/anomalydetector"
-	"github.com/amadeusitgroup/kubervisor/pkg/api/kubervisor/v1"
+	v1 "github.com/amadeusitgroup/kubervisor/pkg/api/kubervisor/v1alpha1"
 	"github.com/amadeusitgroup/kubervisor/pkg/labeling"
 	"go.uber.org/zap"
 

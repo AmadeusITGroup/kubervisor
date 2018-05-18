@@ -1,4 +1,4 @@
-package v1
+package v1alpha1
 
 import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -9,7 +9,7 @@ import (
 )
 
 // SchemeGroupVersion is group version used to register these objects
-var SchemeGroupVersion = schema.GroupVersion{Group: kubervisor.GroupName, Version: "v1"}
+var SchemeGroupVersion = schema.GroupVersion{Group: kubervisor.GroupName, Version: "v1alpha1"}
 
 // Resource takes an unqualified resource and returns a Group qualified GroupResource
 func Resource(resource string) schema.GroupResource {
@@ -24,7 +24,7 @@ const (
 	// ResourceKind represent the resource kind
 	ResourceKind = "KubervisorService"
 	// ResourceVersion represent the resource version
-	ResourceVersion = "v1"
+	ResourceVersion = "v1alpha1"
 )
 
 var (

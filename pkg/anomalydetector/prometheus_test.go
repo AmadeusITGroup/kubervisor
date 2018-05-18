@@ -7,7 +7,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/amadeusitgroup/kubervisor/pkg/api/kubervisor/v1"
+	v1 "github.com/amadeusitgroup/kubervisor/pkg/api/kubervisor/v1alpha1"
 	promApi "github.com/prometheus/client_golang/api/prometheus/v1"
 	"github.com/prometheus/common/model"
 	"go.uber.org/zap"
@@ -284,7 +284,7 @@ func Test_promContinuousValueDeviationAnalyser_doAnalysis(t *testing.T) {
 				qAPI: &testPrometheusAPI{
 					err: nil,
 					value: model.Vector([]*model.Sample{
-						&model.Sample{
+						{
 							Metric: model.Metric(model.LabelSet(map[model.LabelName]model.LabelValue{"pod": "podA"})),
 							Value:  model.SampleValue(42.0),
 						},

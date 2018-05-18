@@ -16,7 +16,7 @@ import (
 	"github.com/golang/glog"
 
 	kubervisor "github.com/amadeusitgroup/kubervisor/pkg/api/kubervisor"
-	v1 "github.com/amadeusitgroup/kubervisor/pkg/api/kubervisor/v1"
+	v1 "github.com/amadeusitgroup/kubervisor/pkg/api/kubervisor/v1alpha1"
 	"github.com/amadeusitgroup/kubervisor/pkg/client/clientset/versioned"
 )
 

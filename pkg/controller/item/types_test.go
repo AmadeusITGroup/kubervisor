@@ -7,7 +7,7 @@ import (
 	"testing"
 	"time"
 
-	apiv1 "github.com/amadeusitgroup/kubervisor/pkg/api/kubervisor/v1"
+	apiv1 "github.com/amadeusitgroup/kubervisor/pkg/api/kubervisor/v1alpha1"
 	"github.com/amadeusitgroup/kubervisor/pkg/labeling"
 	test "github.com/amadeusitgroup/kubervisor/test"
 	"go.uber.org/zap"

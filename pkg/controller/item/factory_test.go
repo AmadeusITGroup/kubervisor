@@ -3,7 +3,7 @@ package item
 import (
 	"testing"
 
-	apiv1 "github.com/amadeusitgroup/kubervisor/pkg/api/kubervisor/v1"
+	apiv1 "github.com/amadeusitgroup/kubervisor/pkg/api/kubervisor/v1alpha1"
 	test "github.com/amadeusitgroup/kubervisor/test"
 	kapiv1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"

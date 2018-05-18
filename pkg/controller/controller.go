@@ -31,11 +31,11 @@ import (
 	"k8s.io/client-go/tools/record"
 	"k8s.io/client-go/util/workqueue"
 
-	kubervisorapi "github.com/amadeusitgroup/kubervisor/pkg/api/kubervisor/v1"
+	kubervisorapi "github.com/amadeusitgroup/kubervisor/pkg/api/kubervisor/v1alpha1"
 	bclient "github.com/amadeusitgroup/kubervisor/pkg/client/clientset/versioned"
 	binformers "github.com/amadeusitgroup/kubervisor/pkg/client/informers/externalversions"
-	"github.com/amadeusitgroup/kubervisor/pkg/client/informers/externalversions/kubervisor/v1"
-	blisters "github.com/amadeusitgroup/kubervisor/pkg/client/listers/kubervisor/v1"
+	"github.com/amadeusitgroup/kubervisor/pkg/client/informers/externalversions/kubervisor/v1alpha1"
+	blisters "github.com/amadeusitgroup/kubervisor/pkg/client/listers/kubervisor/v1alpha1"
 	"github.com/amadeusitgroup/kubervisor/pkg/controller/item"
 	"github.com/amadeusitgroup/kubervisor/pkg/labeling"
 	election "github.com/amadeusitgroup/kubervisor/pkg/leaderelection"
@@ -74,7 +74,7 @@ type Controller struct {
 
 	kubeInformerFactory    kubeinformers.SharedInformerFactory
 	breakerInformerFactory binformers.SharedInformerFactory
-	breakerInformer        v1.KubervisorServiceInformer
+	breakerInformer        v1alpha1.KubervisorServiceInformer
 	kubeClient             clientset.Interface
 	breakerClient          bclient.Interface
 
@@ -134,7 +134,7 @@ func New(initializer Initializer) *Controller {
 
 	podInformer := kubeInformerFactory.Core().V1().Pods()
 	serviceInformer := kubeInformerFactory.Core().V1().Services()
-	breakerInformer := breakerInformerFactory.Kubervisor().V1().KubervisorServices()
+	breakerInformer := breakerInformerFactory.Kubervisor().V1alpha1().KubervisorServices()
 
 	id, err := os.Hostname()
 	if err != nil {

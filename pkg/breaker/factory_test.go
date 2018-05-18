@@ -3,7 +3,7 @@ package breaker
 import (
 	"testing"
 
-	"github.com/amadeusitgroup/kubervisor/pkg/api/kubervisor/v1"
+	v1 "github.com/amadeusitgroup/kubervisor/pkg/api/kubervisor/v1alpha1"
 	"k8s.io/apimachinery/pkg/labels"
 )
 

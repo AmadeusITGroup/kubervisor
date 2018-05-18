@@ -10,7 +10,7 @@ import (
 	kcache "k8s.io/client-go/tools/cache"
 
 	activator "github.com/amadeusitgroup/kubervisor/pkg/activate"
-	"github.com/amadeusitgroup/kubervisor/pkg/api/kubervisor/v1"
+	"github.com/amadeusitgroup/kubervisor/pkg/api/kubervisor/v1alpha1"
 	"github.com/amadeusitgroup/kubervisor/pkg/breaker"
 	"github.com/amadeusitgroup/kubervisor/pkg/labeling"
 	"github.com/amadeusitgroup/kubervisor/pkg/pod"
@@ -41,8 +41,8 @@ type Interface interface {
 	Namespace() string
 	Start(ctx context.Context)
 	Stop() error
-	CompareWithSpec(spec *v1.KubervisorServiceSpec, selector labels.Selector) bool
-	GetStatus() v1.PodCountStatus
+	CompareWithSpec(spec *v1alpha1.KubervisorServiceSpec, selector labels.Selector) bool
+	GetStatus() v1alpha1.PodCountStatus
 }
 
 type breakerActivatorPair struct {
@@ -51,7 +51,7 @@ type breakerActivatorPair struct {
 }
 
 // CompareConfig compare the pair with the spec and return true if equal
-func (p *breakerActivatorPair) CompareConfig(specBreaker *v1.BreakerStrategy, specSelector labels.Selector) bool {
+func (p *breakerActivatorPair) CompareConfig(specBreaker *v1alpha1.BreakerStrategy, specSelector labels.Selector) bool {
 	//First compare the activator part
 	if (p.activator != nil && specBreaker.Activator == nil) || (p.activator == nil && specBreaker.Activator != nil) {
 		return false
@@ -123,7 +123,7 @@ func (b *KubervisorServiceItem) getBreakerByStrategyName(strategyName string) *b
 }
 
 // CompareWithSpec used to compare the current configuration with a new KubervisorServiceSpec (return true if there is a difference ... maybe the function need to be renamed)
-func (b *KubervisorServiceItem) CompareWithSpec(spec *v1.KubervisorServiceSpec, selector labels.Selector) bool {
+func (b *KubervisorServiceItem) CompareWithSpec(spec *v1alpha1.KubervisorServiceSpec, selector labels.Selector) bool {
 	if !b.defaultActivator.CompareConfig(&spec.DefaultActivator, selector) {
 		return true
 	}
@@ -155,8 +155,8 @@ func (b *KubervisorServiceItem) runActivator(ctx context.Context, activator acti
 }
 
 //GetStatus return the status for the breaker
-func (b *KubervisorServiceItem) GetStatus() v1.PodCountStatus {
-	status := v1.PodCountStatus{}
+func (b *KubervisorServiceItem) GetStatus() v1alpha1.PodCountStatus {
+	status := v1alpha1.PodCountStatus{}
 	allPods, _ := b.podLister.List(b.selector)
 	status.NbPodsManaged = uint32(len(allPods))
 	for _, p := range allPods {

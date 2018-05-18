@@ -5,7 +5,7 @@ import (
 	apiequality "k8s.io/apimachinery/pkg/api/equality"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
-	apiv1 "github.com/amadeusitgroup/kubervisor/pkg/api/kubervisor/v1"
+	apiv1 "github.com/amadeusitgroup/kubervisor/pkg/api/kubervisor/v1alpha1"
 )
 
 type statusUpdateFunc func(*apiv1.KubervisorServiceStatus, string, metav1.Time) (*apiv1.KubervisorServiceStatus, error)

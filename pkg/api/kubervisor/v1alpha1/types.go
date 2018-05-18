@@ -1,4 +1,4 @@
-package v1
+package v1alpha1
 
 import (
 	api "k8s.io/api/core/v1"
@@ -6,7 +6,6 @@ import (
 )
 
 // +genclient
-// +genclient:noStatus
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
 
 // KubervisorService represents a Breaker configuration

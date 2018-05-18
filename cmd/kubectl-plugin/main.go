@@ -16,7 +16,7 @@ import (
 	meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/tools/clientcmd"
 
-	v1 "github.com/amadeusitgroup/kubervisor/pkg/api/kubervisor/v1"
+	v1 "github.com/amadeusitgroup/kubervisor/pkg/api/kubervisor/v1alpha1"
 	kvclient "github.com/amadeusitgroup/kubervisor/pkg/client"
 )
 
@@ -63,14 +63,14 @@ func main() {
 
 	var kvs *v1.KubervisorServiceList
 	if kubervisorServicesName == "" {
-		kvs, err = kubervisorClient.KubervisorV1().KubervisorServices(namespace).List(meta_v1.ListOptions{})
+		kvs, err = kubervisorClient.KubervisorV1alpha1().KubervisorServices(namespace).List(meta_v1.ListOptions{})
 		if err != nil {
 			fmt.Printf("unable to list kubervisorservice err:%v\n", err)
 			return
 		}
 	} else {
 		kvs = &v1.KubervisorServiceList{}
-		ks, err := kubervisorClient.KubervisorV1().KubervisorServices(namespace).Get(kubervisorServicesName, meta_v1.GetOptions{})
+		ks, err := kubervisorClient.KubervisorV1alpha1().KubervisorServices(namespace).Get(kubervisorServicesName, meta_v1.GetOptions{})
 		if err != nil {
 			if !apierrors.IsNotFound(err) {
 				fmt.Printf("unable to get kubervisorservice err:%v\n", err)
