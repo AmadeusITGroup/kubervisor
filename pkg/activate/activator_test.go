@@ -2,6 +2,7 @@ package activate
 
 import (
 	"fmt"
+	"reflect"
 	"sync"
 	"testing"
 	"time"
@@ -585,6 +586,76 @@ func TestActivatorImpl_CompareConfig(t *testing.T) {
 			}
 			if got := b.CompareConfig(tt.args.specStrategy, tt.args.specSelector); got != tt.want {
 				t.Errorf("ActivatorImpl.CompareConfig() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestActivatorImpl_GetStatus(t *testing.T) {
+	ARunningReadyTraffic := test.PodGen("A", "test-ns", map[string]string{"app": "foo"}, true, true, labeling.LabelTrafficYes)
+	BRunningReadyTraffic := test.PodGen("B", "test-ns", map[string]string{"app": "foo"}, true, true, labeling.LabelTrafficYes)
+	CNotRunningReadyTraffic := test.PodGen("C", "test-ns", map[string]string{"app": "foo"}, false, true, labeling.LabelTrafficYes)
+	DRunningNotReadyPauseTraffic := test.PodGen("D", "test-ns", map[string]string{"app": "foo"}, true, false, labeling.LabelTrafficPause)
+	ERunningReadyNoTraffic := test.PodGen("E", "test-ns", map[string]string{"app": "foo"}, true, true, labeling.LabelTrafficNo)
+	PRunningReadyPauseTraffic := test.PodGen("P", "test-ns", map[string]string{"app": "foo"}, true, true, labeling.LabelTrafficPause)
+	BadAppRunningReadyTraffic := test.PodGen("BadApp", "test-ns", map[string]string{"app": "bar"}, true, true, labeling.LabelTrafficYes)
+	UnknowLabelTraffic := test.PodGen("A", "test-ns", map[string]string{"app": "foo"}, true, true, "")
+	type fields struct {
+		selector  labels.Selector
+		podLister kv1.PodNamespaceLister
+		logger    *zap.Logger
+	}
+	tests := []struct {
+		name   string
+		fields fields
+		want   v1.BreakerStatus
+	}{
+		{
+			name: "no pods",
+			fields: fields{
+				selector: labels.SelectorFromSet(map[string]string{"app": "foo"}),
+				podLister: test.NewTestPodNamespaceLister(
+					[]*kapiv1.Pod{},
+					"test-ns",
+				),
+			},
+			want: v1.BreakerStatus{},
+		},
+		{
+			name: "various pods",
+			fields: fields{
+				selector: labels.SelectorFromSet(map[string]string{"app": "foo"}),
+				podLister: test.NewTestPodNamespaceLister(
+					[]*kapiv1.Pod{
+						ARunningReadyTraffic,
+						BRunningReadyTraffic,
+						CNotRunningReadyTraffic,
+						DRunningNotReadyPauseTraffic,
+						ERunningReadyNoTraffic,
+						PRunningReadyPauseTraffic,
+						BadAppRunningReadyTraffic,
+						UnknowLabelTraffic,
+					},
+					"test-ns",
+				),
+			},
+			want: v1.BreakerStatus{
+				NbPodsManaged: 4,
+				NbPodsBreaked: 1,
+				NbPodsPaused:  1,
+				NbPodsUnknown: 1,
+			},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			b := &ActivatorImpl{
+				selectorConfig: tt.fields.selector,
+				podLister:      tt.fields.podLister,
+				logger:         tt.fields.logger,
+			}
+			if got := b.GetStatus(); !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("BreakerImpl.GetStatus() = %v, want %v", got, tt.want)
 			}
 		})
 	}

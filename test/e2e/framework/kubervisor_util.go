@@ -44,8 +44,8 @@ func NewKubervisorService(name string) *v1.KubervisorService {
 			Name: name,
 		},
 		Spec: v1.KubervisorServiceSpec{
-			Activator: *v1.DefaultActivatorStrategy(&v1.ActivatorStrategy{}),
-			Breaker:   *v1.DefaultBreakerStrategy(&v1.BreakerStrategy{}),
+			DefaultActivator: *v1.DefaultActivatorStrategy(&v1.ActivatorStrategy{}),
+			Breakers:         []v1.BreakerStrategy{*v1.DefaultBreakerStrategy(&v1.BreakerStrategy{})},
 		},
 	}
 }

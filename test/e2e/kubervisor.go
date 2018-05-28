@@ -48,11 +48,15 @@ var _ = gink.Describe("KubervisorService CRUD", func() {
 	gink.It("should create a KubervisorService and break 2 pods", func() {
 		bc := framework.NewKubervisorService("busybreak")
 		bc.Spec.Service = "busybox"
-		bc.Spec.Breaker.CustomService = "customanomalydetector." + testNs
-		bc.Spec.Breaker.DiscreteValueOutOfList = nil
-		bc.Spec.Breaker.MinPodsAvailableCount = v1.NewUInt(3)
-		bc.Spec.Breaker.EvaluationPeriod = v1.NewFloat64(1.0)
-		bc.Spec.Activator.Period = v1.NewFloat64(600.0)
+
+		breaker := v1.BreakerStrategy{}
+		breaker.CustomService = "customanomalydetector." + testNs
+		breaker.DiscreteValueOutOfList = nil
+		breaker.MinPodsAvailableCount = v1.NewUInt(3)
+		breaker.EvaluationPeriod = v1.NewFloat64(1.0)
+		bc.Spec.Breakers = []v1.BreakerStrategy{breaker}
+
+		bc.Spec.DefaultActivator.Period = v1.NewFloat64(600.0)
 		gom.Eventually(framework.CreateKubervisorService(kubervisorClient, bc, testNs), "10s", "1s").ShouldNot(gom.HaveOccurred())
 		gom.Eventually(framework.IsKubervisorServiceCreated(kubervisorClient, bc.Name, testNs), "10s", "1s").ShouldNot(gom.HaveOccurred())
 		time.Sleep(10 * time.Second)

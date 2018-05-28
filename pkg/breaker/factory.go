@@ -44,6 +44,7 @@ func New(cfg FactoryConfig) (Breaker, error) {
 
 	return &breakerImpl{
 		KubervisorServiceName: cfg.KubervisorServiceName,
+		StrategyName:          cfg.StrategyName,
 		breakerStrategyConfig: cfg.BreakerStrategyConfig,
 		logger:                cfg.Logger,
 		podControl:            cfg.PodControl,

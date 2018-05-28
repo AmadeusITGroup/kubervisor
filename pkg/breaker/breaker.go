@@ -10,7 +10,6 @@ import (
 
 	"github.com/amadeusitgroup/kubervisor/pkg/anomalydetector"
 	"github.com/amadeusitgroup/kubervisor/pkg/api/kubervisor/v1"
-	"github.com/amadeusitgroup/kubervisor/pkg/labeling"
 	"github.com/amadeusitgroup/kubervisor/pkg/pod"
 )
 
@@ -18,13 +17,13 @@ import (
 type Breaker interface {
 	Run(stop <-chan struct{})
 	CompareConfig(specConfig *v1.BreakerStrategy) bool
-	GetStatus() v1.BreakerStatus
 }
 
 //Config configuration required to create a Breaker
 type Config struct {
 	BreakerStrategyConfig v1.BreakerStrategy
 	KubervisorServiceName string
+	StrategyName          string
 	Selector              labels.Selector
 	PodLister             kv1.PodNamespaceLister
 	PodControl            pod.ControlInterface
@@ -37,6 +36,7 @@ var _ Breaker = &breakerImpl{}
 //breakerImpl implementation of the breaker interface
 type breakerImpl struct {
 	KubervisorServiceName string
+	StrategyName          string
 	breakerStrategyConfig v1.BreakerStrategy
 	selector              labels.Selector
 	podLister             kv1.PodNamespaceLister
@@ -107,27 +107,4 @@ func (b *breakerImpl) computeMinAvailablePods(podUnderSelectorCount int) int {
 		return quota
 	}
 	return count
-}
-
-//GetStatus return the status for the breaker
-func (b *breakerImpl) GetStatus() v1.BreakerStatus {
-	status := v1.BreakerStatus{}
-	allPods, _ := b.podLister.List(b.selector)
-	status.NbPodsManaged = uint32(len(allPods))
-	for _, p := range allPods {
-		if !pod.IsReady(p) {
-			status.NbPodsManaged--
-			continue
-		}
-		yesTraffic, pauseTraffic, err := labeling.IsPodTrafficLabelOkOrPause(p)
-		switch {
-		case err != nil:
-			status.NbPodsUnknown++
-		case pauseTraffic:
-			status.NbPodsPaused++
-		case !yesTraffic:
-			status.NbPodsBreaked++
-		}
-	}
-	return status
 }

@@ -21,6 +21,7 @@ import (
 type Activator interface {
 	Run(stop <-chan struct{})
 	CompareConfig(specStrategy *v1.ActivatorStrategy, specSelector labels.Selector) bool
+	GetStatus() v1.BreakerStatus
 }
 
 //Config configuration required to create a Activator
@@ -30,6 +31,7 @@ type Config struct {
 	PodLister               kv1.PodNamespaceLister
 	PodControl              pod.ControlInterface
 	BreakerName             string
+	BreakerStrategyName     string
 	Logger                  *zap.Logger
 }
 
@@ -42,6 +44,7 @@ type ActivatorImpl struct {
 	podLister               kv1.PodNamespaceLister
 	podControl              pod.ControlInterface
 	breakerName             string
+	breakerStrategyName     string
 	logger                  *zap.Logger
 	evaluationPeriod        time.Duration
 	strategyApplier         strategyApplier
@@ -144,4 +147,27 @@ func (b *ActivatorImpl) applyActivatorStrategy(p *kapiv1.Pod) error {
 		}
 	}
 	return nil
+}
+
+//GetStatus return the status for the breaker
+func (b *ActivatorImpl) GetStatus() v1.BreakerStatus {
+	status := v1.BreakerStatus{}
+	allPods, _ := b.podLister.List(b.selectorConfig)
+	status.NbPodsManaged = uint32(len(allPods))
+	for _, p := range allPods {
+		if !pod.IsReady(p) {
+			status.NbPodsManaged--
+			continue
+		}
+		yesTraffic, pauseTraffic, err := labeling.IsPodTrafficLabelOkOrPause(p)
+		switch {
+		case err != nil:
+			status.NbPodsUnknown++
+		case pauseTraffic:
+			status.NbPodsPaused++
+		case !yesTraffic:
+			status.NbPodsBreaked++
+		}
+	}
+	return status
 }

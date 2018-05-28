@@ -36,6 +36,7 @@ func New(cfg FactoryConfig) (Activator, error) {
 		podLister:               cfg.PodLister,
 		selectorConfig:          augmentedSelector,
 		breakerName:             cfg.BreakerName,
+		breakerStrategyName:     cfg.BreakerStrategyName,
 		evaluationPeriod:        time.Second,
 	}
 	a.strategyApplier = a
