@@ -21,33 +21,37 @@ import (
 type Activator interface {
 	Run(stop <-chan struct{})
 	CompareConfig(specStrategy *v1.ActivatorStrategy, specSelector labels.Selector) bool
-	GetStatus() v1.BreakerStatus
 }
 
 //Config configuration required to create a Activator
 type Config struct {
-	ActivatorStrategyConfig v1.ActivatorStrategy
-	Selector                labels.Selector
-	PodLister               kv1.PodNamespaceLister
-	PodControl              pod.ControlInterface
-	BreakerName             string
+	KubervisorName          string
 	BreakerStrategyName     string
-	Logger                  *zap.Logger
+	Selector                labels.Selector
+	ActivatorStrategyConfig v1.ActivatorStrategy
+
+	PodLister  kv1.PodNamespaceLister
+	PodControl pod.ControlInterface
+
+	Logger *zap.Logger
 }
 
 var _ Activator = &ActivatorImpl{}
 
 //ActivatorImpl implementation of the Activator interface
 type ActivatorImpl struct {
-	activatorStrategyConfig v1.ActivatorStrategy
-	selectorConfig          labels.Selector
-	podLister               kv1.PodNamespaceLister
-	podControl              pod.ControlInterface
-	breakerName             string
+	kubervisorName          string
 	breakerStrategyName     string
-	logger                  *zap.Logger
-	evaluationPeriod        time.Duration
-	strategyApplier         strategyApplier
+	selector                labels.Selector
+	activatorStrategyConfig v1.ActivatorStrategy
+
+	podLister  kv1.PodNamespaceLister
+	podControl pod.ControlInterface
+
+	logger *zap.Logger
+
+	evaluationPeriod time.Duration
+	strategyApplier  strategyApplier
 }
 
 type strategyApplier interface {
@@ -57,7 +61,7 @@ type strategyApplier interface {
 //Run implements Activator run loop ( to launch as goroutine: go Run())}
 func (b *ActivatorImpl) Run(stop <-chan struct{}) {
 	rqTrafficNo, _ := labels.NewRequirement(labeling.LabelTrafficKey, selection.Equals, []string{string(labeling.LabelTrafficNo)})
-	withTrafficNoSelector := b.selectorConfig.Add(*rqTrafficNo)
+	withTrafficNoSelector := b.selector.Add(*rqTrafficNo)
 
 	ticker := time.NewTicker(b.evaluationPeriod)
 	defer ticker.Stop()
@@ -67,12 +71,12 @@ func (b *ActivatorImpl) Run(stop <-chan struct{}) {
 			//Select pods affected by the associated breaker
 			pods, err := b.podLister.List(withTrafficNoSelector)
 			if err != nil {
-				b.logger.Sugar().Errorf("activator for '%s' can't list pods:%s", b.breakerName, err)
+				b.logger.Sugar().Errorf("activator for '%s' can't list pods:%s", b.kubervisorName, err)
 			}
 
 			for _, p := range pods {
 				if err = b.strategyApplier.applyActivatorStrategy(p); err != nil {
-					b.logger.Sugar().Errorf("can't apply activator '%s' strategy on pod '%s' :%s", b.breakerName, p.Name, err)
+					b.logger.Sugar().Errorf("can't apply activator '%s' strategy on pod '%s' :%s", b.kubervisorName, p.Name, err)
 				}
 			}
 		case <-stop:
@@ -86,8 +90,8 @@ func (b *ActivatorImpl) CompareConfig(specStrategy *v1.ActivatorStrategy, specSe
 	if !apiequality.Semantic.DeepEqual(&b.activatorStrategyConfig, specStrategy) {
 		return false
 	}
-	s, _ := labeling.SelectorWithBreakerName(specSelector, b.breakerName)
-	return reflect.DeepEqual(s, b.selectorConfig)
+	s, _ := labeling.SelectorWithBreakerName(specSelector, b.kubervisorName)
+	return reflect.DeepEqual(s, b.selector)
 }
 
 func (b *ActivatorImpl) applyActivatorStrategy(p *kapiv1.Pod) error {
@@ -107,67 +111,44 @@ func (b *ActivatorImpl) applyActivatorStrategy(p *kapiv1.Pod) error {
 	case v1.ActivatorStrategyModePeriodic:
 		retrytime := breakAt.Add(retryPeriod)
 		if retrytime.Before(now) {
-			if _, err := b.podControl.UpdateActivationLabelsAndAnnotations(b.breakerName, p); err != nil {
+			if _, err := b.podControl.UpdateActivationLabelsAndAnnotations(b.kubervisorName, p); err != nil {
 				return err
 			}
 		}
 	case v1.ActivatorStrategyModeRetryAndKill:
 		if retryCount > int(*b.activatorStrategyConfig.MaxRetryCount) {
-			return b.podControl.KillPod(b.breakerName, p)
+			return b.podControl.KillPod(b.kubervisorName, p)
 		}
 
 		retrytime := breakAt.Add(time.Duration(retryCount) * retryPeriod)
 		if retrytime.Before(now) {
-			if _, err := b.podControl.UpdateActivationLabelsAndAnnotations(b.breakerName, p); err != nil {
+			if _, err := b.podControl.UpdateActivationLabelsAndAnnotations(b.kubervisorName, p); err != nil {
 				return err
 			}
 		}
 	case v1.ActivatorStrategyModeRetryAndPause:
 		if retryCount > int(*b.activatorStrategyConfig.MaxRetryCount) {
 			rqTrafficPause, _ := labels.NewRequirement(labeling.LabelTrafficKey, selection.Equals, []string{string(labeling.LabelTrafficPause)})
-			withTrafficPauseSelector := b.selectorConfig.Add(*rqTrafficPause)
+			withTrafficPauseSelector := b.selector.Add(*rqTrafficPause)
 			list, err := b.podLister.List(withTrafficPauseSelector)
 			if err != nil {
-				return fmt.Errorf("in activator '%s', can't list paused pods:%s", b.breakerName, err)
+				return fmt.Errorf("in activator '%s', can't list paused pods:%s", b.kubervisorName, err)
 			}
 			if len(list) >= int(*b.activatorStrategyConfig.MaxPauseCount) {
-				return b.podControl.KillPod(b.breakerName, p)
+				return b.podControl.KillPod(b.kubervisorName, p)
 			}
-			if _, err := b.podControl.UpdatePauseLabelsAndAnnotations(b.breakerName, p); err != nil {
-				return fmt.Errorf("in activator '%s' can't set 'pause' on pod '%s' :%s", b.breakerName, p.Name, err)
+			if _, err := b.podControl.UpdatePauseLabelsAndAnnotations(b.kubervisorName, p); err != nil {
+				return fmt.Errorf("in activator '%s' can't set 'pause' on pod '%s' :%s", b.kubervisorName, p.Name, err)
 			}
 			return nil
 		}
 
 		retrytime := breakAt.Add(time.Duration(retryCount) * retryPeriod)
 		if retrytime.Before(now) {
-			if _, err := b.podControl.UpdateActivationLabelsAndAnnotations(b.breakerName, p); err != nil {
-				return fmt.Errorf("can't apply activator '%s' strategy on pod '%s' :%s", b.breakerName, p.Name, err)
+			if _, err := b.podControl.UpdateActivationLabelsAndAnnotations(b.kubervisorName, p); err != nil {
+				return fmt.Errorf("can't apply activator '%s' strategy on pod '%s' :%s", b.kubervisorName, p.Name, err)
 			}
 		}
 	}
 	return nil
-}
-
-//GetStatus return the status for the breaker
-func (b *ActivatorImpl) GetStatus() v1.BreakerStatus {
-	status := v1.BreakerStatus{}
-	allPods, _ := b.podLister.List(b.selectorConfig)
-	status.NbPodsManaged = uint32(len(allPods))
-	for _, p := range allPods {
-		if !pod.IsReady(p) {
-			status.NbPodsManaged--
-			continue
-		}
-		yesTraffic, pauseTraffic, err := labeling.IsPodTrafficLabelOkOrPause(p)
-		switch {
-		case err != nil:
-			status.NbPodsUnknown++
-		case pauseTraffic:
-			status.NbPodsPaused++
-		case !yesTraffic:
-			status.NbPodsBreaked++
-		}
-	}
-	return status
 }

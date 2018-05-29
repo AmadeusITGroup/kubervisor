@@ -13,6 +13,7 @@ import (
 //Kubervisor keys for Labels and Annotations
 const (
 	LabelBreakerNameKey     = "kubervisor/name"
+	LabelBreakerStrategyKey = "kubervisor/strategy"
 	AnnotationBreakAtKey    = "breaker/breakAt"
 	AnnotationRetryCountKey = "breaker/retryCount"
 )

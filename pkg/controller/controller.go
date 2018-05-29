@@ -322,7 +322,9 @@ func (ctrl *Controller) sync(key string) (bool, error) {
 		return false, nil
 	}
 
-	// TODO add validation
+	if err := kubervisorapi.ValidateKubervisorServiceSpec(sharedKubervisorService.Spec); err != nil {
+		return false, fmt.Errorf("Invalid KubervisorService definition: %v", err)
+	}
 
 	// TODO: add test the case of graceful deletion
 	if sharedKubervisorService.DeletionTimestamp != nil {

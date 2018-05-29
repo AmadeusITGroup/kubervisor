@@ -147,7 +147,7 @@ func TestBreakerImpl_Run(t *testing.T) {
 				logger:          devlogger,
 				anomalyDetector: &testAnomalyDetector{pods: []*kapiv1.Pod{ARunningReadyTraffic}},
 				podControl: &test.TestPodControl{
-					UpdateBreakerAnnotationAndLabelFunc: func(name string, p *kapiv1.Pod) (*kapiv1.Pod, error) {
+					UpdateBreakerAnnotationAndLabelFunc: func(name string, strategy string, p *kapiv1.Pod) (*kapiv1.Pod, error) {
 						if p == ARunningReadyTraffic {
 							test.GetTestSequence(t, testprefix+"/ok").PassAtLeastOnce(0)
 						} else {
@@ -186,7 +186,7 @@ func TestBreakerImpl_Run(t *testing.T) {
 				logger:          devlogger,
 				anomalyDetector: &testAnomalyDetector{pods: []*kapiv1.Pod{ARunningReadyTraffic, BRunningReadyTraffic}},
 				podControl: &test.TestPodControl{
-					UpdateBreakerAnnotationAndLabelFunc: func(name string, p *kapiv1.Pod) (*kapiv1.Pod, error) {
+					UpdateBreakerAnnotationAndLabelFunc: func(name string, strategy string, p *kapiv1.Pod) (*kapiv1.Pod, error) {
 						switch p {
 						case ARunningReadyTraffic:
 							test.GetTestSequence(t, testprefix+"/cutall").PassAtLeastOnce(0)
@@ -228,7 +228,7 @@ func TestBreakerImpl_Run(t *testing.T) {
 				logger:          devlogger,
 				anomalyDetector: &testAnomalyDetector{pods: []*kapiv1.Pod{ARunningReadyTraffic, BRunningReadyTraffic}},
 				podControl: &test.TestPodControl{
-					UpdateBreakerAnnotationAndLabelFunc: func(name string, p *kapiv1.Pod) (*kapiv1.Pod, error) {
+					UpdateBreakerAnnotationAndLabelFunc: func(name string, strategy string, p *kapiv1.Pod) (*kapiv1.Pod, error) {
 						t.Fatalf("Test bigCount should not break any pod")
 						return p, nil
 					},
@@ -263,7 +263,7 @@ func TestBreakerImpl_Run(t *testing.T) {
 				logger:          devlogger,
 				anomalyDetector: &testAnomalyDetector{pods: []*kapiv1.Pod{ARunningReadyTraffic}},
 				podControl: &test.TestPodControl{
-					UpdateBreakerAnnotationAndLabelFunc: func(name string, p *kapiv1.Pod) (*kapiv1.Pod, error) {
+					UpdateBreakerAnnotationAndLabelFunc: func(name string, strategy string, p *kapiv1.Pod) (*kapiv1.Pod, error) {
 						switch p {
 						case ARunningReadyTraffic:
 							test.GetTestSequence(t, testprefix+"/0quota1cut2running").PassAtLeastOnce(0)
@@ -303,7 +303,7 @@ func TestBreakerImpl_Run(t *testing.T) {
 				logger:          devlogger,
 				anomalyDetector: &testAnomalyDetector{pods: []*kapiv1.Pod{ARunningReadyTraffic, BRunningReadyTraffic}},
 				podControl: &test.TestPodControl{
-					UpdateBreakerAnnotationAndLabelFunc: func(name string, p *kapiv1.Pod) (*kapiv1.Pod, error) {
+					UpdateBreakerAnnotationAndLabelFunc: func(name string, strategy string, p *kapiv1.Pod) (*kapiv1.Pod, error) {
 						switch p {
 						case ARunningReadyTraffic:
 							test.GetTestSequence(t, testprefix+"/only1").PassAtLeastOnce(0)
@@ -371,7 +371,7 @@ func (t *testAnomalyDetector) GetPodsOutOfBounds() ([]*kapiv1.Pod, error) {
 
 func TestBreakerImpl_CompareConfig(t *testing.T) {
 	type fields struct {
-		KubervisorServiceName string
+		breakerName           string
 		breakerStrategyConfig v1.BreakerStrategy
 		selector              labels.Selector
 		podLister             kv1.PodNamespaceLister
@@ -380,7 +380,8 @@ func TestBreakerImpl_CompareConfig(t *testing.T) {
 		anomalyDetector       anomalydetector.AnomalyDetector
 	}
 	type args struct {
-		specConfig *v1.BreakerStrategy
+		specConfig   *v1.BreakerStrategy
+		specSelector labels.Selector
 	}
 	tests := []struct {
 		name   string
@@ -393,9 +394,12 @@ func TestBreakerImpl_CompareConfig(t *testing.T) {
 			name: "similar",
 			fields: fields{
 				breakerStrategyConfig: *v1.DefaultBreakerStrategy(&v1.BreakerStrategy{}),
+				breakerName:           "b1",
+				selector:              labels.Set{"app": "test1", labeling.LabelBreakerNameKey: "b1"}.AsSelectorPreValidated(),
 			},
 			args: args{
-				specConfig: v1.DefaultBreakerStrategy(&v1.BreakerStrategy{}),
+				specConfig:   v1.DefaultBreakerStrategy(&v1.BreakerStrategy{}),
+				specSelector: labels.Set{"app": "test1"}.AsSelectorPreValidated(),
 			},
 			want: true,
 		},
@@ -403,9 +407,25 @@ func TestBreakerImpl_CompareConfig(t *testing.T) {
 			name: "different",
 			fields: fields{
 				breakerStrategyConfig: *v1.DefaultBreakerStrategy(&v1.BreakerStrategy{}),
+				breakerName:           "b1",
+				selector:              labels.Set{"app": "test1", labeling.LabelBreakerNameKey: "b1"}.AsSelectorPreValidated(),
 			},
 			args: args{
-				specConfig: v1.DefaultBreakerStrategy(&v1.BreakerStrategy{EvaluationPeriod: v1.NewFloat64(42)}),
+				specConfig:   v1.DefaultBreakerStrategy(&v1.BreakerStrategy{EvaluationPeriod: v1.NewFloat64(42)}),
+				specSelector: labels.Set{"app": "test1"}.AsSelectorPreValidated(),
+			},
+			want: false,
+		},
+		{
+			name: "different labels",
+			fields: fields{
+				breakerStrategyConfig: *v1.DefaultBreakerStrategy(&v1.BreakerStrategy{}),
+				breakerName:           "b1",
+				selector:              labels.Set{"app": "test1", labeling.LabelBreakerNameKey: "b1"}.AsSelectorPreValidated(),
+			},
+			args: args{
+				specConfig:   v1.DefaultBreakerStrategy(&v1.BreakerStrategy{}),
+				specSelector: labels.Set{"app": "test2"}.AsSelectorPreValidated(),
 			},
 			want: false,
 		},
@@ -413,15 +433,15 @@ func TestBreakerImpl_CompareConfig(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			b := &breakerImpl{
-				KubervisorServiceName: tt.fields.KubervisorServiceName,
 				breakerStrategyConfig: tt.fields.breakerStrategyConfig,
+				kubervisorName:        tt.fields.breakerName,
 				selector:              tt.fields.selector,
 				podLister:             tt.fields.podLister,
 				podControl:            tt.fields.podControl,
 				logger:                tt.fields.logger,
 				anomalyDetector:       tt.fields.anomalyDetector,
 			}
-			if got := b.CompareConfig(tt.args.specConfig); got != tt.want {
+			if got := b.CompareConfig(tt.args.specConfig, tt.args.specSelector); got != tt.want {
 				t.Errorf("BreakerImpl.CompareConfig() = %v, want %v", got, tt.want)
 			}
 		})

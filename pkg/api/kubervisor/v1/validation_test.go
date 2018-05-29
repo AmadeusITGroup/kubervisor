@@ -298,6 +298,17 @@ func TestValidateKubervisorServiceSpec(t *testing.T) {
 			wantErr: false,
 		},
 		{
+			name: "noname",
+			args: args{
+				s: KubervisorServiceSpec{
+					Breakers:         []BreakerStrategy{*DefaultBreakerStrategy(&BreakerStrategy{Name: "", CustomService: "Custo"})},
+					DefaultActivator: *DefaultActivatorStrategy(&ActivatorStrategy{}),
+					Service:          "servicefine",
+				},
+			},
+			wantErr: true,
+		},
+		{
 			name: "dupe names",
 			args: args{
 				s: KubervisorServiceSpec{

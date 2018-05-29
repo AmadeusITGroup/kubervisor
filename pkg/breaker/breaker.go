@@ -1,6 +1,7 @@
 package breaker
 
 import (
+	"reflect"
 	"time"
 
 	"go.uber.org/zap"
@@ -10,40 +11,50 @@ import (
 
 	"github.com/amadeusitgroup/kubervisor/pkg/anomalydetector"
 	"github.com/amadeusitgroup/kubervisor/pkg/api/kubervisor/v1"
+	"github.com/amadeusitgroup/kubervisor/pkg/labeling"
 	"github.com/amadeusitgroup/kubervisor/pkg/pod"
 )
 
 //Breaker engine that check anomaly and relabel pods
 type Breaker interface {
 	Run(stop <-chan struct{})
-	CompareConfig(specConfig *v1.BreakerStrategy) bool
+	CompareConfig(specConfig *v1.BreakerStrategy, specSelector labels.Selector) bool
+	Name() string
 }
 
 //Config configuration required to create a Breaker
 type Config struct {
-	BreakerStrategyConfig v1.BreakerStrategy
-	KubervisorServiceName string
+	KubervisorName        string
 	StrategyName          string
 	Selector              labels.Selector
-	PodLister             kv1.PodNamespaceLister
-	PodControl            pod.ControlInterface
-	Logger                *zap.Logger
-	BreakerName           string
+	BreakerStrategyConfig v1.BreakerStrategy
+
+	PodLister  kv1.PodNamespaceLister
+	PodControl pod.ControlInterface
+
+	Logger *zap.Logger
 }
 
 var _ Breaker = &breakerImpl{}
 
 //breakerImpl implementation of the breaker interface
 type breakerImpl struct {
-	KubervisorServiceName string
-	StrategyName          string
-	breakerStrategyConfig v1.BreakerStrategy
+	kubervisorName        string
+	breakerStrategyName   string
 	selector              labels.Selector
-	podLister             kv1.PodNamespaceLister
-	podControl            pod.ControlInterface
+	breakerStrategyConfig v1.BreakerStrategy
 
-	logger          *zap.Logger
+	podLister  kv1.PodNamespaceLister
+	podControl pod.ControlInterface
+
+	logger *zap.Logger
+
 	anomalyDetector anomalydetector.AnomalyDetector
+}
+
+//Name return the name of the breaker strategy
+func (b *breakerImpl) Name() string {
+	return b.breakerStrategyName
 }
 
 //Run implements Breaker run loop ( to launch as goroutine: go Run())
@@ -78,7 +89,7 @@ func (b *breakerImpl) Run(stop <-chan struct{}) {
 			}
 
 			for _, p := range podsToCut[:removeCount] {
-				if _, err := b.podControl.UpdateBreakerAnnotationAndLabel(b.KubervisorServiceName, p); err != nil {
+				if _, err := b.podControl.UpdateBreakerAnnotationAndLabel(b.kubervisorName, b.breakerStrategyName, p); err != nil {
 					b.logger.Sugar().Errorf("can't update Breaker annotation and label: %s", err)
 				}
 			}
@@ -90,8 +101,13 @@ func (b *breakerImpl) Run(stop <-chan struct{}) {
 }
 
 // CompareConfig used to compare the current config with a possible new spec config
-func (b *breakerImpl) CompareConfig(specConfig *v1.BreakerStrategy) bool {
-	return apiequality.Semantic.DeepEqual(&b.breakerStrategyConfig, specConfig)
+func (b *breakerImpl) CompareConfig(specConfig *v1.BreakerStrategy, specSelector labels.Selector) bool {
+	if !apiequality.Semantic.DeepEqual(&b.breakerStrategyConfig, specConfig) {
+		return false
+	}
+	s, _ := labeling.SelectorWithBreakerName(specSelector, b.kubervisorName)
+	return reflect.DeepEqual(s, b.selector)
+
 }
 
 func (b *breakerImpl) computeMinAvailablePods(podUnderSelectorCount int) int {

@@ -50,6 +50,7 @@ var _ = gink.Describe("KubervisorService CRUD", func() {
 		bc.Spec.Service = "busybox"
 
 		breaker := v1.BreakerStrategy{}
+		breaker.Name = "strategy1"
 		breaker.CustomService = "customanomalydetector." + testNs
 		breaker.DiscreteValueOutOfList = nil
 		breaker.MinPodsAvailableCount = v1.NewUInt(3)

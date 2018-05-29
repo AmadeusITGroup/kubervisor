@@ -1,10 +1,13 @@
 package item
 
 import (
+	"fmt"
+
 	"go.uber.org/zap"
 	"k8s.io/apimachinery/pkg/labels"
 	kv1 "k8s.io/client-go/listers/core/v1"
 
+	"github.com/amadeusitgroup/kubervisor/pkg/labeling"
 	"github.com/amadeusitgroup/kubervisor/pkg/pod"
 
 	activator "github.com/amadeusitgroup/kubervisor/pkg/activate"
@@ -18,13 +21,19 @@ func New(bc *apiv1.KubervisorService, cfg *Config) (Interface, error) {
 		return cfg.customFactory(bc, cfg)
 	}
 
+	namespacedPodLister := cfg.PodLister.Pods(bc.Namespace)
+	augmentedSelector, errSelector := labeling.SelectorWithBreakerName(cfg.Selector, bc.Name)
+	if errSelector != nil {
+		return nil, fmt.Errorf("Can't build activator: %v", errSelector)
+	}
+
 	activateDefaultConfig := activator.FactoryConfig{
 		Config: activator.Config{
+			KubervisorName:          bc.Name,
+			Selector:                augmentedSelector,
 			ActivatorStrategyConfig: bc.Spec.DefaultActivator,
-			Selector:                cfg.Selector,
-			BreakerName:             bc.Name,
 			PodControl:              cfg.PodControl,
-			PodLister:               cfg.PodLister.Pods(bc.Namespace),
+			PodLister:               namespacedPodLister,
 			Logger:                  cfg.Logger,
 		},
 	}
@@ -37,14 +46,13 @@ func New(bc *apiv1.KubervisorService, cfg *Config) (Interface, error) {
 	for _, bspec := range bc.Spec.Breakers {
 		breakerConfig := breaker.FactoryConfig{
 			Config: breaker.Config{
-				KubervisorServiceName: bc.Name,
-				BreakerStrategyConfig: bspec,
+				KubervisorName:        bc.Name,
 				StrategyName:          bspec.Name,
-				Selector:              cfg.Selector,
+				Selector:              augmentedSelector,
+				BreakerStrategyConfig: bspec,
 				PodControl:            cfg.PodControl,
-				PodLister:             cfg.PodLister.Pods(bc.Namespace),
+				PodLister:             namespacedPodLister,
 				Logger:                cfg.Logger,
-				BreakerName:           bc.Name,
 			},
 		}
 		breakerInterface, err := breaker.New(breakerConfig)
@@ -58,12 +66,12 @@ func New(bc *apiv1.KubervisorService, cfg *Config) (Interface, error) {
 		if bspec.Activator != nil {
 			activateConfig := activator.FactoryConfig{
 				Config: activator.Config{
-					ActivatorStrategyConfig: *bspec.Activator,
-					Selector:                cfg.Selector,
-					BreakerName:             bc.Name,
+					KubervisorName:          bc.Name,
 					BreakerStrategyName:     bspec.Name,
+					Selector:                augmentedSelector,
+					ActivatorStrategyConfig: *bspec.Activator,
 					PodControl:              cfg.PodControl,
-					PodLister:               cfg.PodLister.Pods(bc.Namespace),
+					PodLister:               namespacedPodLister,
 					Logger:                  cfg.Logger,
 				},
 			}
@@ -79,8 +87,10 @@ func New(bc *apiv1.KubervisorService, cfg *Config) (Interface, error) {
 	return &KubervisorServiceItem{
 		name:             bc.Name,
 		namespace:        bc.Namespace,
+		selector:         augmentedSelector,
 		defaultActivator: activatorDefaultInterface,
 		breakers:         baPairs,
+		podLister:        namespacedPodLister,
 	}, nil
 
 }

@@ -10,7 +10,7 @@ import (
 func ValidateKubervisorServiceSpec(s KubervisorServiceSpec) error {
 	valStr := validation.NameIsDNS1035Label(s.Service, false)
 	if len(valStr) != 0 {
-		return fmt.Errorf("Validation of kubervisor service specification, service: %s", valStr[0])
+		return fmt.Errorf("Validation of kubervisor service specification, service '%s': %v", s.Service, valStr[0])
 	}
 
 	if s.Breakers == nil || len(s.Breakers) == 0 {
@@ -43,7 +43,7 @@ func ValidateActivatorStrategy(s ActivatorStrategy) error {
 func ValidateBreakerStrategy(s BreakerStrategy) error {
 	valStr := validation.NameIsDNS1035Label(s.Name, false)
 	if len(valStr) != 0 {
-		return fmt.Errorf("bad strategy name: %s", valStr[0])
+		return fmt.Errorf("bad strategy name '%s' :%v", s.Name, valStr[0])
 	}
 
 	strategies := []string{}

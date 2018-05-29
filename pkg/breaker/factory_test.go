@@ -4,18 +4,20 @@ import (
 	"testing"
 
 	"github.com/amadeusitgroup/kubervisor/pkg/api/kubervisor/v1"
+	"k8s.io/apimachinery/pkg/labels"
 )
 
 type emptyCustomBreakerT struct {
 	SimilarConfig bool
+	name          string
 }
 
 func (e *emptyCustomBreakerT) Run(stop <-chan struct{}) {}
-func (e *emptyCustomBreakerT) CompareConfig(specConfig *v1.BreakerStrategy) bool {
+func (e *emptyCustomBreakerT) CompareConfig(specConfig *v1.BreakerStrategy, specSelector labels.Selector) bool {
 	return e.SimilarConfig
 }
-func (e *emptyCustomBreakerT) GetStatus() v1.BreakerStatus {
-	return v1.BreakerStatus{}
+func (e *emptyCustomBreakerT) Name() string {
+	return e.name
 }
 
 var emptyCustomBreaker Breaker = &emptyCustomBreakerT{}
@@ -54,18 +56,6 @@ func TestNew(t *testing.T) {
 				return ok
 			},
 		},
-		{
-			name: "bad breaker name",
-			args: args{
-				cfg: FactoryConfig{
-					Config: Config{
-						BreakerName: "b1!@#!",
-					},
-				},
-			},
-			wantErr: true,
-		},
-
 		{
 			name: "error",
 			args: args{

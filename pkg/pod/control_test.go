@@ -23,6 +23,10 @@ func TestControl_UpdateBreakerAnnotationAndLabel(t *testing.T) {
 			t.Errorf("bad breaker name")
 			return false
 		}
+		if strategy, ok := p.Labels[labeling.LabelBreakerStrategyKey]; strategy != "strategy1" || !ok {
+			t.Errorf("bad breaker strategy")
+			return false
+		}
 		if _, ok := p.Annotations[labeling.AnnotationBreakAtKey]; !ok {
 			t.Errorf("missing breakAt annotation")
 			return false
@@ -39,6 +43,7 @@ func TestControl_UpdateBreakerAnnotationAndLabel(t *testing.T) {
 	}
 	type args struct {
 		breakerConfigName string
+		breakerStrategy   string
 		inputPod          *kapiv1.Pod
 	}
 	tests := []struct {
@@ -55,6 +60,7 @@ func TestControl_UpdateBreakerAnnotationAndLabel(t *testing.T) {
 			},
 			args: args{
 				breakerConfigName: "mytestname",
+				breakerStrategy:   "strategy1",
 				inputPod:          test.PodGen("A", "test-ns", nil, true, true, ""),
 			},
 			checkFunc: checkFunc1,
@@ -67,6 +73,7 @@ func TestControl_UpdateBreakerAnnotationAndLabel(t *testing.T) {
 			},
 			args: args{
 				breakerConfigName: "mytestname",
+				breakerStrategy:   "strategy1",
 				inputPod:          test.PodGen("A", "test-ns", nil, true, true, labeling.LabelTrafficYes),
 			},
 			checkFunc: checkFunc1,
@@ -78,7 +85,7 @@ func TestControl_UpdateBreakerAnnotationAndLabel(t *testing.T) {
 			c := &Control{
 				kubeClient: tt.fields.kubeClient,
 			}
-			got, err := c.UpdateBreakerAnnotationAndLabel(tt.args.breakerConfigName, tt.args.inputPod)
+			got, err := c.UpdateBreakerAnnotationAndLabel(tt.args.breakerConfigName, tt.args.breakerStrategy, tt.args.inputPod)
 
 			if (err != nil) != tt.wantErr {
 				t.Errorf("Control.UpdateBreakerAnnotationAndLabel() error = %v, wantErr %v", err, tt.wantErr)

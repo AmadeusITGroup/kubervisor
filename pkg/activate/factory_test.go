@@ -63,19 +63,6 @@ func TestNew(t *testing.T) {
 			},
 		},
 		{
-			name: "badName",
-			args: args{
-				cfg: FactoryConfig{
-					Config: Config{
-						ActivatorStrategyConfig: v1.ActivatorStrategy{},
-						Selector:                labels.SelectorFromSet(map[string]string{"app": "foo"}),
-						BreakerName:             "%*",
-					},
-				},
-			},
-			wantErr: true,
-		},
-		{
 			name: "custom",
 			args: args{
 				cfg: FactoryConfig{customFactory: func(cfg FactoryConfig) (Activator, error) { return emptyCustomActivator, nil }},

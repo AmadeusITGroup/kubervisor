@@ -6,11 +6,14 @@ import (
 	"sync"
 
 	"k8s.io/apimachinery/pkg/labels"
+	kv1 "k8s.io/client-go/listers/core/v1"
 	kcache "k8s.io/client-go/tools/cache"
 
 	activator "github.com/amadeusitgroup/kubervisor/pkg/activate"
 	"github.com/amadeusitgroup/kubervisor/pkg/api/kubervisor/v1"
 	"github.com/amadeusitgroup/kubervisor/pkg/breaker"
+	"github.com/amadeusitgroup/kubervisor/pkg/labeling"
+	"github.com/amadeusitgroup/kubervisor/pkg/pod"
 )
 
 // KubervisorServiceItemStore represent the KubervisorService Item store
@@ -43,16 +46,12 @@ type Interface interface {
 }
 
 type breakerActivatorPair struct {
-	name      string
 	activator activator.Activator
 	breaker   breaker.Breaker
 }
 
 // CompareConfig compare the pair with the spec and return true if equal
 func (p *breakerActivatorPair) CompareConfig(specBreaker *v1.BreakerStrategy, specSelector labels.Selector) bool {
-	if specBreaker.Name != p.name {
-		return false
-	}
 	//First compare the activator part
 	if (p.activator != nil && specBreaker.Activator == nil) || (p.activator == nil && specBreaker.Activator != nil) {
 		return false
@@ -63,7 +62,7 @@ func (p *breakerActivatorPair) CompareConfig(specBreaker *v1.BreakerStrategy, sp
 		}
 	}
 	//Second compare the breaker part
-	return p.breaker.CompareConfig(specBreaker)
+	return p.breaker.CompareConfig(specBreaker, specSelector)
 }
 
 //KubervisorServiceItem  Use to agreagate all sub process linked to a KubervisorService
@@ -73,6 +72,9 @@ type KubervisorServiceItem struct {
 	namespace        string
 	defaultActivator activator.Activator
 	breakers         []breakerActivatorPair
+
+	podLister kv1.PodNamespaceLister
+	selector  labels.Selector
 
 	cancelFunc context.CancelFunc
 	waitGroup  sync.WaitGroup
@@ -113,7 +115,7 @@ func (b *KubervisorServiceItem) Stop() error {
 
 func (b *KubervisorServiceItem) getBreakerByStrategyName(strategyName string) *breakerActivatorPair {
 	for i := range b.breakers {
-		if b.breakers[i].name == strategyName {
+		if b.breakers[i].breaker.Name() == strategyName {
 			return &b.breakers[i]
 		}
 	}
@@ -152,7 +154,25 @@ func (b *KubervisorServiceItem) runActivator(ctx context.Context, activator acti
 	activator.Run(ctx.Done())
 }
 
-//GetStatus get the current status for the breaker (stats on pods)
+//GetStatus return the status for the breaker
 func (b *KubervisorServiceItem) GetStatus() v1.BreakerStatus {
-	return b.defaultActivator.GetStatus()
+	status := v1.BreakerStatus{}
+	allPods, _ := b.podLister.List(b.selector)
+	status.NbPodsManaged = uint32(len(allPods))
+	for _, p := range allPods {
+		if !pod.IsReady(p) {
+			status.NbPodsManaged--
+			continue
+		}
+		yesTraffic, pauseTraffic, err := labeling.IsPodTrafficLabelOkOrPause(p)
+		switch {
+		case err != nil:
+			status.NbPodsUnknown++
+		case pauseTraffic:
+			status.NbPodsPaused++
+		case !yesTraffic:
+			status.NbPodsBreaked++
+		}
+	}
+	return status
 }
