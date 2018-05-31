@@ -42,7 +42,7 @@ type Interface interface {
 	Start(ctx context.Context)
 	Stop() error
 	CompareWithSpec(spec *v1.KubervisorServiceSpec, selector labels.Selector) bool
-	GetStatus() v1.BreakerStatus
+	GetStatus() v1.PodCountStatus
 }
 
 type breakerActivatorPair struct {
@@ -155,8 +155,8 @@ func (b *KubervisorServiceItem) runActivator(ctx context.Context, activator acti
 }
 
 //GetStatus return the status for the breaker
-func (b *KubervisorServiceItem) GetStatus() v1.BreakerStatus {
-	status := v1.BreakerStatus{}
+func (b *KubervisorServiceItem) GetStatus() v1.PodCountStatus {
+	status := v1.PodCountStatus{}
 	allPods, _ := b.podLister.List(b.selector)
 	status.NbPodsManaged = uint32(len(allPods))
 	for _, p := range allPods {

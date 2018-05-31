@@ -216,8 +216,8 @@ func (f *fakeActivator) Run(stop <-chan struct{}) {
 func (f *fakeActivator) CompareConfig(specStrategy *apiv1.ActivatorStrategy, specSelector labels.Selector) bool {
 	return true
 }
-func (f *fakeActivator) GetStatus() apiv1.BreakerStatus {
-	return apiv1.BreakerStatus{}
+func (f *fakeActivator) GetStatus() apiv1.PodCountStatus {
+	return apiv1.PodCountStatus{}
 }
 
 type fakeBreaker struct {
@@ -350,7 +350,7 @@ func Test_GetStatus(t *testing.T) {
 	tests := []struct {
 		name   string
 		fields fields
-		want   apiv1.BreakerStatus
+		want   apiv1.PodCountStatus
 	}{
 		{
 			name: "no pods",
@@ -361,7 +361,7 @@ func Test_GetStatus(t *testing.T) {
 					"test-ns",
 				),
 			},
-			want: apiv1.BreakerStatus{},
+			want: apiv1.PodCountStatus{},
 		},
 		{
 			name: "various pods",
@@ -381,7 +381,7 @@ func Test_GetStatus(t *testing.T) {
 					"test-ns",
 				),
 			},
-			want: apiv1.BreakerStatus{
+			want: apiv1.PodCountStatus{
 				NbPodsManaged: 4,
 				NbPodsBreaked: 1,
 				NbPodsPaused:  1,

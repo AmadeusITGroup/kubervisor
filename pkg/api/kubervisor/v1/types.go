@@ -38,7 +38,7 @@ type KubervisorServiceList struct {
 
 // KubervisorServiceSpec contains KubervisorService specification
 type KubervisorServiceSpec struct {
-	Breakers         []BreakerStrategy `json:"breaker"`
+	Breakers         []BreakerStrategy `json:"breakers"`
 	DefaultActivator ActivatorStrategy `json:"defaultActivator"`
 	Service          string            `json:"service,omitempty"`
 }
@@ -86,11 +86,11 @@ type KubervisorServiceStatus struct {
 	StartTime *metav1.Time `json:"startTime,omitempty"`
 
 	// Status represent the breaker status: contains status by pods (score, breaked or not, reason)
-	Breaker *BreakerStatus `json:"breaker,omitempty"`
+	PodCounts *PodCountStatus `json:"podCount,omitempty"`
 }
 
-// BreakerStatus contains breaker status
-type BreakerStatus struct {
+// PodCountStatus contains breaker status
+type PodCountStatus struct {
 	NbPodsManaged uint32 `json:"nbPodsManaged,omitempty"`
 	NbPodsBreaked uint32 `json:"nbPodsBreaked,omitempty"`
 	NbPodsPaused  uint32 `json:"nbPodsPaused,omitempty"`

@@ -12,8 +12,8 @@ type emptyCustomActivatorT struct {
 	SimilarConfig bool
 }
 
-func (e *emptyCustomActivatorT) Run(stop <-chan struct{})    {}
-func (e *emptyCustomActivatorT) GetStatus() v1.BreakerStatus { return v1.BreakerStatus{} }
+func (e *emptyCustomActivatorT) Run(stop <-chan struct{})     {}
+func (e *emptyCustomActivatorT) GetStatus() v1.PodCountStatus { return v1.PodCountStatus{} }
 func (e *emptyCustomActivatorT) CompareConfig(specStrategy *v1.ActivatorStrategy, specSelector labels.Selector) bool {
 	return e.SimilarConfig
 }

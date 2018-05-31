@@ -425,15 +425,15 @@ func (ctrl *Controller) syncKubervisorService(bc *kubervisorapi.KubervisorServic
 
 	newStatus := bci.GetStatus()
 	updateGauge(bci.Name(), newStatus)
-	if bc.Status.Breaker == nil || !equalBreakerStatusCounters(newStatus, *bc.Status.Breaker) {
-		bc.Status.Breaker = &newStatus
+	if bc.Status.PodCounts == nil || !equalPodCountStatus(newStatus, *bc.Status.PodCounts) {
+		bc.Status.PodCounts = &newStatus
 		//update status to running
 		ctrl.updateStatusCondition(bc, UpdateStatusConditionRunning, "", now)
 	}
 	return false, nil
 }
 
-func updateGauge(name string, status kubervisorapi.BreakerStatus) {
+func updateGauge(name string, status kubervisorapi.PodCountStatus) {
 	kubervisorGauges.WithLabelValues(name, "managed").Set(float64(status.NbPodsManaged))
 	kubervisorGauges.WithLabelValues(name, "breaked").Set(float64(status.NbPodsBreaked))
 	kubervisorGauges.WithLabelValues(name, "paused").Set(float64(status.NbPodsPaused))
