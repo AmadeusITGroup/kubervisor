@@ -102,7 +102,7 @@ func UpdateStatusCondition(status *apiv1.KubervisorServiceStatus, conditionType 
 	return newStatus, nil
 }
 
-func equalBreakerStatusCounters(a, b apiv1.BreakerStatus) bool {
+func equalPodCountStatus(a, b apiv1.PodCountStatus) bool {
 	t0 := metav1.Time{}
 	a.LastProbeTime, b.LastProbeTime = t0, t0
 	return apiequality.Semantic.DeepEqual(a, b)

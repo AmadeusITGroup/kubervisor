@@ -12,7 +12,8 @@ type emptyCustomActivatorT struct {
 	SimilarConfig bool
 }
 
-func (e *emptyCustomActivatorT) Run(stop <-chan struct{}) {}
+func (e *emptyCustomActivatorT) Run(stop <-chan struct{})     {}
+func (e *emptyCustomActivatorT) GetStatus() v1.PodCountStatus { return v1.PodCountStatus{} }
 func (e *emptyCustomActivatorT) CompareConfig(specStrategy *v1.ActivatorStrategy, specSelector labels.Selector) bool {
 	return e.SimilarConfig
 }
@@ -60,19 +61,6 @@ func TestNew(t *testing.T) {
 				_, ok := b.(*ActivatorImpl)
 				return ok
 			},
-		},
-		{
-			name: "badName",
-			args: args{
-				cfg: FactoryConfig{
-					Config: Config{
-						ActivatorStrategyConfig: v1.ActivatorStrategy{},
-						Selector:                labels.SelectorFromSet(map[string]string{"app": "foo"}),
-						BreakerName:             "%*",
-					},
-				},
-			},
-			wantErr: true,
 		},
 		{
 			name: "custom",

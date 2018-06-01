@@ -63,6 +63,10 @@ func Test_isDiscreteValueOutOfListDefaulted(t *testing.T) {
 }
 
 func Test_isBreakerStrategyDefaulted(t *testing.T) {
+
+	activatorNotDefaulted := DefaultBreakerStrategy(&BreakerStrategy{})
+	activatorNotDefaulted.Activator = &ActivatorStrategy{}
+
 	type args struct {
 		item *BreakerStrategy
 	}
@@ -78,6 +82,13 @@ func Test_isBreakerStrategyDefaulted(t *testing.T) {
 				item: DefaultBreakerStrategy(&BreakerStrategy{}),
 			},
 			want: true,
+		},
+		{
+			name: "activator in strategy not defaulted",
+			args: args{
+				item: activatorNotDefaulted,
+			},
+			want: false,
 		},
 		{
 			name: "missing EvaluationPeriod",
@@ -244,8 +255,8 @@ func TestIsKubervisorServiceDefaulted(t *testing.T) {
 			args: args{
 				bc: &KubervisorService{
 					Spec: KubervisorServiceSpec{
-						Activator: *DefaultActivatorStrategy(&ActivatorStrategy{}),
-						Breaker:   *DefaultBreakerStrategy(&BreakerStrategy{}),
+						DefaultActivator: *DefaultActivatorStrategy(&ActivatorStrategy{}),
+						Breakers:         []BreakerStrategy{*DefaultBreakerStrategy(&BreakerStrategy{})},
 					},
 				},
 			},
@@ -256,7 +267,7 @@ func TestIsKubervisorServiceDefaulted(t *testing.T) {
 			args: args{
 				bc: &KubervisorService{
 					Spec: KubervisorServiceSpec{
-						Breaker: *DefaultBreakerStrategy(&BreakerStrategy{}),
+						Breakers: []BreakerStrategy{*DefaultBreakerStrategy(&BreakerStrategy{})},
 					},
 				},
 			},
@@ -267,7 +278,8 @@ func TestIsKubervisorServiceDefaulted(t *testing.T) {
 			args: args{
 				bc: &KubervisorService{
 					Spec: KubervisorServiceSpec{
-						Activator: *DefaultActivatorStrategy(&ActivatorStrategy{}),
+						Breakers:         []BreakerStrategy{BreakerStrategy{}},
+						DefaultActivator: *DefaultActivatorStrategy(&ActivatorStrategy{}),
 					},
 				},
 			},

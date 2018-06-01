@@ -198,13 +198,13 @@ func TestUpdateStatusConditionRunning(t *testing.T) {
 	}
 }
 
-func Test_equalBreakerStatusCounters(t *testing.T) {
+func Test_equalPodCountStatus(t *testing.T) {
 	t0 := metav1.Time{}
 	t1 := metav1.Time{Time: time.Now()}
 
 	type args struct {
-		a apiv1.BreakerStatus
-		b apiv1.BreakerStatus
+		a apiv1.PodCountStatus
+		b apiv1.PodCountStatus
 	}
 	tests := []struct {
 		name string
@@ -214,12 +214,12 @@ func Test_equalBreakerStatusCounters(t *testing.T) {
 		{
 			name: "equal",
 			args: args{
-				a: apiv1.BreakerStatus{
+				a: apiv1.PodCountStatus{
 					LastProbeTime: t0,
 					NbPodsBreaked: 1,
 					NbPodsManaged: 10,
 				},
-				b: apiv1.BreakerStatus{
+				b: apiv1.PodCountStatus{
 					LastProbeTime: t1,
 					NbPodsBreaked: 1,
 					NbPodsManaged: 10,
@@ -230,12 +230,12 @@ func Test_equalBreakerStatusCounters(t *testing.T) {
 		{
 			name: "diff",
 			args: args{
-				a: apiv1.BreakerStatus{
+				a: apiv1.PodCountStatus{
 					LastProbeTime: t0,
 					NbPodsBreaked: 1,
 					NbPodsManaged: 10,
 				},
-				b: apiv1.BreakerStatus{
+				b: apiv1.PodCountStatus{
 					LastProbeTime: t1,
 					NbPodsBreaked: 0,
 					NbPodsManaged: 10,
@@ -246,8 +246,8 @@ func Test_equalBreakerStatusCounters(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if got := equalBreakerStatusCounters(tt.args.a, tt.args.b); got != tt.want {
-				t.Errorf("equalBreakerStatusCounters() = %v, want %v", got, tt.want)
+			if got := equalPodCountStatus(tt.args.a, tt.args.b); got != tt.want {
+				t.Errorf("equalPodCountStatus() = %v, want %v", got, tt.want)
 			}
 		})
 	}

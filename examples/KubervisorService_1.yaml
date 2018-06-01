@@ -21,7 +21,8 @@ items:
       app: foo
   spec:
     service: foo-svc
-    breaker:
+    breakers:
+    - name: responseCode
       minPodsAvailableCount: 2
       minPodsAvailableRatio: 50
       discreteValueOutOfList: 
@@ -33,7 +34,7 @@ items:
         badValues:
         tolerance: 80
         minActivity: 50
-    activator:
+    defaultActivator:
       mode: periodic
       period: 30
       maxRetryCount: 5

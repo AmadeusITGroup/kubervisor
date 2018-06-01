@@ -28,7 +28,7 @@ var (
 //ControlInterface interface to act on pods
 type ControlInterface interface {
 	InitBreakerAnnotationAndLabel(breakConfigName string, inputPod *kapiv1.Pod) (*kapiv1.Pod, error)
-	UpdateBreakerAnnotationAndLabel(breakConfigName string, p *kapiv1.Pod) (*kapiv1.Pod, error)
+	UpdateBreakerAnnotationAndLabel(breakConfigName string, breakStrategy string, p *kapiv1.Pod) (*kapiv1.Pod, error)
 	UpdateActivationLabelsAndAnnotations(breakConfigName string, p *kapiv1.Pod) (*kapiv1.Pod, error)
 	UpdatePauseLabelsAndAnnotations(breakConfigName string, p *kapiv1.Pod) (*kapiv1.Pod, error)
 	RemoveBreakerAnnotationAndLabel(p *kapiv1.Pod) (*kapiv1.Pod, error)
@@ -69,11 +69,12 @@ func (c *Control) InitBreakerAnnotationAndLabel(breakConfigName string, inputPod
 }
 
 //UpdateBreakerAnnotationAndLabel implements pod control
-func (c *Control) UpdateBreakerAnnotationAndLabel(breakConfigName string, inputPod *kapiv1.Pod) (returnPod *kapiv1.Pod, err error) {
+func (c *Control) UpdateBreakerAnnotationAndLabel(breakConfigName string, breakStrategy string, inputPod *kapiv1.Pod) (returnPod *kapiv1.Pod, err error) {
 	//Copy to avoid modifying object inside the cache
 	p := copyAndDefault(inputPod)
 
 	p.Labels[labeling.LabelBreakerNameKey] = breakConfigName
+	p.Labels[labeling.LabelBreakerStrategyKey] = breakStrategy
 	p.Labels[labeling.LabelTrafficKey] = string(labeling.LabelTrafficNo)
 
 	retryCount, _ := labeling.GetRetryCount(p)

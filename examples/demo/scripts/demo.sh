@@ -6,6 +6,9 @@ DEMO_ROOT=$(git rev-parse --show-toplevel)/examples/demo
 PWD=$(pwd)
 cd $DEMO_ROOT
 
+desc "Let's go to demo namespace"
+run "kubectl config set-context $(kubectl config current-context) --namespace=demo"
+
 desc "Let see what is running"
 run "kubectl get pods"
 

@@ -2,10 +2,49 @@ package v1
 
 import (
 	"fmt"
+
+	"k8s.io/apimachinery/pkg/api/validation"
 )
+
+//ValidateKubervisorServiceSpec validate the KubervisorService specification
+func ValidateKubervisorServiceSpec(s KubervisorServiceSpec) error {
+	valStr := validation.NameIsDNS1035Label(s.Service, false)
+	if len(valStr) != 0 {
+		return fmt.Errorf("Validation of kubervisor service specification, service '%s': %v", s.Service, valStr[0])
+	}
+
+	if s.Breakers == nil || len(s.Breakers) == 0 {
+		return fmt.Errorf("Validation of kubervisor service specification failed: no BreakerStrategy defined")
+	}
+	names := map[string]struct{}{}
+	for i := range s.Breakers {
+		if err := ValidateBreakerStrategy(s.Breakers[i]); err != nil {
+			return fmt.Errorf("Validation of kubervisor service specification failed for breaker strategy %d: %v", i, err)
+		}
+		name := s.Breakers[i].Name
+		if _, ok := names[name]; ok {
+			return fmt.Errorf("Validation of kubervisor service specification: breaker strategy name not unique %d: %s", i, name)
+		}
+		names[name] = struct{}{}
+	}
+
+	if err := ValidateActivatorStrategy(s.DefaultActivator); err != nil {
+		return fmt.Errorf("Validation of kubervisor service specification failed for default activator strategy: %v", err)
+	}
+	return nil
+}
+
+//ValidateActivatorStrategy validation of input
+func ValidateActivatorStrategy(s ActivatorStrategy) error {
+	return nil // TODO #20
+}
 
 //ValidateBreakerStrategy validation of input
 func ValidateBreakerStrategy(s BreakerStrategy) error {
+	valStr := validation.NameIsDNS1035Label(s.Name, false)
+	if len(valStr) != 0 {
+		return fmt.Errorf("bad strategy name '%s' :%v", s.Name, valStr[0])
+	}
 
 	strategies := []string{}
 	if s.DiscreteValueOutOfList != nil {
@@ -25,7 +64,7 @@ func ValidateBreakerStrategy(s BreakerStrategy) error {
 	}
 
 	if len(strategies) == 0 {
-		return fmt.Errorf("BreakerStrategy is missing anomaly detection specification (DiscreteValueOutOfList or CustomService)")
+		return fmt.Errorf("BreakerStrategy is missing anomaly detection specification (DiscreteValueOutOfList or CustomService or ...)")
 	}
 
 	if len(strategies) > 1 {
@@ -38,6 +77,12 @@ func ValidateBreakerStrategy(s BreakerStrategy) error {
 
 	if s.EvaluationPeriod != nil && *s.EvaluationPeriod > 24*3600.0 {
 		return fmt.Errorf("BreakerStrategy evaluation period undefined or too big (more than 1 day)")
+	}
+
+	if s.Activator != nil {
+		if err := ValidateActivatorStrategy(*s.Activator); err != nil {
+			return fmt.Errorf("BreakerStrategy activator is invalid: %v", err)
+		}
 	}
 
 	return nil

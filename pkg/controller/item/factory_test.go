@@ -13,6 +13,8 @@ import (
 func TestNew(t *testing.T) {
 	activatorStrategyConfig := apiv1.DefaultActivatorStrategy(&apiv1.ActivatorStrategy{})
 	breakerStrategyConfig := apiv1.DefaultBreakerStrategy(&apiv1.BreakerStrategy{
+		Name:      "aname",
+		Activator: activatorStrategyConfig,
 		DiscreteValueOutOfList: &apiv1.DiscreteValueOutOfList{
 			PromQL:            "query",
 			PrometheusService: "Service",
@@ -48,8 +50,8 @@ func TestNew(t *testing.T) {
 				bc: &apiv1.KubervisorService{
 					ObjectMeta: metav1.ObjectMeta{Name: "test-bc", Namespace: "test-ns"},
 					Spec: apiv1.KubervisorServiceSpec{
-						Activator: *activatorStrategyConfig,
-						Breaker:   *breakerStrategyConfig,
+						DefaultActivator: *activatorStrategyConfig,
+						Breakers:         []apiv1.BreakerStrategy{*breakerStrategyConfig},
 					},
 				},
 				cfg: &Config{
@@ -65,8 +67,8 @@ func TestNew(t *testing.T) {
 				bc: &apiv1.KubervisorService{
 					ObjectMeta: metav1.ObjectMeta{Name: "test-!@#$%^&*()\nbc", Namespace: "test-ns"},
 					Spec: apiv1.KubervisorServiceSpec{
-						Activator: *activatorStrategyConfig,
-						Breaker:   *breakerStrategyConfig,
+						DefaultActivator: *activatorStrategyConfig,
+						Breakers:         []apiv1.BreakerStrategy{*breakerStrategyConfig},
 					},
 				},
 				cfg: &Config{
@@ -82,8 +84,8 @@ func TestNew(t *testing.T) {
 				bc: &apiv1.KubervisorService{
 					ObjectMeta: metav1.ObjectMeta{Name: "test-bc", Namespace: "test-ns"},
 					Spec: apiv1.KubervisorServiceSpec{
-						Activator: *activatorStrategyConfig,
-						Breaker:   *emptyBreakerStrategyConfig,
+						DefaultActivator: *activatorStrategyConfig,
+						Breakers:         []apiv1.BreakerStrategy{*emptyBreakerStrategyConfig},
 					},
 				},
 				cfg: &Config{

@@ -38,9 +38,9 @@ type KubervisorServiceList struct {
 
 // KubervisorServiceSpec contains KubervisorService specification
 type KubervisorServiceSpec struct {
-	Breaker   BreakerStrategy   `json:"breaker"`
-	Activator ActivatorStrategy `json:"activator"`
-	Service   string            `json:"service,omitempty"`
+	Breakers         []BreakerStrategy `json:"breakers"`
+	DefaultActivator ActivatorStrategy `json:"defaultActivator"`
+	Service          string            `json:"service,omitempty"`
 }
 
 // KubervisorServiceConditionType KubervisorService Condition Type
@@ -86,11 +86,11 @@ type KubervisorServiceStatus struct {
 	StartTime *metav1.Time `json:"startTime,omitempty"`
 
 	// Status represent the breaker status: contains status by pods (score, breaked or not, reason)
-	Breaker *BreakerStatus `json:"breaker,omitempty"`
+	PodCounts *PodCountStatus `json:"podCount,omitempty"`
 }
 
-// BreakerStatus contains breaker status
-type BreakerStatus struct {
+// PodCountStatus contains breaker status
+type PodCountStatus struct {
 	NbPodsManaged uint32 `json:"nbPodsManaged,omitempty"`
 	NbPodsBreaked uint32 `json:"nbPodsBreaked,omitempty"`
 	NbPodsPaused  uint32 `json:"nbPodsPaused,omitempty"`
@@ -101,6 +101,7 @@ type BreakerStatus struct {
 
 // BreakerStrategy contains BreakerStrategy definition
 type BreakerStrategy struct {
+	Name                  string   `json:"name"`
 	EvaluationPeriod      *float64 `json:"evaluationPeriod,omitempty"`
 	MinPodsAvailableCount *uint    `json:"minPodsAvailableCount,omitempty"`
 	MinPodsAvailableRatio *uint    `json:"minPodsAvailableRatio,omitempty"`
@@ -109,6 +110,8 @@ type BreakerStrategy struct {
 	ContinuousValueDeviation *ContinuousValueDeviation `json:"continuousValueDeviation,omitempty"`
 
 	CustomService string `json:"customService,omitempty"`
+
+	Activator *ActivatorStrategy `json:"activator"`
 }
 
 // ContinuousValueDeviation detect anomaly when the average value for a pod is deviating from the average for the fleet of pods. If a pods does not register enough event it should not be returned by the PromQL

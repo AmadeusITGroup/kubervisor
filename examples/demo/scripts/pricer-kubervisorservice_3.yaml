@@ -6,14 +6,15 @@ metadata:
     app: pricer
 spec:
   service: pricer-1a 
-  breaker:
+  breakers:
+  - name: price-deviation
     minPodsAvailableRatio: 50
     continuousValueDeviation: 
       prometheusService: kube-prometheus-prometheus.demo:9090
       promQL: "(rate(pricer_price_sum[30s])/rate(pricer_price_count[30s]) and delta(pricer_price_count[30s])>3 ) / scalar(sum(rate(pricer_price_sum[30s]))/sum(rate(pricer_price_count[30s])))"
       podNamekey: pod
       maxDeviationPercent: 30
-  activator:
+  defaultActivator:
     mode: retryAndPause
     period: 15
     maxRetryCount: 1

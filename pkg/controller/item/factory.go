@@ -1,10 +1,13 @@
 package item
 
 import (
+	"fmt"
+
 	"go.uber.org/zap"
 	"k8s.io/apimachinery/pkg/labels"
 	kv1 "k8s.io/client-go/listers/core/v1"
 
+	"github.com/amadeusitgroup/kubervisor/pkg/labeling"
 	"github.com/amadeusitgroup/kubervisor/pkg/pod"
 
 	activator "github.com/amadeusitgroup/kubervisor/pkg/activate"
@@ -18,41 +21,76 @@ func New(bc *apiv1.KubervisorService, cfg *Config) (Interface, error) {
 		return cfg.customFactory(bc, cfg)
 	}
 
-	activateConfig := activator.FactoryConfig{
+	namespacedPodLister := cfg.PodLister.Pods(bc.Namespace)
+	augmentedSelector, errSelector := labeling.SelectorWithBreakerName(cfg.Selector, bc.Name)
+	if errSelector != nil {
+		return nil, fmt.Errorf("Can't build activator: %v", errSelector)
+	}
+
+	activateDefaultConfig := activator.FactoryConfig{
 		Config: activator.Config{
-			ActivatorStrategyConfig: bc.Spec.Activator,
-			Selector:                cfg.Selector,
-			BreakerName:             bc.Name,
+			KubervisorName:          bc.Name,
+			Selector:                augmentedSelector,
+			ActivatorStrategyConfig: bc.Spec.DefaultActivator,
 			PodControl:              cfg.PodControl,
-			PodLister:               cfg.PodLister.Pods(bc.Namespace),
+			PodLister:               namespacedPodLister,
 			Logger:                  cfg.Logger,
 		},
 	}
-	activatorInterface, err := activator.New(activateConfig)
+	activatorDefaultInterface, err := activator.New(activateDefaultConfig)
 	if err != nil {
 		return nil, err
 	}
 
-	breakerConfig := breaker.FactoryConfig{
-		Config: breaker.Config{
-			KubervisorServiceName: bc.Name,
-			BreakerStrategyConfig: bc.Spec.Breaker,
-			Selector:              cfg.Selector,
-			PodControl:            cfg.PodControl,
-			PodLister:             cfg.PodLister.Pods(bc.Namespace),
-			Logger:                cfg.Logger,
-			BreakerName:           bc.Name,
-		},
+	baPairs := []breakerActivatorPair{}
+	for _, bspec := range bc.Spec.Breakers {
+		breakerConfig := breaker.FactoryConfig{
+			Config: breaker.Config{
+				KubervisorName:        bc.Name,
+				StrategyName:          bspec.Name,
+				Selector:              augmentedSelector,
+				BreakerStrategyConfig: bspec,
+				PodControl:            cfg.PodControl,
+				PodLister:             namespacedPodLister,
+				Logger:                cfg.Logger,
+			},
+		}
+		breakerInterface, err := breaker.New(breakerConfig)
+		if err != nil {
+			return nil, err
+		}
+		baPair := breakerActivatorPair{
+			breaker: breakerInterface,
+		}
+
+		if bspec.Activator != nil {
+			activateConfig := activator.FactoryConfig{
+				Config: activator.Config{
+					KubervisorName:          bc.Name,
+					BreakerStrategyName:     bspec.Name,
+					Selector:                augmentedSelector,
+					ActivatorStrategyConfig: *bspec.Activator,
+					PodControl:              cfg.PodControl,
+					PodLister:               namespacedPodLister,
+					Logger:                  cfg.Logger,
+				},
+			}
+			activatorInterface, err := activator.New(activateConfig)
+			if err != nil {
+				return nil, err
+			}
+			baPair.activator = activatorInterface
+		}
+		baPairs = append(baPairs, baPair)
 	}
-	breakerInterface, err := breaker.New(breakerConfig)
-	if err != nil {
-		return nil, err
-	}
+
 	return &KubervisorServiceItem{
-		name:      bc.Name,
-		namespace: bc.Namespace,
-		activator: activatorInterface,
-		breaker:   breakerInterface,
+		name:             bc.Name,
+		namespace:        bc.Namespace,
+		selector:         augmentedSelector,
+		defaultActivator: activatorDefaultInterface,
+		breakers:         baPairs,
+		podLister:        namespacedPodLister,
 	}, nil
 
 }

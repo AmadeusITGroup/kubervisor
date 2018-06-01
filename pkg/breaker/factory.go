@@ -4,7 +4,6 @@ import (
 	"fmt"
 
 	"github.com/amadeusitgroup/kubervisor/pkg/anomalydetector"
-	"github.com/amadeusitgroup/kubervisor/pkg/labeling"
 )
 
 //FactoryConfig parameters required for the creation of a breaker
@@ -24,15 +23,10 @@ func New(cfg FactoryConfig) (Breaker, error) {
 		return cfg.customFactory(cfg)
 	}
 
-	augmentedSelector, errSelector := labeling.SelectorWithBreakerName(cfg.Selector, cfg.BreakerName)
-	if errSelector != nil {
-		return nil, fmt.Errorf("Can't build breaker: %v", errSelector)
-	}
-
 	anomalyDetector, err := anomalydetector.New(anomalydetector.FactoryConfig{
 		Config: anomalydetector.Config{
 			BreakerStrategyConfig: cfg.BreakerStrategyConfig,
-			Selector:              augmentedSelector,
+			Selector:              cfg.Selector,
 			Logger:                cfg.Logger,
 			PodLister:             cfg.PodLister,
 		},
@@ -43,12 +37,13 @@ func New(cfg FactoryConfig) (Breaker, error) {
 	}
 
 	return &breakerImpl{
-		KubervisorServiceName: cfg.KubervisorServiceName,
+		breakerStrategyName:   cfg.StrategyName,
 		breakerStrategyConfig: cfg.BreakerStrategyConfig,
 		logger:                cfg.Logger,
 		podControl:            cfg.PodControl,
 		podLister:             cfg.PodLister,
-		selector:              augmentedSelector,
+		kubervisorName:        cfg.KubervisorName,
+		selector:              cfg.Selector,
 		anomalyDetector:       anomalyDetector,
 	}, nil
 }

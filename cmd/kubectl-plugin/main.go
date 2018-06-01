@@ -130,10 +130,10 @@ func computeTableData(kvs *v1.KubervisorServiceList) [][]string {
 	for _, ks := range kvs.Items {
 		status := buildClusterStatus(&ks)
 		var nbPodManaged, nbPodPause, nbPodBreaked uint32
-		if ks.Status.Breaker != nil {
-			nbPodManaged = ks.Status.Breaker.NbPodsManaged
-			nbPodPause = ks.Status.Breaker.NbPodsPaused
-			nbPodBreaked = ks.Status.Breaker.NbPodsBreaked
+		if ks.Status.PodCounts != nil {
+			nbPodManaged = ks.Status.PodCounts.NbPodsManaged
+			nbPodPause = ks.Status.PodCounts.NbPodsPaused
+			nbPodBreaked = ks.Status.PodCounts.NbPodsBreaked
 		}
 		data = append(data, []string{ks.Name, ks.Namespace, status, fmt.Sprintf("%d", nbPodManaged), fmt.Sprintf("%d", nbPodBreaked), fmt.Sprintf("%d", nbPodPause)})
 	}

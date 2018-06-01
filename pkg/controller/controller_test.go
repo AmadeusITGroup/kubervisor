@@ -323,6 +323,7 @@ func TestController_Run(t *testing.T) {
 
 		activatorStrategyConfig := kubervisorapiv1.DefaultActivatorStrategy(&kubervisorapiv1.ActivatorStrategy{})
 		breakerStrategyConfig := &kubervisorapiv1.BreakerStrategy{ // Do not default to test the defaulting path.
+			Name: "strategy1",
 			DiscreteValueOutOfList: &kubervisorapiv1.DiscreteValueOutOfList{
 				PromQL:            "query",
 				PrometheusService: "Service",
@@ -334,17 +335,17 @@ func TestController_Run(t *testing.T) {
 		bc := &kubervisorapiv1.KubervisorService{
 			ObjectMeta: metav1.ObjectMeta{Name: "test-bc", Namespace: "test-ns"},
 			Spec: kubervisorapiv1.KubervisorServiceSpec{
-				Activator: *activatorStrategyConfig,
-				Breaker:   *breakerStrategyConfig,
-				Service:   "svc1",
+				DefaultActivator: *activatorStrategyConfig,
+				Breakers:         []kubervisorapiv1.BreakerStrategy{*breakerStrategyConfig},
+				Service:          "svc1",
 			},
 		}
 		bcNoService := &kubervisorapiv1.KubervisorService{
 			ObjectMeta: metav1.ObjectMeta{Name: "test-bc-noService", Namespace: "test-ns"},
 			Spec: kubervisorapiv1.KubervisorServiceSpec{
-				Activator: *activatorStrategyConfig,
-				Breaker:   *breakerStrategyConfig,
-				Service:   "noService",
+				DefaultActivator: *activatorStrategyConfig,
+				Breakers:         []kubervisorapiv1.BreakerStrategy{*breakerStrategyConfig},
+				Service:          "noService",
 			},
 		}
 
@@ -386,7 +387,7 @@ func TestController_Run(t *testing.T) {
 				return
 			}
 			oldkvs := ksvcToUpdate.DeepCopy()
-			ksvcToUpdate.Spec.Breaker.MinPodsAvailableCount = kubervisorapiv1.NewUInt(100)
+			ksvcToUpdate.Spec.Breakers[0].MinPodsAvailableCount = kubervisorapiv1.NewUInt(100)
 			ksvcToUpdate.Spec.Service = "svc2"
 			ksvcUpdated, err := ctrl.breakerClient.KubervisorV1().KubervisorServices("test-ns").Update(ksvcToUpdate)
 			if err != nil {
@@ -409,7 +410,7 @@ func TestController_Run(t *testing.T) {
 				return
 			}
 			oldkvs := ksvcToUpdate.DeepCopy()
-			ksvcToUpdate.Spec.Service = "unknownService"
+			ksvcToUpdate.Spec.Service = "unknown-service"
 			ksvcUpdated, err := ctrl.breakerClient.KubervisorV1().KubervisorServices("test-ns").Update(ksvcToUpdate)
 			if err != nil {
 				t.Fatalf("Can't update kubervisor service, err: %v", err)

@@ -1,10 +1,7 @@
 package activate
 
 import (
-	"fmt"
 	"time"
-
-	"github.com/amadeusitgroup/kubervisor/pkg/labeling"
 )
 
 //FactoryConfig parameters required for the creation of a Activator
@@ -24,18 +21,14 @@ func New(cfg FactoryConfig) (Activator, error) {
 		return cfg.customFactory(cfg)
 	}
 
-	augmentedSelector, errSelector := labeling.SelectorWithBreakerName(cfg.Selector, cfg.BreakerName)
-	if errSelector != nil {
-		return nil, fmt.Errorf("Can't build activator: %v", errSelector)
-	}
-
 	a := &ActivatorImpl{
+		kubervisorName:          cfg.KubervisorName,
+		breakerStrategyName:     cfg.BreakerStrategyName,
+		selector:                cfg.Selector,
 		activatorStrategyConfig: cfg.ActivatorStrategyConfig,
 		logger:                  cfg.Logger,
 		podControl:              cfg.PodControl,
 		podLister:               cfg.PodLister,
-		selectorConfig:          augmentedSelector,
-		breakerName:             cfg.BreakerName,
 		evaluationPeriod:        time.Second,
 	}
 	a.strategyApplier = a

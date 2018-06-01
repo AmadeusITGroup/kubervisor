@@ -44,8 +44,8 @@ func NewKubervisorService(name string) *v1.KubervisorService {
 			Name: name,
 		},
 		Spec: v1.KubervisorServiceSpec{
-			Activator: *v1.DefaultActivatorStrategy(&v1.ActivatorStrategy{}),
-			Breaker:   *v1.DefaultBreakerStrategy(&v1.BreakerStrategy{}),
+			DefaultActivator: *v1.DefaultActivatorStrategy(&v1.ActivatorStrategy{}),
+			Breakers:         []v1.BreakerStrategy{*v1.DefaultBreakerStrategy(&v1.BreakerStrategy{})},
 		},
 	}
 }
@@ -82,17 +82,17 @@ func CheckKubervisorServiceStatus(client versioned.Interface, name, namespace st
 			Warningf("cannot delete KubervisorService %s/%s: %v", namespace, name, err)
 			return err
 		}
-		if bc.Status.Breaker.NbPodsManaged != managed {
-			return fmt.Errorf("Bad managed count: expect %d got %d", managed, bc.Status.Breaker.NbPodsManaged)
+		if bc.Status.PodCounts.NbPodsManaged != managed {
+			return fmt.Errorf("Bad managed count: expect %d got %d", managed, bc.Status.PodCounts.NbPodsManaged)
 		}
-		if bc.Status.Breaker.NbPodsBreaked != breaked {
-			return fmt.Errorf("Bad breaked count: expect %d got %d", breaked, bc.Status.Breaker.NbPodsBreaked)
+		if bc.Status.PodCounts.NbPodsBreaked != breaked {
+			return fmt.Errorf("Bad breaked count: expect %d got %d", breaked, bc.Status.PodCounts.NbPodsBreaked)
 		}
-		if bc.Status.Breaker.NbPodsPaused != paused {
-			return fmt.Errorf("Bad paused count: expect %d got %d", paused, bc.Status.Breaker.NbPodsPaused)
+		if bc.Status.PodCounts.NbPodsPaused != paused {
+			return fmt.Errorf("Bad paused count: expect %d got %d", paused, bc.Status.PodCounts.NbPodsPaused)
 		}
-		if bc.Status.Breaker.NbPodsUnknown != unknown {
-			return fmt.Errorf("Bad unknown count: expect %d got %d", unknown, bc.Status.Breaker.NbPodsUnknown)
+		if bc.Status.PodCounts.NbPodsUnknown != unknown {
+			return fmt.Errorf("Bad unknown count: expect %d got %d", unknown, bc.Status.PodCounts.NbPodsUnknown)
 		}
 
 		return nil

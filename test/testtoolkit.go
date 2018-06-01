@@ -92,7 +92,7 @@ func (es *TestStepSequence) PassOnlyOnce(step int) {
 	es.steps[step].doneOnce = true
 }
 
-//PassOnlyOnce to be called when a step in the sequence is considered as passed qnd can't be passed a second time
+//PassAtLeastOnce to be called when a step in the sequence is considered as passed qnd can't be passed a second time
 func (es *TestStepSequence) PassAtLeastOnce(step int) {
 	defer func() {
 		if r := recover(); r != nil {
@@ -262,14 +262,14 @@ type TestPodControl struct {
 	Case                                     string
 	FailOnUndefinedFunc                      bool
 	InitBreakerAnnotationAndLabelFunc        func(name string, p *kapiv1.Pod) (*kapiv1.Pod, error)
-	UpdateBreakerAnnotationAndLabelFunc      func(name string, p *kapiv1.Pod) (*kapiv1.Pod, error)
+	UpdateBreakerAnnotationAndLabelFunc      func(name string, strategy string, p *kapiv1.Pod) (*kapiv1.Pod, error)
 	UpdateActivationLabelsAndAnnotationsFunc func(name string, p *kapiv1.Pod) (*kapiv1.Pod, error)
 	UpdatePauseLabelsAndAnnotationsFunc      func(name string, p *kapiv1.Pod) (*kapiv1.Pod, error)
 	RemoveBreakerAnnotationAndLabelFunc      func(p *kapiv1.Pod) (*kapiv1.Pod, error)
 	KillPodFunc                              func(name string, p *kapiv1.Pod) error
 }
 
-//UpdateBreakerAnnotationAndLabel fake implementation for podcontrol
+//InitBreakerAnnotationAndLabel fake implementation for podcontrol
 func (t *TestPodControl) InitBreakerAnnotationAndLabel(name string, p *kapiv1.Pod) (*kapiv1.Pod, error) {
 	if t.InitBreakerAnnotationAndLabelFunc != nil {
 		return t.InitBreakerAnnotationAndLabelFunc(name, p)
@@ -281,9 +281,9 @@ func (t *TestPodControl) InitBreakerAnnotationAndLabel(name string, p *kapiv1.Po
 }
 
 //UpdateBreakerAnnotationAndLabel fake implementation for podcontrol
-func (t *TestPodControl) UpdateBreakerAnnotationAndLabel(name string, p *kapiv1.Pod) (*kapiv1.Pod, error) {
+func (t *TestPodControl) UpdateBreakerAnnotationAndLabel(name string, strategy string, p *kapiv1.Pod) (*kapiv1.Pod, error) {
 	if t.UpdateBreakerAnnotationAndLabelFunc != nil {
-		return t.UpdateBreakerAnnotationAndLabelFunc(name, p)
+		return t.UpdateBreakerAnnotationAndLabelFunc(name, strategy, p)
 	}
 	if t.FailOnUndefinedFunc {
 		t.T.Errorf("UpdateBreakerAnnotationAndLabel should not be called in %s/%s", t.T.Name(), t.Case)

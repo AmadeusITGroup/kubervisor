@@ -35,11 +35,11 @@ func TestActivatorImpl_Run(t *testing.T) {
 	devlogger, _ := zap.NewDevelopment()
 
 	type fields struct {
-		activatorStrategyConfig v1.ActivatorStrategy
+		breakerName             string
 		selector                labels.Selector
+		activatorStrategyConfig v1.ActivatorStrategy
 		podLister               kv1.PodNamespaceLister
 		podControl              pod.ControlInterface
-		breakerName             string
 		logger                  *zap.Logger
 		strategyApplier         strategyApplier
 	}
@@ -96,11 +96,11 @@ func TestActivatorImpl_Run(t *testing.T) {
 			defer close(tt.stop)
 			sequence := test.NewTestSequence(t, testprefix+"/"+tt.name, tt.stepCount, tt.sequenceTimeout)
 			b := &ActivatorImpl{
+				kubervisorName:          tt.fields.breakerName,
+				selector:                tt.fields.selector,
 				activatorStrategyConfig: tt.fields.activatorStrategyConfig,
-				selectorConfig:          tt.fields.selector,
 				podLister:               tt.fields.podLister,
 				podControl:              tt.fields.podControl,
-				breakerName:             tt.fields.breakerName,
 				logger:                  tt.fields.logger,
 				evaluationPeriod:        20 * time.Millisecond,
 				strategyApplier:         tt.fields.strategyApplier,
@@ -122,11 +122,11 @@ func TestActivatorImpl_Run(t *testing.T) {
 func TestActivatorImpl_applyActivatorStrategy(t *testing.T) {
 	testprefix := t.Name()
 	type fields struct {
-		activatorStrategyConfig v1.ActivatorStrategy
+		breakerName             string
 		selector                labels.Selector
+		activatorStrategyConfig v1.ActivatorStrategy
 		podLister               kv1.PodNamespaceLister
 		podControl              pod.ControlInterface
-		breakerName             string
 		logger                  *zap.Logger
 	}
 
@@ -492,11 +492,11 @@ func TestActivatorImpl_applyActivatorStrategy(t *testing.T) {
 			}
 
 			b := &ActivatorImpl{
+				kubervisorName:          tt.fields.breakerName,
+				selector:                tt.fields.selector,
 				activatorStrategyConfig: tt.fields.activatorStrategyConfig,
-				selectorConfig:          tt.fields.selector,
 				podLister:               tt.fields.podLister,
 				podControl:              tt.fields.podControl,
-				breakerName:             tt.fields.breakerName,
 				logger:                  tt.fields.logger,
 			}
 
@@ -533,8 +533,8 @@ func TestActivatorImpl_CompareConfig(t *testing.T) {
 				config: FactoryConfig{
 					Config: Config{
 						ActivatorStrategyConfig: *v1.DefaultActivatorStrategy(&v1.ActivatorStrategy{}),
-						BreakerName:             "b1",
-						Selector:                labels.Set{"app": "test1"}.AsSelectorPreValidated(),
+						KubervisorName:          "b1",
+						Selector:                labels.Set{"app": "test1", labeling.LabelBreakerNameKey: "b1"}.AsSelectorPreValidated(),
 					},
 				},
 			},
@@ -550,7 +550,8 @@ func TestActivatorImpl_CompareConfig(t *testing.T) {
 				config: FactoryConfig{
 					Config: Config{
 						ActivatorStrategyConfig: *v1.DefaultActivatorStrategy(&v1.ActivatorStrategy{}),
-						Selector:                labels.Set{"app": "test1"}.AsSelectorPreValidated(),
+						KubervisorName:          "b1",
+						Selector:                labels.Set{"app": "test1", labeling.LabelBreakerNameKey: "b1"}.AsSelectorPreValidated(),
 					},
 				},
 			},
@@ -561,12 +562,13 @@ func TestActivatorImpl_CompareConfig(t *testing.T) {
 			want: false,
 		},
 		{
-			name: "similar",
+			name: "diff Strategy",
 			fields: fields{
 				config: FactoryConfig{
 					Config: Config{
 						ActivatorStrategyConfig: *v1.DefaultActivatorStrategy(&v1.ActivatorStrategy{}),
-						Selector:                labels.Set{"app": "test1"}.AsSelectorPreValidated(),
+						KubervisorName:          "b1",
+						Selector:                labels.Set{"app": "test1", labeling.LabelBreakerNameKey: "b1"}.AsSelectorPreValidated(),
 					},
 				},
 			},
