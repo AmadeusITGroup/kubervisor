@@ -52,7 +52,12 @@ function run() {
       sleep 0.5
     fi
     OFILE="$(mktemp -t $(basename $0).XXXXXX)"
-    script -q -c "$1" "$OFILE" 
+    if [ "${OSTYPE//[0-9.]/}" == "darwin" ]
+    then
+        script -q "$OFILE" $1
+    else
+        script -q -c "$1" "$OFILE"
+    fi
     r=$?    
     read -d '' -t "${timeout}" -n 10000 # clear stdin
     prompt
