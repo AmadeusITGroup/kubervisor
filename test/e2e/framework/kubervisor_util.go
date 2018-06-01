@@ -16,7 +16,7 @@ import (
 	kmetav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	clientset "k8s.io/client-go/kubernetes"
 
-	v1 "github.com/amadeusitgroup/kubervisor/pkg/api/kubervisor/v1alpha1"
+	api "github.com/amadeusitgroup/kubervisor/pkg/api/kubervisor/v1alpha1"
 	"github.com/amadeusitgroup/kubervisor/pkg/client/clientset/versioned"
 )
 
@@ -38,20 +38,20 @@ func BuildAndSetClients() (versioned.Interface, clientset.Interface) {
 }
 
 // NewKubervisorService return new instance of a KubervisorService
-func NewKubervisorService(name string) *v1.KubervisorService {
-	return &v1.KubervisorService{
+func NewKubervisorService(name string) *api.KubervisorService {
+	return &api.KubervisorService{
 		ObjectMeta: kmetav1.ObjectMeta{
 			Name: name,
 		},
-		Spec: v1.KubervisorServiceSpec{
-			DefaultActivator: *v1.DefaultActivatorStrategy(&v1.ActivatorStrategy{}),
-			Breakers:         []v1.BreakerStrategy{*v1.DefaultBreakerStrategy(&v1.BreakerStrategy{})},
+		Spec: api.KubervisorServiceSpec{
+			DefaultActivator: *api.DefaultActivatorStrategy(&api.ActivatorStrategy{}),
+			Breakers:         []api.BreakerStrategy{*api.DefaultBreakerStrategy(&api.BreakerStrategy{})},
 		},
 	}
 }
 
 // CreateKubervisorService is an higher order func that returns the func to create a KubervisorService
-func CreateKubervisorService(client versioned.Interface, bc *v1.KubervisorService, namespace string) func() error {
+func CreateKubervisorService(client versioned.Interface, bc *api.KubervisorService, namespace string) func() error {
 	return func() error {
 		if _, err := client.KubervisorV1alpha1().KubervisorServices(namespace).Create(bc); err != nil {
 			Warningf("cannot create KubervisorService %s/%s: %v", namespace, bc.Name, err)

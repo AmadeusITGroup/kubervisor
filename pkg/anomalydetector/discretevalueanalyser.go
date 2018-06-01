@@ -8,7 +8,7 @@ import (
 	"k8s.io/apimachinery/pkg/labels"
 	kv1 "k8s.io/client-go/listers/core/v1"
 
-	"github.com/amadeusitgroup/kubervisor/pkg/api/kubervisor/v1alpha1"
+	api "github.com/amadeusitgroup/kubervisor/pkg/api/kubervisor/v1alpha1"
 	"github.com/amadeusitgroup/kubervisor/pkg/labeling"
 	"github.com/amadeusitgroup/kubervisor/pkg/pod"
 )
@@ -27,7 +27,7 @@ var _ AnomalyDetector = &DiscreteValueOutOfListAnalyser{}
 
 //DiscreteValueOutOfListAnalyser anomalyDetector that check the ratio of good/bad value and return the pods that exceed a given threshold for that ratio
 type DiscreteValueOutOfListAnalyser struct {
-	v1alpha1.DiscreteValueOutOfList
+	api.DiscreteValueOutOfList
 	selector  labels.Selector
 	analyser  discreteValueAnalyser
 	podLister kv1.PodNamespaceLister

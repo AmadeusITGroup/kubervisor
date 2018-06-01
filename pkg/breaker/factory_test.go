@@ -3,7 +3,7 @@ package breaker
 import (
 	"testing"
 
-	v1 "github.com/amadeusitgroup/kubervisor/pkg/api/kubervisor/v1alpha1"
+	api "github.com/amadeusitgroup/kubervisor/pkg/api/kubervisor/v1alpha1"
 	"k8s.io/apimachinery/pkg/labels"
 )
 
@@ -13,7 +13,7 @@ type emptyCustomBreakerT struct {
 }
 
 func (e *emptyCustomBreakerT) Run(stop <-chan struct{}) {}
-func (e *emptyCustomBreakerT) CompareConfig(specConfig *v1.BreakerStrategy, specSelector labels.Selector) bool {
+func (e *emptyCustomBreakerT) CompareConfig(specConfig *api.BreakerStrategy, specSelector labels.Selector) bool {
 	return e.SimilarConfig
 }
 func (e *emptyCustomBreakerT) Name() string {
@@ -38,8 +38,8 @@ func TestNew(t *testing.T) {
 			args: args{
 				cfg: FactoryConfig{
 					Config: Config{
-						BreakerStrategyConfig: v1.BreakerStrategy{
-							DiscreteValueOutOfList: &v1.DiscreteValueOutOfList{
+						BreakerStrategyConfig: api.BreakerStrategy{
+							DiscreteValueOutOfList: &api.DiscreteValueOutOfList{
 								PromQL:            "query",
 								PrometheusService: "Service",
 								GoodValues:        []string{"ok"},

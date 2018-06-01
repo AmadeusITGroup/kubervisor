@@ -7,7 +7,7 @@ import (
 	"testing"
 	"time"
 
-	apiv1 "github.com/amadeusitgroup/kubervisor/pkg/api/kubervisor/v1alpha1"
+	api "github.com/amadeusitgroup/kubervisor/pkg/api/kubervisor/v1alpha1"
 	"github.com/amadeusitgroup/kubervisor/pkg/labeling"
 	test "github.com/amadeusitgroup/kubervisor/test"
 	"go.uber.org/zap"
@@ -54,11 +54,11 @@ func TestKubervisorServiceItemKeyFunc(t *testing.T) {
 }
 
 func TestKubervisorServiceItem_CompareWithSpec(t *testing.T) {
-	activatorStrategyConfig := apiv1.DefaultActivatorStrategy(&apiv1.ActivatorStrategy{})
-	breakerStrategyConfig := apiv1.DefaultBreakerStrategy(&apiv1.BreakerStrategy{
+	activatorStrategyConfig := api.DefaultActivatorStrategy(&api.ActivatorStrategy{})
+	breakerStrategyConfig := api.DefaultBreakerStrategy(&api.BreakerStrategy{
 		Name:      "aname",
 		Activator: activatorStrategyConfig,
-		DiscreteValueOutOfList: &apiv1.DiscreteValueOutOfList{
+		DiscreteValueOutOfList: &api.DiscreteValueOutOfList{
 			PromQL:            "query",
 			PrometheusService: "Service",
 			GoodValues:        []string{"ok"},
@@ -66,11 +66,11 @@ func TestKubervisorServiceItem_CompareWithSpec(t *testing.T) {
 			PodNameKey:        "podname",
 		},
 	})
-	bc := &apiv1.KubervisorService{
+	bc := &api.KubervisorService{
 		ObjectMeta: metav1.ObjectMeta{Name: "test-bc", Namespace: "test-ns"},
-		Spec: apiv1.KubervisorServiceSpec{
+		Spec: api.KubervisorServiceSpec{
 			DefaultActivator: *activatorStrategyConfig,
-			Breakers:         []apiv1.BreakerStrategy{*breakerStrategyConfig},
+			Breakers:         []api.BreakerStrategy{*breakerStrategyConfig},
 		},
 	}
 	cfg := &Config{
@@ -79,7 +79,7 @@ func TestKubervisorServiceItem_CompareWithSpec(t *testing.T) {
 	}
 
 	type args struct {
-		spec     *apiv1.KubervisorServiceSpec
+		spec     *api.KubervisorServiceSpec
 		selector labels.Selector
 	}
 	tests := []struct {
@@ -130,7 +130,7 @@ func TestKubervisorServiceItem_CompareWithSpec(t *testing.T) {
 			},
 			init: func() Interface {
 				bc2 := bc.DeepCopy()
-				bc2.Spec.DefaultActivator.Period = apiv1.NewFloat64(12.04)
+				bc2.Spec.DefaultActivator.Period = api.NewFloat64(12.04)
 				i, err := New(bc2, cfg)
 				if err != nil {
 					t.Fatalf("Factory did not return an Interface: %v", err)
@@ -150,7 +150,7 @@ func TestKubervisorServiceItem_CompareWithSpec(t *testing.T) {
 				bc2 := bc.DeepCopy()
 				secondStrategy := breakerStrategyConfig.DeepCopy()
 				secondStrategy.Name = "other"
-				bc2.Spec.Breakers = []apiv1.BreakerStrategy{*breakerStrategyConfig, *secondStrategy}
+				bc2.Spec.Breakers = []api.BreakerStrategy{*breakerStrategyConfig, *secondStrategy}
 				i, err := New(bc2, cfg)
 				if err != nil {
 					t.Fatalf("Factory did not return an Interface: %v", err)
@@ -213,11 +213,11 @@ func (f *fakeActivator) Run(stop <-chan struct{}) {
 	<-stop
 	f.addSequenceToken("S")
 }
-func (f *fakeActivator) CompareConfig(specStrategy *apiv1.ActivatorStrategy, specSelector labels.Selector) bool {
+func (f *fakeActivator) CompareConfig(specStrategy *api.ActivatorStrategy, specSelector labels.Selector) bool {
 	return true
 }
-func (f *fakeActivator) GetStatus() apiv1.PodCountStatus {
-	return apiv1.PodCountStatus{}
+func (f *fakeActivator) GetStatus() api.PodCountStatus {
+	return api.PodCountStatus{}
 }
 
 type fakeBreaker struct {
@@ -241,7 +241,7 @@ func (f *fakeBreaker) Run(stop <-chan struct{}) {
 	<-stop
 	f.addSequenceToken("S")
 }
-func (f *fakeBreaker) CompareConfig(specConfig *apiv1.BreakerStrategy, specSelector labels.Selector) bool {
+func (f *fakeBreaker) CompareConfig(specConfig *api.BreakerStrategy, specSelector labels.Selector) bool {
 	return true
 }
 func (f *fakeBreaker) Name() string { return "Name" }
@@ -350,7 +350,7 @@ func Test_GetStatus(t *testing.T) {
 	tests := []struct {
 		name   string
 		fields fields
-		want   apiv1.PodCountStatus
+		want   api.PodCountStatus
 	}{
 		{
 			name: "no pods",
@@ -361,7 +361,7 @@ func Test_GetStatus(t *testing.T) {
 					"test-ns",
 				),
 			},
-			want: apiv1.PodCountStatus{},
+			want: api.PodCountStatus{},
 		},
 		{
 			name: "various pods",
@@ -381,7 +381,7 @@ func Test_GetStatus(t *testing.T) {
 					"test-ns",
 				),
 			},
-			want: apiv1.PodCountStatus{
+			want: api.PodCountStatus{
 				NbPodsManaged: 4,
 				NbPodsBreaked: 1,
 				NbPodsPaused:  1,

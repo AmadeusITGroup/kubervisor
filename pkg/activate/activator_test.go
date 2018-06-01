@@ -11,7 +11,7 @@ import (
 	"k8s.io/apimachinery/pkg/labels"
 	kv1 "k8s.io/client-go/listers/core/v1"
 
-	"github.com/amadeusitgroup/kubervisor/pkg/api/kubervisor/v1alpha1"
+	api "github.com/amadeusitgroup/kubervisor/pkg/api/kubervisor/v1alpha1"
 	"github.com/amadeusitgroup/kubervisor/pkg/labeling"
 	"github.com/amadeusitgroup/kubervisor/pkg/pod"
 	test "github.com/amadeusitgroup/kubervisor/test"
@@ -37,7 +37,7 @@ func TestActivatorImpl_Run(t *testing.T) {
 	type fields struct {
 		breakerName             string
 		selector                labels.Selector
-		activatorStrategyConfig v1alpha1.ActivatorStrategy
+		activatorStrategyConfig api.ActivatorStrategy
 		podLister               kv1.PodNamespaceLister
 		podControl              pod.ControlInterface
 		logger                  *zap.Logger
@@ -56,8 +56,8 @@ func TestActivatorImpl_Run(t *testing.T) {
 		{
 			name: "2pods",
 			fields: fields{
-				activatorStrategyConfig: v1alpha1.ActivatorStrategy{
-					Period: v1alpha1.NewFloat64(0.05),
+				activatorStrategyConfig: api.ActivatorStrategy{
+					Period: api.NewFloat64(0.05),
 				},
 				selector: labels.SelectorFromSet(map[string]string{"app": "foo"}),
 				podLister: test.NewTestPodNamespaceLister(
@@ -124,7 +124,7 @@ func TestActivatorImpl_applyActivatorStrategy(t *testing.T) {
 	type fields struct {
 		breakerName             string
 		selector                labels.Selector
-		activatorStrategyConfig v1alpha1.ActivatorStrategy
+		activatorStrategyConfig api.ActivatorStrategy
 		podLister               kv1.PodNamespaceLister
 		podControl              pod.ControlInterface
 		logger                  *zap.Logger
@@ -154,9 +154,9 @@ func TestActivatorImpl_applyActivatorStrategy(t *testing.T) {
 		{
 			name: "periodic_not_trigerred",
 			fields: fields{
-				activatorStrategyConfig: v1alpha1.ActivatorStrategy{
-					Period: v1alpha1.NewFloat64(0.05),
-					Mode:   v1alpha1.ActivatorStrategyModePeriodic,
+				activatorStrategyConfig: api.ActivatorStrategy{
+					Period: api.NewFloat64(0.05),
+					Mode:   api.ActivatorStrategyModePeriodic,
 				},
 				podControl: &test.TestPodControl{
 					T:                   t,
@@ -176,9 +176,9 @@ func TestActivatorImpl_applyActivatorStrategy(t *testing.T) {
 		{
 			name: "periodic_with_error",
 			fields: fields{
-				activatorStrategyConfig: v1alpha1.ActivatorStrategy{
-					Period: v1alpha1.NewFloat64(0.05),
-					Mode:   v1alpha1.ActivatorStrategyModePeriodic,
+				activatorStrategyConfig: api.ActivatorStrategy{
+					Period: api.NewFloat64(0.05),
+					Mode:   api.ActivatorStrategyModePeriodic,
 				},
 				podControl: &test.TestPodControl{
 					T:                   t,
@@ -202,9 +202,9 @@ func TestActivatorImpl_applyActivatorStrategy(t *testing.T) {
 			name:     "periodic_fine",
 			sequence: test.NewTestSequence(t, testprefix+"/periodic_fine", 1, time.Second),
 			fields: fields{
-				activatorStrategyConfig: v1alpha1.ActivatorStrategy{
-					Period: v1alpha1.NewFloat64(0.05),
-					Mode:   v1alpha1.ActivatorStrategyModePeriodic,
+				activatorStrategyConfig: api.ActivatorStrategy{
+					Period: api.NewFloat64(0.05),
+					Mode:   api.ActivatorStrategyModePeriodic,
 				},
 				podControl: &test.TestPodControl{
 					T:                   t,
@@ -228,10 +228,10 @@ func TestActivatorImpl_applyActivatorStrategy(t *testing.T) {
 		{
 			name: "retryAndKill_kill_error",
 			fields: fields{
-				activatorStrategyConfig: v1alpha1.ActivatorStrategy{
-					Mode:          v1alpha1.ActivatorStrategyModeRetryAndKill,
-					MaxRetryCount: v1alpha1.NewUInt(3),
-					Period:        v1alpha1.NewFloat64(0.05),
+				activatorStrategyConfig: api.ActivatorStrategy{
+					Mode:          api.ActivatorStrategyModeRetryAndKill,
+					MaxRetryCount: api.NewUInt(3),
+					Period:        api.NewFloat64(0.05),
 				},
 				podControl: &test.TestPodControl{
 					T:                   t,
@@ -255,10 +255,10 @@ func TestActivatorImpl_applyActivatorStrategy(t *testing.T) {
 			name:     "retryAndKill_kill_fine",
 			sequence: test.NewTestSequence(t, testprefix+"/retryAndKill_kill_fine", 1, time.Second),
 			fields: fields{
-				activatorStrategyConfig: v1alpha1.ActivatorStrategy{
-					Period:        v1alpha1.NewFloat64(0.05),
-					Mode:          v1alpha1.ActivatorStrategyModeRetryAndKill,
-					MaxRetryCount: v1alpha1.NewUInt(3),
+				activatorStrategyConfig: api.ActivatorStrategy{
+					Period:        api.NewFloat64(0.05),
+					Mode:          api.ActivatorStrategyModeRetryAndKill,
+					MaxRetryCount: api.NewUInt(3),
 				},
 				podControl: &test.TestPodControl{
 					T:                   t,
@@ -282,10 +282,10 @@ func TestActivatorImpl_applyActivatorStrategy(t *testing.T) {
 		{
 			name: "retryAndKill_retry_error",
 			fields: fields{
-				activatorStrategyConfig: v1alpha1.ActivatorStrategy{
-					Period:        v1alpha1.NewFloat64(0.05),
-					Mode:          v1alpha1.ActivatorStrategyModeRetryAndKill,
-					MaxRetryCount: v1alpha1.NewUInt(3),
+				activatorStrategyConfig: api.ActivatorStrategy{
+					Period:        api.NewFloat64(0.05),
+					Mode:          api.ActivatorStrategyModeRetryAndKill,
+					MaxRetryCount: api.NewUInt(3),
 				},
 				podControl: &test.TestPodControl{
 					T:                   t,
@@ -309,10 +309,10 @@ func TestActivatorImpl_applyActivatorStrategy(t *testing.T) {
 			name:     "retryAndKill_retry_fine",
 			sequence: test.NewTestSequence(t, testprefix+"/retryAndKill_retry_fine", 1, time.Second),
 			fields: fields{
-				activatorStrategyConfig: v1alpha1.ActivatorStrategy{
-					Period:        v1alpha1.NewFloat64(0.05),
-					Mode:          v1alpha1.ActivatorStrategyModeRetryAndKill,
-					MaxRetryCount: v1alpha1.NewUInt(3),
+				activatorStrategyConfig: api.ActivatorStrategy{
+					Period:        api.NewFloat64(0.05),
+					Mode:          api.ActivatorStrategyModeRetryAndKill,
+					MaxRetryCount: api.NewUInt(3),
 				},
 				podControl: &test.TestPodControl{
 					T:                   t,
@@ -337,10 +337,10 @@ func TestActivatorImpl_applyActivatorStrategy(t *testing.T) {
 			name:     "retryAndPause_retry_fine",
 			sequence: test.NewTestSequence(t, testprefix+"/retryAndPause_retry_fine", 1, time.Second),
 			fields: fields{
-				activatorStrategyConfig: v1alpha1.ActivatorStrategy{
-					Period:        v1alpha1.NewFloat64(0.05),
-					Mode:          v1alpha1.ActivatorStrategyModeRetryAndPause,
-					MaxRetryCount: v1alpha1.NewUInt(3),
+				activatorStrategyConfig: api.ActivatorStrategy{
+					Period:        api.NewFloat64(0.05),
+					Mode:          api.ActivatorStrategyModeRetryAndPause,
+					MaxRetryCount: api.NewUInt(3),
 				},
 				podControl: &test.TestPodControl{
 					T:                   t,
@@ -365,10 +365,10 @@ func TestActivatorImpl_applyActivatorStrategy(t *testing.T) {
 			name:     "retryAndPause_retry_error",
 			sequence: test.NewTestSequence(t, testprefix+"/retryAndPause_retry_error", 1, time.Second),
 			fields: fields{
-				activatorStrategyConfig: v1alpha1.ActivatorStrategy{
-					Period:        v1alpha1.NewFloat64(0.05),
-					Mode:          v1alpha1.ActivatorStrategyModeRetryAndPause,
-					MaxRetryCount: v1alpha1.NewUInt(3),
+				activatorStrategyConfig: api.ActivatorStrategy{
+					Period:        api.NewFloat64(0.05),
+					Mode:          api.ActivatorStrategyModeRetryAndPause,
+					MaxRetryCount: api.NewUInt(3),
 				},
 				podControl: &test.TestPodControl{
 					T:                   t,
@@ -393,11 +393,11 @@ func TestActivatorImpl_applyActivatorStrategy(t *testing.T) {
 			name:     "retryAndPause_pause_error",
 			sequence: test.NewTestSequence(t, testprefix+"/retryAndPause_pause_error", 1, time.Second),
 			fields: fields{
-				activatorStrategyConfig: v1alpha1.ActivatorStrategy{
-					Period:        v1alpha1.NewFloat64(0.05),
-					Mode:          v1alpha1.ActivatorStrategyModeRetryAndPause,
-					MaxRetryCount: v1alpha1.NewUInt(3),
-					MaxPauseCount: v1alpha1.NewUInt(1),
+				activatorStrategyConfig: api.ActivatorStrategy{
+					Period:        api.NewFloat64(0.05),
+					Mode:          api.ActivatorStrategyModeRetryAndPause,
+					MaxRetryCount: api.NewUInt(3),
+					MaxPauseCount: api.NewUInt(1),
 				},
 				podControl: &test.TestPodControl{
 					T:                   t,
@@ -424,11 +424,11 @@ func TestActivatorImpl_applyActivatorStrategy(t *testing.T) {
 			name:     "retryAndPause_pause_fine",
 			sequence: test.NewTestSequence(t, testprefix+"/retryAndPause_pause_fine", 1, time.Second),
 			fields: fields{
-				activatorStrategyConfig: v1alpha1.ActivatorStrategy{
-					Mode:          v1alpha1.ActivatorStrategyModeRetryAndPause,
-					MaxRetryCount: v1alpha1.NewUInt(3),
-					MaxPauseCount: v1alpha1.NewUInt(1),
-					Period:        v1alpha1.NewFloat64(0.05),
+				activatorStrategyConfig: api.ActivatorStrategy{
+					Mode:          api.ActivatorStrategyModeRetryAndPause,
+					MaxRetryCount: api.NewUInt(3),
+					MaxPauseCount: api.NewUInt(1),
+					Period:        api.NewFloat64(0.05),
 				},
 				podControl: &test.TestPodControl{
 					T:                   t,
@@ -455,11 +455,11 @@ func TestActivatorImpl_applyActivatorStrategy(t *testing.T) {
 			name:     "retryAndPause_kill",
 			sequence: test.NewTestSequence(t, testprefix+"/retryAndPause_kill", 1, time.Second),
 			fields: fields{
-				activatorStrategyConfig: v1alpha1.ActivatorStrategy{
-					Mode:          v1alpha1.ActivatorStrategyModeRetryAndPause,
-					MaxRetryCount: v1alpha1.NewUInt(3),
-					MaxPauseCount: v1alpha1.NewUInt(0),
-					Period:        v1alpha1.NewFloat64(0.05),
+				activatorStrategyConfig: api.ActivatorStrategy{
+					Mode:          api.ActivatorStrategyModeRetryAndPause,
+					MaxRetryCount: api.NewUInt(3),
+					MaxPauseCount: api.NewUInt(0),
+					Period:        api.NewFloat64(0.05),
 				},
 				podControl: &test.TestPodControl{
 					T:                   t,
@@ -518,7 +518,7 @@ func TestActivatorImpl_CompareConfig(t *testing.T) {
 		config FactoryConfig
 	}
 	type args struct {
-		specStrategy *v1alpha1.ActivatorStrategy
+		specStrategy *api.ActivatorStrategy
 		specSelector labels.Selector
 	}
 	tests := []struct {
@@ -532,14 +532,14 @@ func TestActivatorImpl_CompareConfig(t *testing.T) {
 			fields: fields{
 				config: FactoryConfig{
 					Config: Config{
-						ActivatorStrategyConfig: *v1alpha1.DefaultActivatorStrategy(&v1alpha1.ActivatorStrategy{}),
+						ActivatorStrategyConfig: *api.DefaultActivatorStrategy(&api.ActivatorStrategy{}),
 						KubervisorName:          "b1",
 						Selector:                labels.Set{"app": "test1", labeling.LabelBreakerNameKey: "b1"}.AsSelectorPreValidated(),
 					},
 				},
 			},
 			args: args{
-				specStrategy: v1alpha1.DefaultActivatorStrategy(&v1alpha1.ActivatorStrategy{}),
+				specStrategy: api.DefaultActivatorStrategy(&api.ActivatorStrategy{}),
 				specSelector: labels.Set{"app": "test1"}.AsSelectorPreValidated(),
 			},
 			want: true,
@@ -549,14 +549,14 @@ func TestActivatorImpl_CompareConfig(t *testing.T) {
 			fields: fields{
 				config: FactoryConfig{
 					Config: Config{
-						ActivatorStrategyConfig: *v1alpha1.DefaultActivatorStrategy(&v1alpha1.ActivatorStrategy{}),
+						ActivatorStrategyConfig: *api.DefaultActivatorStrategy(&api.ActivatorStrategy{}),
 						KubervisorName:          "b1",
 						Selector:                labels.Set{"app": "test1", labeling.LabelBreakerNameKey: "b1"}.AsSelectorPreValidated(),
 					},
 				},
 			},
 			args: args{
-				specStrategy: v1alpha1.DefaultActivatorStrategy(&v1alpha1.ActivatorStrategy{}),
+				specStrategy: api.DefaultActivatorStrategy(&api.ActivatorStrategy{}),
 				specSelector: labels.Set{"app": "test2"}.AsSelectorPreValidated(),
 			},
 			want: false,
@@ -566,14 +566,14 @@ func TestActivatorImpl_CompareConfig(t *testing.T) {
 			fields: fields{
 				config: FactoryConfig{
 					Config: Config{
-						ActivatorStrategyConfig: *v1alpha1.DefaultActivatorStrategy(&v1alpha1.ActivatorStrategy{}),
+						ActivatorStrategyConfig: *api.DefaultActivatorStrategy(&api.ActivatorStrategy{}),
 						KubervisorName:          "b1",
 						Selector:                labels.Set{"app": "test1", labeling.LabelBreakerNameKey: "b1"}.AsSelectorPreValidated(),
 					},
 				},
 			},
 			args: args{
-				specStrategy: v1alpha1.DefaultActivatorStrategy(&v1alpha1.ActivatorStrategy{MaxPauseCount: v1alpha1.NewUInt(42)}),
+				specStrategy: api.DefaultActivatorStrategy(&api.ActivatorStrategy{MaxPauseCount: api.NewUInt(42)}),
 				specSelector: labels.Set{"app": "test1"}.AsSelectorPreValidated(),
 			},
 			want: false,

@@ -12,7 +12,7 @@ import (
 	"k8s.io/apimachinery/pkg/selection"
 	kv1 "k8s.io/client-go/listers/core/v1"
 
-	v1 "github.com/amadeusitgroup/kubervisor/pkg/api/kubervisor/v1alpha1"
+	api "github.com/amadeusitgroup/kubervisor/pkg/api/kubervisor/v1alpha1"
 	"github.com/amadeusitgroup/kubervisor/pkg/labeling"
 	"github.com/amadeusitgroup/kubervisor/pkg/pod"
 )
@@ -20,7 +20,7 @@ import (
 //Activator engine that check anomaly and relabel pods
 type Activator interface {
 	Run(stop <-chan struct{})
-	CompareConfig(specStrategy *v1.ActivatorStrategy, specSelector labels.Selector) bool
+	CompareConfig(specStrategy *api.ActivatorStrategy, specSelector labels.Selector) bool
 }
 
 //Config configuration required to create a Activator
@@ -28,7 +28,7 @@ type Config struct {
 	KubervisorName          string
 	BreakerStrategyName     string
 	Selector                labels.Selector
-	ActivatorStrategyConfig v1.ActivatorStrategy
+	ActivatorStrategyConfig api.ActivatorStrategy
 
 	PodLister  kv1.PodNamespaceLister
 	PodControl pod.ControlInterface
@@ -43,7 +43,7 @@ type ActivatorImpl struct {
 	kubervisorName          string
 	breakerStrategyName     string
 	selector                labels.Selector
-	activatorStrategyConfig v1.ActivatorStrategy
+	activatorStrategyConfig api.ActivatorStrategy
 
 	podLister  kv1.PodNamespaceLister
 	podControl pod.ControlInterface
@@ -86,7 +86,7 @@ func (b *ActivatorImpl) Run(stop <-chan struct{}) {
 }
 
 // CompareConfig used to compare the current config with the possible new spec
-func (b *ActivatorImpl) CompareConfig(specStrategy *v1.ActivatorStrategy, specSelector labels.Selector) bool {
+func (b *ActivatorImpl) CompareConfig(specStrategy *api.ActivatorStrategy, specSelector labels.Selector) bool {
 	if !apiequality.Semantic.DeepEqual(&b.activatorStrategyConfig, specStrategy) {
 		return false
 	}
@@ -108,14 +108,14 @@ func (b *ActivatorImpl) applyActivatorStrategy(p *kapiv1.Pod) error {
 	now := time.Now()
 
 	switch b.activatorStrategyConfig.Mode {
-	case v1.ActivatorStrategyModePeriodic:
+	case api.ActivatorStrategyModePeriodic:
 		retrytime := breakAt.Add(retryPeriod)
 		if retrytime.Before(now) {
 			if _, err := b.podControl.UpdateActivationLabelsAndAnnotations(b.kubervisorName, p); err != nil {
 				return err
 			}
 		}
-	case v1.ActivatorStrategyModeRetryAndKill:
+	case api.ActivatorStrategyModeRetryAndKill:
 		if retryCount > int(*b.activatorStrategyConfig.MaxRetryCount) {
 			return b.podControl.KillPod(b.kubervisorName, p)
 		}
@@ -126,7 +126,7 @@ func (b *ActivatorImpl) applyActivatorStrategy(p *kapiv1.Pod) error {
 				return err
 			}
 		}
-	case v1.ActivatorStrategyModeRetryAndPause:
+	case api.ActivatorStrategyModeRetryAndPause:
 		if retryCount > int(*b.activatorStrategyConfig.MaxRetryCount) {
 			rqTrafficPause, _ := labels.NewRequirement(labeling.LabelTrafficKey, selection.Equals, []string{string(labeling.LabelTrafficPause)})
 			withTrafficPauseSelector := b.selector.Add(*rqTrafficPause)

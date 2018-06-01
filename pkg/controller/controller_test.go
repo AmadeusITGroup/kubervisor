@@ -11,7 +11,7 @@ import (
 
 	"k8s.io/apimachinery/pkg/labels"
 
-	kubervisorapiv1 "github.com/amadeusitgroup/kubervisor/pkg/api/kubervisor/v1alpha1"
+	api "github.com/amadeusitgroup/kubervisor/pkg/api/kubervisor/v1alpha1"
 	bclient "github.com/amadeusitgroup/kubervisor/pkg/client/clientset/versioned"
 	"github.com/amadeusitgroup/kubervisor/pkg/client/clientset/versioned/fake"
 	"github.com/amadeusitgroup/kubervisor/pkg/labeling"
@@ -280,7 +280,7 @@ func newTestController(t *testing.T) *Controller {
 		nbWorker: 1,
 	}
 	ctrl := New(initializer)
-	ctrl.updateHandlerFunc = func(bc *kubervisorapiv1.KubervisorService) (*kubervisorapiv1.KubervisorService, error) {
+	ctrl.updateHandlerFunc = func(bc *api.KubervisorService) (*api.KubervisorService, error) {
 		ks, err := ctrl.breakerClient.Kubervisor().KubervisorServices(bc.Namespace).Update(bc)
 		ctrl.breakerInformer.Informer().GetStore().Add(bc)
 		ctrl.onAddKubervisorService(bc)
@@ -321,10 +321,10 @@ func TestController_Run(t *testing.T) {
 			return
 		}
 
-		activatorStrategyConfig := kubervisorapiv1.DefaultActivatorStrategy(&kubervisorapiv1.ActivatorStrategy{})
-		breakerStrategyConfig := &kubervisorapiv1.BreakerStrategy{ // Do not default to test the defaulting path.
+		activatorStrategyConfig := api.DefaultActivatorStrategy(&api.ActivatorStrategy{})
+		breakerStrategyConfig := &api.BreakerStrategy{ // Do not default to test the defaulting path.
 			Name: "strategy1",
-			DiscreteValueOutOfList: &kubervisorapiv1.DiscreteValueOutOfList{
+			DiscreteValueOutOfList: &api.DiscreteValueOutOfList{
 				PromQL:            "query",
 				PrometheusService: "Service",
 				GoodValues:        []string{"ok"},
@@ -332,19 +332,19 @@ func TestController_Run(t *testing.T) {
 				PodNameKey:        "podname",
 			},
 		}
-		bc := &kubervisorapiv1.KubervisorService{
+		bc := &api.KubervisorService{
 			ObjectMeta: metav1.ObjectMeta{Name: "test-bc", Namespace: "test-ns"},
-			Spec: kubervisorapiv1.KubervisorServiceSpec{
+			Spec: api.KubervisorServiceSpec{
 				DefaultActivator: *activatorStrategyConfig,
-				Breakers:         []kubervisorapiv1.BreakerStrategy{*breakerStrategyConfig},
+				Breakers:         []api.BreakerStrategy{*breakerStrategyConfig},
 				Service:          "svc1",
 			},
 		}
-		bcNoService := &kubervisorapiv1.KubervisorService{
+		bcNoService := &api.KubervisorService{
 			ObjectMeta: metav1.ObjectMeta{Name: "test-bc-noService", Namespace: "test-ns"},
-			Spec: kubervisorapiv1.KubervisorServiceSpec{
+			Spec: api.KubervisorServiceSpec{
 				DefaultActivator: *activatorStrategyConfig,
-				Breakers:         []kubervisorapiv1.BreakerStrategy{*breakerStrategyConfig},
+				Breakers:         []api.BreakerStrategy{*breakerStrategyConfig},
 				Service:          "noService",
 			},
 		}
@@ -387,7 +387,7 @@ func TestController_Run(t *testing.T) {
 				return
 			}
 			oldkvs := ksvcToUpdate.DeepCopy()
-			ksvcToUpdate.Spec.Breakers[0].MinPodsAvailableCount = kubervisorapiv1.NewUInt(100)
+			ksvcToUpdate.Spec.Breakers[0].MinPodsAvailableCount = api.NewUInt(100)
 			ksvcToUpdate.Spec.Service = "svc2"
 			ksvcUpdated, err := ctrl.breakerClient.KubervisorV1alpha1().KubervisorServices("test-ns").Update(ksvcToUpdate)
 			if err != nil {

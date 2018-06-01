@@ -16,7 +16,7 @@ import (
 	meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/tools/clientcmd"
 
-	v1 "github.com/amadeusitgroup/kubervisor/pkg/api/kubervisor/v1alpha1"
+	api "github.com/amadeusitgroup/kubervisor/pkg/api/kubervisor/v1alpha1"
 	kvclient "github.com/amadeusitgroup/kubervisor/pkg/client"
 )
 
@@ -61,7 +61,7 @@ func main() {
 		glog.Fatalf("Unable to init kubervisor.clientset from kubeconfig:%v", err)
 	}
 
-	var kvs *v1.KubervisorServiceList
+	var kvs *api.KubervisorServiceList
 	if kubervisorServicesName == "" {
 		kvs, err = kubervisorClient.KubervisorV1alpha1().KubervisorServices(namespace).List(meta_v1.ListOptions{})
 		if err != nil {
@@ -69,7 +69,7 @@ func main() {
 			return
 		}
 	} else {
-		kvs = &v1.KubervisorServiceList{}
+		kvs = &api.KubervisorServiceList{}
 		ks, err := kubervisorClient.KubervisorV1alpha1().KubervisorServices(namespace).Get(kubervisorServicesName, meta_v1.GetOptions{})
 		if err != nil {
 			if !apierrors.IsNotFound(err) {
@@ -96,7 +96,7 @@ func main() {
 	os.Exit(0)
 }
 
-func hasStatus(ks *v1.KubervisorService, conditionType v1.KubervisorServiceConditionType, status kapiv1.ConditionStatus) bool {
+func hasStatus(ks *api.KubervisorService, conditionType api.KubervisorServiceConditionType, status kapiv1.ConditionStatus) bool {
 	for _, cond := range ks.Status.Conditions {
 		if cond.Type == conditionType && cond.Status == status {
 			return true
@@ -109,23 +109,23 @@ func resourcesNotFound() {
 	fmt.Println("No resources found.")
 }
 
-func buildClusterStatus(ks *v1.KubervisorService) string {
+func buildClusterStatus(ks *api.KubervisorService) string {
 	status := []string{}
 
-	if hasStatus(ks, v1.KubervisorServiceRunning, kapiv1.ConditionTrue) {
-		status = append(status, string(v1.KubervisorServiceRunning))
-	} else if hasStatus(ks, v1.KubervisorServiceInitFailed, kapiv1.ConditionTrue) {
-		status = append(status, string(v1.KubervisorServiceInitFailed))
-	} else if hasStatus(ks, v1.KubeServiceNotAvailable, kapiv1.ConditionTrue) {
-		status = append(status, string(v1.KubeServiceNotAvailable))
-	} else if hasStatus(ks, v1.KubervisorServiceFailed, kapiv1.ConditionTrue) {
-		status = append(status, string(v1.KubervisorServiceFailed))
+	if hasStatus(ks, api.KubervisorServiceRunning, kapiv1.ConditionTrue) {
+		status = append(status, string(api.KubervisorServiceRunning))
+	} else if hasStatus(ks, api.KubervisorServiceInitFailed, kapiv1.ConditionTrue) {
+		status = append(status, string(api.KubervisorServiceInitFailed))
+	} else if hasStatus(ks, api.KubeServiceNotAvailable, kapiv1.ConditionTrue) {
+		status = append(status, string(api.KubeServiceNotAvailable))
+	} else if hasStatus(ks, api.KubervisorServiceFailed, kapiv1.ConditionTrue) {
+		status = append(status, string(api.KubervisorServiceFailed))
 	}
 
 	return strings.Join(status, "-")
 }
 
-func computeTableData(kvs *v1.KubervisorServiceList) [][]string {
+func computeTableData(kvs *api.KubervisorServiceList) [][]string {
 	data := [][]string{}
 	for _, ks := range kvs.Items {
 		status := buildClusterStatus(&ks)

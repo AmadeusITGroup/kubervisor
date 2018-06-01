@@ -16,25 +16,25 @@ import (
 	"github.com/golang/glog"
 
 	kubervisor "github.com/amadeusitgroup/kubervisor/pkg/api/kubervisor"
-	v1 "github.com/amadeusitgroup/kubervisor/pkg/api/kubervisor/v1alpha1"
+	api "github.com/amadeusitgroup/kubervisor/pkg/api/kubervisor/v1alpha1"
 	"github.com/amadeusitgroup/kubervisor/pkg/client/clientset/versioned"
 )
 
 // DefineKubervisorResources defines the  DefineKubervisor Resources as a k8s CR
 func DefineKubervisorResources(clientset apiextensionsclient.Interface) (*apiextensionsv1beta1.CustomResourceDefinition, error) {
-	kubervisorClusterResourceName := v1.ResourcePlural + "." + kubervisor.GroupName
+	kubervisorClusterResourceName := api.ResourcePlural + "." + kubervisor.GroupName
 	crd := &apiextensionsv1beta1.CustomResourceDefinition{
 		ObjectMeta: metav1.ObjectMeta{
 			Name: kubervisorClusterResourceName,
 		},
 		Spec: apiextensionsv1beta1.CustomResourceDefinitionSpec{
 			Group:   kubervisor.GroupName,
-			Version: v1.SchemeGroupVersion.Version,
+			Version: api.SchemeGroupVersion.Version,
 			Scope:   apiextensionsv1beta1.NamespaceScoped,
 			Names: apiextensionsv1beta1.CustomResourceDefinitionNames{
-				Plural:     v1.ResourcePlural,
-				Singular:   v1.ResourceSingular,
-				Kind:       reflect.TypeOf(v1.KubervisorService{}).Name(),
+				Plural:     api.ResourcePlural,
+				Singular:   api.ResourceSingular,
+				Kind:       reflect.TypeOf(api.KubervisorService{}).Name(),
 				ShortNames: []string{"rdc"},
 			},
 		},
@@ -78,12 +78,12 @@ func DefineKubervisorResources(clientset apiextensionsclient.Interface) (*apiext
 // NewClient builds and initializes a Client and a Scheme for RedisCluster CR
 func NewClient(cfg *rest.Config) (versioned.Interface, error) {
 	scheme := runtime.NewScheme()
-	if err := v1.AddToScheme(scheme); err != nil {
+	if err := api.AddToScheme(scheme); err != nil {
 		return nil, err
 	}
 
 	config := *cfg
-	config.GroupVersion = &v1.SchemeGroupVersion
+	config.GroupVersion = &api.SchemeGroupVersion
 	config.APIPath = "/apis"
 	config.ContentType = runtime.ContentTypeJSON
 	config.NegotiatedSerializer = serializer.DirectCodecFactory{CodecFactory: serializer.NewCodecFactory(scheme)}

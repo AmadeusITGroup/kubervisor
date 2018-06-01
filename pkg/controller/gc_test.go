@@ -13,7 +13,7 @@ import (
 	"k8s.io/client-go/tools/cache"
 
 	"github.com/amadeusitgroup/kubervisor/pkg/api/kubervisor"
-	v1 "github.com/amadeusitgroup/kubervisor/pkg/api/kubervisor/v1alpha1"
+	api "github.com/amadeusitgroup/kubervisor/pkg/api/kubervisor/v1alpha1"
 	"github.com/amadeusitgroup/kubervisor/pkg/client/clientset/versioned/fake"
 	"github.com/amadeusitgroup/kubervisor/pkg/client/informers/externalversions"
 	blisters "github.com/amadeusitgroup/kubervisor/pkg/client/listers/kubervisor/v1alpha1"
@@ -78,9 +78,9 @@ func Test_newGarbageCollector(t *testing.T) {
 
 func Test_garbageCollector_updateCounters(t *testing.T) {
 
-	ksvc := &v1.KubervisorService{}
+	ksvc := &api.KubervisorService{}
 	ksvc.Kind = "KubervisorService"
-	ksvc.APIVersion = kubervisor.GroupName + "/" + v1.SchemeGroupVersion.Version
+	ksvc.APIVersion = kubervisor.GroupName + "/" + api.SchemeGroupVersion.Version
 	ksvc.Name = "kkk"
 	ksvc.Namespace = "test-ns"
 

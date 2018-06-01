@@ -8,14 +8,14 @@ import (
 	kv1 "k8s.io/client-go/listers/core/v1"
 
 	activator "github.com/amadeusitgroup/kubervisor/pkg/activate"
-	apiv1 "github.com/amadeusitgroup/kubervisor/pkg/api/kubervisor/v1alpha1"
+	api "github.com/amadeusitgroup/kubervisor/pkg/api/kubervisor/v1alpha1"
 	"github.com/amadeusitgroup/kubervisor/pkg/breaker"
 	"github.com/amadeusitgroup/kubervisor/pkg/labeling"
 	"github.com/amadeusitgroup/kubervisor/pkg/pod"
 )
 
 // New return new KubervisorServiceItem instance
-func New(bc *apiv1.KubervisorService, cfg *Config) (Interface, error) {
+func New(bc *api.KubervisorService, cfg *Config) (Interface, error) {
 	if cfg.customFactory != nil {
 		return cfg.customFactory(bc, cfg)
 	}
@@ -105,6 +105,6 @@ type Config struct {
 }
 
 //Factory functor for Interface
-type Factory func(bc *apiv1.KubervisorService, cfg *Config) (Interface, error)
+type Factory func(bc *api.KubervisorService, cfg *Config) (Interface, error)
 
 var _ Factory = New

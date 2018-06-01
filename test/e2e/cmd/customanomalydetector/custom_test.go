@@ -6,7 +6,7 @@ import (
 	"time"
 
 	"github.com/amadeusitgroup/kubervisor/pkg/anomalydetector"
-	v1 "github.com/amadeusitgroup/kubervisor/pkg/api/kubervisor/v1alpha1"
+	api "github.com/amadeusitgroup/kubervisor/pkg/api/kubervisor/v1alpha1"
 	"github.com/amadeusitgroup/kubervisor/pkg/labeling"
 	"go.uber.org/zap"
 
@@ -31,7 +31,7 @@ func TestSerialization(t *testing.T) {
 
 	cfg := anomalydetector.FactoryConfig{
 		Config: anomalydetector.Config{
-			BreakerStrategyConfig: v1.BreakerStrategy{
+			BreakerStrategyConfig: api.BreakerStrategy{
 				CustomService: server.URL,
 			},
 		},
