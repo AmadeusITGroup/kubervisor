@@ -10,7 +10,7 @@ import (
 	kv1 "k8s.io/client-go/listers/core/v1"
 
 	"github.com/amadeusitgroup/kubervisor/pkg/anomalydetector"
-	"github.com/amadeusitgroup/kubervisor/pkg/api/kubervisor/v1"
+	api "github.com/amadeusitgroup/kubervisor/pkg/api/kubervisor/v1alpha1"
 	"github.com/amadeusitgroup/kubervisor/pkg/labeling"
 	"github.com/amadeusitgroup/kubervisor/pkg/pod"
 )
@@ -18,7 +18,7 @@ import (
 //Breaker engine that check anomaly and relabel pods
 type Breaker interface {
 	Run(stop <-chan struct{})
-	CompareConfig(specConfig *v1.BreakerStrategy, specSelector labels.Selector) bool
+	CompareConfig(specConfig *api.BreakerStrategy, specSelector labels.Selector) bool
 	Name() string
 }
 
@@ -27,7 +27,7 @@ type Config struct {
 	KubervisorName        string
 	StrategyName          string
 	Selector              labels.Selector
-	BreakerStrategyConfig v1.BreakerStrategy
+	BreakerStrategyConfig api.BreakerStrategy
 
 	PodLister  kv1.PodNamespaceLister
 	PodControl pod.ControlInterface
@@ -42,7 +42,7 @@ type breakerImpl struct {
 	kubervisorName        string
 	breakerStrategyName   string
 	selector              labels.Selector
-	breakerStrategyConfig v1.BreakerStrategy
+	breakerStrategyConfig api.BreakerStrategy
 
 	podLister  kv1.PodNamespaceLister
 	podControl pod.ControlInterface
@@ -101,7 +101,7 @@ func (b *breakerImpl) Run(stop <-chan struct{}) {
 }
 
 // CompareConfig used to compare the current config with a possible new spec config
-func (b *breakerImpl) CompareConfig(specConfig *v1.BreakerStrategy, specSelector labels.Selector) bool {
+func (b *breakerImpl) CompareConfig(specConfig *api.BreakerStrategy, specSelector labels.Selector) bool {
 	if !apiequality.Semantic.DeepEqual(&b.breakerStrategyConfig, specConfig) {
 		return false
 	}

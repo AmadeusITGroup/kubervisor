@@ -13,7 +13,7 @@ import (
 	// for test lisibility
 	gom "github.com/onsi/gomega"
 
-	"github.com/amadeusitgroup/kubervisor/pkg/api/kubervisor/v1"
+	api "github.com/amadeusitgroup/kubervisor/pkg/api/kubervisor/v1alpha1"
 	"github.com/amadeusitgroup/kubervisor/pkg/client/clientset/versioned"
 	"github.com/amadeusitgroup/kubervisor/test/e2e/framework"
 )
@@ -49,15 +49,15 @@ var _ = gink.Describe("KubervisorService CRUD", func() {
 		bc := framework.NewKubervisorService("busybreak")
 		bc.Spec.Service = "busybox"
 
-		breaker := v1.BreakerStrategy{}
+		breaker := api.BreakerStrategy{}
 		breaker.Name = "strategy1"
 		breaker.CustomService = "customanomalydetector." + testNs
 		breaker.DiscreteValueOutOfList = nil
-		breaker.MinPodsAvailableCount = v1.NewUInt(3)
-		breaker.EvaluationPeriod = v1.NewFloat64(1.0)
-		bc.Spec.Breakers = []v1.BreakerStrategy{breaker}
+		breaker.MinPodsAvailableCount = api.NewUInt(3)
+		breaker.EvaluationPeriod = api.NewFloat64(1.0)
+		bc.Spec.Breakers = []api.BreakerStrategy{breaker}
 
-		bc.Spec.DefaultActivator.Period = v1.NewFloat64(600.0)
+		bc.Spec.DefaultActivator.Period = api.NewFloat64(600.0)
 		gom.Eventually(framework.CreateKubervisorService(kubervisorClient, bc, testNs), "10s", "1s").ShouldNot(gom.HaveOccurred())
 		gom.Eventually(framework.IsKubervisorServiceCreated(kubervisorClient, bc.Name, testNs), "10s", "1s").ShouldNot(gom.HaveOccurred())
 		time.Sleep(10 * time.Second)

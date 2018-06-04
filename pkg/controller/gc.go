@@ -10,7 +10,7 @@ import (
 	"k8s.io/apimachinery/pkg/labels"
 	corev1listers "k8s.io/client-go/listers/core/v1"
 
-	blisters "github.com/amadeusitgroup/kubervisor/pkg/client/listers/kubervisor/v1"
+	blisters "github.com/amadeusitgroup/kubervisor/pkg/client/listers/kubervisor/v1alpha1"
 	"github.com/amadeusitgroup/kubervisor/pkg/labeling"
 	"github.com/amadeusitgroup/kubervisor/pkg/pod"
 )

@@ -9,11 +9,11 @@ import (
 	"github.com/prometheus/common/model"
 	"go.uber.org/zap"
 
-	"github.com/amadeusitgroup/kubervisor/pkg/api/kubervisor/v1"
+	api "github.com/amadeusitgroup/kubervisor/pkg/api/kubervisor/v1alpha1"
 )
 
 type promDiscreteValueOutOfListAnalyser struct {
-	config           v1.DiscreteValueOutOfList
+	config           api.DiscreteValueOutOfList
 	queyrAPI         promApi.API
 	logger           *zap.Logger
 	valueCheckerFunc func(value string) (ok bool)
@@ -59,7 +59,7 @@ func (p *promDiscreteValueOutOfListAnalyser) buildCounters(vector model.Vector) 
 }
 
 type promContinuousValueDeviationAnalyser struct {
-	config   v1.ContinuousValueDeviation
+	config   api.ContinuousValueDeviation
 	queryAPI promApi.API
 	logger   *zap.Logger
 }

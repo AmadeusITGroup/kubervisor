@@ -7,7 +7,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/amadeusitgroup/kubervisor/pkg/api/kubervisor/v1"
+	api "github.com/amadeusitgroup/kubervisor/pkg/api/kubervisor/v1alpha1"
 	promApi "github.com/prometheus/client_golang/api/prometheus/v1"
 	"github.com/prometheus/common/model"
 	"go.uber.org/zap"
@@ -15,7 +15,7 @@ import (
 
 func Test_promDiscreteValueOutOfListAnalyser_buildCounters(t *testing.T) {
 	type fields struct {
-		config           v1.DiscreteValueOutOfList
+		config           api.DiscreteValueOutOfList
 		logger           *zap.Logger
 		valueCheckerFunc func(value string) (ok bool)
 	}
@@ -31,7 +31,7 @@ func Test_promDiscreteValueOutOfListAnalyser_buildCounters(t *testing.T) {
 		{
 			name: "empty",
 			fields: fields{
-				config:           v1.DiscreteValueOutOfList{PodNameKey: "podname", Key: "code"},
+				config:           api.DiscreteValueOutOfList{PodNameKey: "podname", Key: "code"},
 				valueCheckerFunc: func(value string) bool { return ContainsString([]string{"200"}, value) },
 			},
 			args: args{
@@ -42,8 +42,8 @@ func Test_promDiscreteValueOutOfListAnalyser_buildCounters(t *testing.T) {
 		{
 			name: "one ok element; inclusion",
 			fields: fields{
-				config: *v1.DefaultDiscreteValueOutOfList(
-					&v1.DiscreteValueOutOfList{PodNameKey: "podname", Key: "code"}),
+				config: *api.DefaultDiscreteValueOutOfList(
+					&api.DiscreteValueOutOfList{PodNameKey: "podname", Key: "code"}),
 				valueCheckerFunc: func(value string) bool { return ContainsString([]string{"200"}, value) },
 			},
 			args: args{
@@ -59,8 +59,8 @@ func Test_promDiscreteValueOutOfListAnalyser_buildCounters(t *testing.T) {
 		{
 			name: "one ko element; inclusion",
 			fields: fields{
-				config: *v1.DefaultDiscreteValueOutOfList(
-					&v1.DiscreteValueOutOfList{PodNameKey: "podname", Key: "code"}),
+				config: *api.DefaultDiscreteValueOutOfList(
+					&api.DiscreteValueOutOfList{PodNameKey: "podname", Key: "code"}),
 				valueCheckerFunc: func(value string) bool { return ContainsString([]string{"200"}, value) },
 			},
 			args: args{
@@ -76,8 +76,8 @@ func Test_promDiscreteValueOutOfListAnalyser_buildCounters(t *testing.T) {
 		{
 			name: "one ok element; exclusion",
 			fields: fields{
-				config: *v1.DefaultDiscreteValueOutOfList(
-					&v1.DiscreteValueOutOfList{PodNameKey: "podname", Key: "code"}),
+				config: *api.DefaultDiscreteValueOutOfList(
+					&api.DiscreteValueOutOfList{PodNameKey: "podname", Key: "code"}),
 				valueCheckerFunc: func(value string) bool { return !ContainsString([]string{"500"}, value) },
 			},
 			args: args{
@@ -93,7 +93,7 @@ func Test_promDiscreteValueOutOfListAnalyser_buildCounters(t *testing.T) {
 		{
 			name: "one ko element; exclusion",
 			fields: fields{
-				config:           v1.DiscreteValueOutOfList{PodNameKey: "podname", Key: "code"},
+				config:           api.DiscreteValueOutOfList{PodNameKey: "podname", Key: "code"},
 				valueCheckerFunc: func(value string) bool { return !ContainsString([]string{"500"}, value) },
 			},
 			args: args{
@@ -109,7 +109,7 @@ func Test_promDiscreteValueOutOfListAnalyser_buildCounters(t *testing.T) {
 		{
 			name: "complex; inclusion",
 			fields: fields{
-				config:           v1.DiscreteValueOutOfList{PodNameKey: "podname", Key: "code"},
+				config:           api.DiscreteValueOutOfList{PodNameKey: "podname", Key: "code"},
 				valueCheckerFunc: func(value string) bool { return ContainsString([]string{"200"}, value) },
 			},
 			args: args{
@@ -159,7 +159,7 @@ func Test_promDiscreteValueOutOfListAnalyser_buildCounters(t *testing.T) {
 
 func Test_promDiscreteValueOutOfListAnalyser_doAnalysis(t *testing.T) {
 	type fields struct {
-		config           v1.DiscreteValueOutOfList
+		config           api.DiscreteValueOutOfList
 		qAPI             promApi.API
 		logger           *zap.Logger
 		valueCheckerFunc func(value string) (ok bool)
@@ -173,7 +173,7 @@ func Test_promDiscreteValueOutOfListAnalyser_doAnalysis(t *testing.T) {
 		{
 			name: "caseErrorQuery",
 			fields: fields{
-				config: v1.DiscreteValueOutOfList{},
+				config: api.DiscreteValueOutOfList{},
 				qAPI: &testPrometheusAPI{
 					err: fmt.Errorf("A prom Error"),
 				},
@@ -184,7 +184,7 @@ func Test_promDiscreteValueOutOfListAnalyser_doAnalysis(t *testing.T) {
 		{
 			name: "okEmpty",
 			fields: fields{
-				config: v1.DiscreteValueOutOfList{
+				config: api.DiscreteValueOutOfList{
 					PodNameKey: "pod",
 					Key:        "code",
 				},
@@ -199,7 +199,7 @@ func Test_promDiscreteValueOutOfListAnalyser_doAnalysis(t *testing.T) {
 		{
 			name: "badCast",
 			fields: fields{
-				config: v1.DiscreteValueOutOfList{
+				config: api.DiscreteValueOutOfList{
 					PodNameKey: "pod",
 				},
 				qAPI: &testPrometheusAPI{
@@ -254,7 +254,7 @@ func (tAPI *testPrometheusAPI) LabelValues(ctx context.Context, label string) (m
 
 func Test_promContinuousValueDeviationAnalyser_doAnalysis(t *testing.T) {
 	type fields struct {
-		config v1.ContinuousValueDeviation
+		config api.ContinuousValueDeviation
 		qAPI   promApi.API
 		logger *zap.Logger
 	}
@@ -267,7 +267,7 @@ func Test_promContinuousValueDeviationAnalyser_doAnalysis(t *testing.T) {
 		{
 			name: "caseErrorQuery",
 			fields: fields{
-				config: v1.ContinuousValueDeviation{},
+				config: api.ContinuousValueDeviation{},
 				qAPI: &testPrometheusAPI{
 					err: fmt.Errorf("A prom Error"),
 				},
@@ -278,13 +278,13 @@ func Test_promContinuousValueDeviationAnalyser_doAnalysis(t *testing.T) {
 		{
 			name: "podA",
 			fields: fields{
-				config: v1.ContinuousValueDeviation{
+				config: api.ContinuousValueDeviation{
 					PodNameKey: "pod",
 				},
 				qAPI: &testPrometheusAPI{
 					err: nil,
 					value: model.Vector([]*model.Sample{
-						&model.Sample{
+						{
 							Metric: model.Metric(model.LabelSet(map[model.LabelName]model.LabelValue{"pod": "podA"})),
 							Value:  model.SampleValue(42.0),
 						},
@@ -297,7 +297,7 @@ func Test_promContinuousValueDeviationAnalyser_doAnalysis(t *testing.T) {
 		{
 			name: "badCast",
 			fields: fields{
-				config: v1.ContinuousValueDeviation{
+				config: api.ContinuousValueDeviation{
 					PodNameKey: "pod",
 				},
 				qAPI: &testPrometheusAPI{

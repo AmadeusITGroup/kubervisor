@@ -7,7 +7,7 @@ import (
 	"go.uber.org/zap"
 	kapiv1 "k8s.io/api/core/v1"
 
-	"github.com/amadeusitgroup/kubervisor/pkg/api/kubervisor/v1"
+	api "github.com/amadeusitgroup/kubervisor/pkg/api/kubervisor/v1alpha1"
 )
 
 type emptyCustomAnomalyDetectorT struct {
@@ -57,8 +57,8 @@ func TestNew(t *testing.T) {
 					Config: Config{
 						Logger:    devLogger,
 						PodLister: nil,
-						BreakerStrategyConfig: v1.BreakerStrategy{
-							DiscreteValueOutOfList: &v1.DiscreteValueOutOfList{},
+						BreakerStrategyConfig: api.BreakerStrategy{
+							DiscreteValueOutOfList: &api.DiscreteValueOutOfList{},
 						},
 					},
 				},
@@ -73,9 +73,9 @@ func TestNew(t *testing.T) {
 					Config: Config{
 						Logger:    devLogger,
 						PodLister: nil,
-						BreakerStrategyConfig: v1.BreakerStrategy{
-							ContinuousValueDeviation: &v1.ContinuousValueDeviation{
-								MaxDeviationPercent: v1.NewFloat64(30.0),
+						BreakerStrategyConfig: api.BreakerStrategy{
+							ContinuousValueDeviation: &api.ContinuousValueDeviation{
+								MaxDeviationPercent: api.NewFloat64(30.0),
 								PodNameKey:          "pod",
 								PrometheusService:   "PrometheusService",
 								PromQL:              "fakeQuery",
@@ -94,9 +94,9 @@ func TestNew(t *testing.T) {
 					Config: Config{
 						Logger:    devLogger,
 						PodLister: nil,
-						BreakerStrategyConfig: v1.BreakerStrategy{
-							ContinuousValueDeviation: &v1.ContinuousValueDeviation{
-								MaxDeviationPercent: v1.NewFloat64(30.0),
+						BreakerStrategyConfig: api.BreakerStrategy{
+							ContinuousValueDeviation: &api.ContinuousValueDeviation{
+								MaxDeviationPercent: api.NewFloat64(30.0),
 								PodNameKey:          "pod",
 								PrometheusService:   "PrometheusService",
 							},
@@ -114,8 +114,8 @@ func TestNew(t *testing.T) {
 					Config: Config{
 						Logger:    devLogger,
 						PodLister: nil,
-						BreakerStrategyConfig: v1.BreakerStrategy{
-							ContinuousValueDeviation: &v1.ContinuousValueDeviation{},
+						BreakerStrategyConfig: api.BreakerStrategy{
+							ContinuousValueDeviation: &api.ContinuousValueDeviation{},
 						},
 					},
 				},
@@ -130,8 +130,8 @@ func TestNew(t *testing.T) {
 					Config: Config{
 						Logger:    devLogger,
 						PodLister: nil,
-						BreakerStrategyConfig: v1.BreakerStrategy{
-							DiscreteValueOutOfList: &v1.DiscreteValueOutOfList{
+						BreakerStrategyConfig: api.BreakerStrategy{
+							DiscreteValueOutOfList: &api.DiscreteValueOutOfList{
 								PromQL:            "fake query",
 								PrometheusService: "PrometheusService",
 								GoodValues:        []string{"1"},
@@ -152,8 +152,8 @@ func TestNew(t *testing.T) {
 					Config: Config{
 						Logger:    devLogger,
 						PodLister: nil,
-						BreakerStrategyConfig: v1.BreakerStrategy{
-							DiscreteValueOutOfList: &v1.DiscreteValueOutOfList{
+						BreakerStrategyConfig: api.BreakerStrategy{
+							DiscreteValueOutOfList: &api.DiscreteValueOutOfList{
 								PromQL:            "fake query",
 								PrometheusService: "PrometheusService",
 								BadValues:         []string{"0"},
@@ -174,7 +174,7 @@ func TestNew(t *testing.T) {
 					Config: Config{
 						Logger:    devLogger,
 						PodLister: nil,
-						BreakerStrategyConfig: v1.BreakerStrategy{
+						BreakerStrategyConfig: api.BreakerStrategy{
 							CustomService: "CustomURI",
 						},
 					},

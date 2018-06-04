@@ -5,7 +5,7 @@ import (
 	"testing"
 	"time"
 
-	apiv1 "github.com/amadeusitgroup/kubervisor/pkg/api/kubervisor/v1"
+	api "github.com/amadeusitgroup/kubervisor/pkg/api/kubervisor/v1alpha1"
 	kapiv1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
@@ -16,27 +16,27 @@ func TestUpdateStatusConditionServiceError(t *testing.T) {
 	msg := "service not found"
 
 	type args struct {
-		status     *apiv1.KubervisorServiceStatus
+		status     *api.KubervisorServiceStatus
 		msg        string
 		updatetime metav1.Time
 	}
 	tests := []struct {
 		name    string
 		args    args
-		want    *apiv1.KubervisorServiceStatus
+		want    *api.KubervisorServiceStatus
 		wantErr bool
 	}{
 		{
 			name: "add new condition",
 			args: args{
-				status: &apiv1.KubervisorServiceStatus{
-					Conditions: []apiv1.KubervisorServiceCondition{},
+				status: &api.KubervisorServiceStatus{
+					Conditions: []api.KubervisorServiceCondition{},
 				},
 				msg:        msg,
 				updatetime: now,
 			},
-			want: &apiv1.KubervisorServiceStatus{
-				Conditions: []apiv1.KubervisorServiceCondition{newStatusConditionServiceError(msg, now)},
+			want: &api.KubervisorServiceStatus{
+				Conditions: []api.KubervisorServiceCondition{newStatusConditionServiceError(msg, now)},
 			},
 			wantErr: false,
 		},
@@ -44,14 +44,14 @@ func TestUpdateStatusConditionServiceError(t *testing.T) {
 		{
 			name: "update condition",
 			args: args{
-				status: &apiv1.KubervisorServiceStatus{
-					Conditions: []apiv1.KubervisorServiceCondition{newStatusConditionServiceError(msg, pastTime)},
+				status: &api.KubervisorServiceStatus{
+					Conditions: []api.KubervisorServiceCondition{newStatusConditionServiceError(msg, pastTime)},
 				},
 				msg:        msg,
 				updatetime: now,
 			},
-			want: &apiv1.KubervisorServiceStatus{
-				Conditions: []apiv1.KubervisorServiceCondition{newStatusConditionServiceError(msg, now)},
+			want: &api.KubervisorServiceStatus{
+				Conditions: []api.KubervisorServiceCondition{newStatusConditionServiceError(msg, now)},
 			},
 			wantErr: false,
 		},
@@ -76,27 +76,27 @@ func TestUpdateStatusConditionInitFailure(t *testing.T) {
 	msg := "bad breaker config"
 
 	type args struct {
-		status     *apiv1.KubervisorServiceStatus
+		status     *api.KubervisorServiceStatus
 		msg        string
 		updatetime metav1.Time
 	}
 	tests := []struct {
 		name    string
 		args    args
-		want    *apiv1.KubervisorServiceStatus
+		want    *api.KubervisorServiceStatus
 		wantErr bool
 	}{
 		{
 			name: "add new condition",
 			args: args{
-				status: &apiv1.KubervisorServiceStatus{
-					Conditions: []apiv1.KubervisorServiceCondition{},
+				status: &api.KubervisorServiceStatus{
+					Conditions: []api.KubervisorServiceCondition{},
 				},
 				msg:        msg,
 				updatetime: now,
 			},
-			want: &apiv1.KubervisorServiceStatus{
-				Conditions: []apiv1.KubervisorServiceCondition{newStatusConditionInitFailed(msg, now)},
+			want: &api.KubervisorServiceStatus{
+				Conditions: []api.KubervisorServiceCondition{newStatusConditionInitFailed(msg, now)},
 			},
 			wantErr: false,
 		},
@@ -104,14 +104,14 @@ func TestUpdateStatusConditionInitFailure(t *testing.T) {
 		{
 			name: "update condition",
 			args: args{
-				status: &apiv1.KubervisorServiceStatus{
-					Conditions: []apiv1.KubervisorServiceCondition{newStatusConditionInitFailed(msg, pastTime)},
+				status: &api.KubervisorServiceStatus{
+					Conditions: []api.KubervisorServiceCondition{newStatusConditionInitFailed(msg, pastTime)},
 				},
 				msg:        msg,
 				updatetime: now,
 			},
-			want: &apiv1.KubervisorServiceStatus{
-				Conditions: []apiv1.KubervisorServiceCondition{newStatusConditionInitFailed(msg, now)},
+			want: &api.KubervisorServiceStatus{
+				Conditions: []api.KubervisorServiceCondition{newStatusConditionInitFailed(msg, now)},
 			},
 			wantErr: false,
 		},
@@ -140,29 +140,29 @@ func TestUpdateStatusConditionRunning(t *testing.T) {
 	initFailedConditionUpdated := updateStatusCondition(&initFailedCondition, kapiv1.ConditionFalse, now)
 
 	type args struct {
-		status     *apiv1.KubervisorServiceStatus
+		status     *api.KubervisorServiceStatus
 		msg        string
 		updatetime metav1.Time
 	}
 	tests := []struct {
 		name    string
 		args    args
-		want    *apiv1.KubervisorServiceStatus
+		want    *api.KubervisorServiceStatus
 		wantErr bool
 	}{
 		{
 			name: "add new condition",
 			args: args{
-				status: &apiv1.KubervisorServiceStatus{
-					Conditions: []apiv1.KubervisorServiceCondition{
+				status: &api.KubervisorServiceStatus{
+					Conditions: []api.KubervisorServiceCondition{
 						initFailedCondition,
 					},
 				},
 				msg:        msg,
 				updatetime: now,
 			},
-			want: &apiv1.KubervisorServiceStatus{
-				Conditions: []apiv1.KubervisorServiceCondition{
+			want: &api.KubervisorServiceStatus{
+				Conditions: []api.KubervisorServiceCondition{
 					initFailedConditionUpdated,
 					newStatusConditionRunning(msg, now),
 				},
@@ -172,14 +172,14 @@ func TestUpdateStatusConditionRunning(t *testing.T) {
 		{
 			name: "update condition",
 			args: args{
-				status: &apiv1.KubervisorServiceStatus{
-					Conditions: []apiv1.KubervisorServiceCondition{newStatusConditionRunning(msg, pastTime)},
+				status: &api.KubervisorServiceStatus{
+					Conditions: []api.KubervisorServiceCondition{newStatusConditionRunning(msg, pastTime)},
 				},
 				msg:        msg,
 				updatetime: now,
 			},
-			want: &apiv1.KubervisorServiceStatus{
-				Conditions: []apiv1.KubervisorServiceCondition{newStatusConditionRunning(msg, now)},
+			want: &api.KubervisorServiceStatus{
+				Conditions: []api.KubervisorServiceCondition{newStatusConditionRunning(msg, now)},
 			},
 			wantErr: false,
 		},
@@ -203,8 +203,8 @@ func Test_equalPodCountStatus(t *testing.T) {
 	t1 := metav1.Time{Time: time.Now()}
 
 	type args struct {
-		a apiv1.PodCountStatus
-		b apiv1.PodCountStatus
+		a api.PodCountStatus
+		b api.PodCountStatus
 	}
 	tests := []struct {
 		name string
@@ -214,12 +214,12 @@ func Test_equalPodCountStatus(t *testing.T) {
 		{
 			name: "equal",
 			args: args{
-				a: apiv1.PodCountStatus{
+				a: api.PodCountStatus{
 					LastProbeTime: t0,
 					NbPodsBreaked: 1,
 					NbPodsManaged: 10,
 				},
-				b: apiv1.PodCountStatus{
+				b: api.PodCountStatus{
 					LastProbeTime: t1,
 					NbPodsBreaked: 1,
 					NbPodsManaged: 10,
@@ -230,12 +230,12 @@ func Test_equalPodCountStatus(t *testing.T) {
 		{
 			name: "diff",
 			args: args{
-				a: apiv1.PodCountStatus{
+				a: api.PodCountStatus{
 					LastProbeTime: t0,
 					NbPodsBreaked: 1,
 					NbPodsManaged: 10,
 				},
-				b: apiv1.PodCountStatus{
+				b: api.PodCountStatus{
 					LastProbeTime: t1,
 					NbPodsBreaked: 0,
 					NbPodsManaged: 10,

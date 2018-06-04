@@ -27,7 +27,7 @@ SOFTWARE.
 package fake
 
 import (
-	kubervisor_v1 "github.com/amadeusitgroup/kubervisor/pkg/api/kubervisor/v1"
+	v1alpha1 "github.com/amadeusitgroup/kubervisor/pkg/api/kubervisor/v1alpha1"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	labels "k8s.io/apimachinery/pkg/labels"
 	schema "k8s.io/apimachinery/pkg/runtime/schema"
@@ -38,29 +38,29 @@ import (
 
 // FakeKubervisorServices implements KubervisorServiceInterface
 type FakeKubervisorServices struct {
-	Fake *FakeKubervisorV1
+	Fake *FakeKubervisorV1alpha1
 	ns   string
 }
 
-var kubervisorservicesResource = schema.GroupVersionResource{Group: "kubervisor.k8s.io", Version: "v1", Resource: "kubervisorservices"}
+var kubervisorservicesResource = schema.GroupVersionResource{Group: "kubervisor.k8s.io", Version: "v1alpha1", Resource: "kubervisorservices"}
 
-var kubervisorservicesKind = schema.GroupVersionKind{Group: "kubervisor.k8s.io", Version: "v1", Kind: "KubervisorService"}
+var kubervisorservicesKind = schema.GroupVersionKind{Group: "kubervisor.k8s.io", Version: "v1alpha1", Kind: "KubervisorService"}
 
 // Get takes name of the kubervisorService, and returns the corresponding kubervisorService object, and an error if there is any.
-func (c *FakeKubervisorServices) Get(name string, options v1.GetOptions) (result *kubervisor_v1.KubervisorService, err error) {
+func (c *FakeKubervisorServices) Get(name string, options v1.GetOptions) (result *v1alpha1.KubervisorService, err error) {
 	obj, err := c.Fake.
-		Invokes(testing.NewGetAction(kubervisorservicesResource, c.ns, name), &kubervisor_v1.KubervisorService{})
+		Invokes(testing.NewGetAction(kubervisorservicesResource, c.ns, name), &v1alpha1.KubervisorService{})
 
 	if obj == nil {
 		return nil, err
 	}
-	return obj.(*kubervisor_v1.KubervisorService), err
+	return obj.(*v1alpha1.KubervisorService), err
 }
 
 // List takes label and field selectors, and returns the list of KubervisorServices that match those selectors.
-func (c *FakeKubervisorServices) List(opts v1.ListOptions) (result *kubervisor_v1.KubervisorServiceList, err error) {
+func (c *FakeKubervisorServices) List(opts v1.ListOptions) (result *v1alpha1.KubervisorServiceList, err error) {
 	obj, err := c.Fake.
-		Invokes(testing.NewListAction(kubervisorservicesResource, kubervisorservicesKind, c.ns, opts), &kubervisor_v1.KubervisorServiceList{})
+		Invokes(testing.NewListAction(kubervisorservicesResource, kubervisorservicesKind, c.ns, opts), &v1alpha1.KubervisorServiceList{})
 
 	if obj == nil {
 		return nil, err
@@ -70,8 +70,8 @@ func (c *FakeKubervisorServices) List(opts v1.ListOptions) (result *kubervisor_v
 	if label == nil {
 		label = labels.Everything()
 	}
-	list := &kubervisor_v1.KubervisorServiceList{}
-	for _, item := range obj.(*kubervisor_v1.KubervisorServiceList).Items {
+	list := &v1alpha1.KubervisorServiceList{}
+	for _, item := range obj.(*v1alpha1.KubervisorServiceList).Items {
 		if label.Matches(labels.Set(item.Labels)) {
 			list.Items = append(list.Items, item)
 		}
@@ -87,31 +87,43 @@ func (c *FakeKubervisorServices) Watch(opts v1.ListOptions) (watch.Interface, er
 }
 
 // Create takes the representation of a kubervisorService and creates it.  Returns the server's representation of the kubervisorService, and an error, if there is any.
-func (c *FakeKubervisorServices) Create(kubervisorService *kubervisor_v1.KubervisorService) (result *kubervisor_v1.KubervisorService, err error) {
+func (c *FakeKubervisorServices) Create(kubervisorService *v1alpha1.KubervisorService) (result *v1alpha1.KubervisorService, err error) {
 	obj, err := c.Fake.
-		Invokes(testing.NewCreateAction(kubervisorservicesResource, c.ns, kubervisorService), &kubervisor_v1.KubervisorService{})
+		Invokes(testing.NewCreateAction(kubervisorservicesResource, c.ns, kubervisorService), &v1alpha1.KubervisorService{})
 
 	if obj == nil {
 		return nil, err
 	}
-	return obj.(*kubervisor_v1.KubervisorService), err
+	return obj.(*v1alpha1.KubervisorService), err
 }
 
 // Update takes the representation of a kubervisorService and updates it. Returns the server's representation of the kubervisorService, and an error, if there is any.
-func (c *FakeKubervisorServices) Update(kubervisorService *kubervisor_v1.KubervisorService) (result *kubervisor_v1.KubervisorService, err error) {
+func (c *FakeKubervisorServices) Update(kubervisorService *v1alpha1.KubervisorService) (result *v1alpha1.KubervisorService, err error) {
 	obj, err := c.Fake.
-		Invokes(testing.NewUpdateAction(kubervisorservicesResource, c.ns, kubervisorService), &kubervisor_v1.KubervisorService{})
+		Invokes(testing.NewUpdateAction(kubervisorservicesResource, c.ns, kubervisorService), &v1alpha1.KubervisorService{})
 
 	if obj == nil {
 		return nil, err
 	}
-	return obj.(*kubervisor_v1.KubervisorService), err
+	return obj.(*v1alpha1.KubervisorService), err
+}
+
+// UpdateStatus was generated because the type contains a Status member.
+// Add a +genclient:noStatus comment above the type to avoid generating UpdateStatus().
+func (c *FakeKubervisorServices) UpdateStatus(kubervisorService *v1alpha1.KubervisorService) (*v1alpha1.KubervisorService, error) {
+	obj, err := c.Fake.
+		Invokes(testing.NewUpdateSubresourceAction(kubervisorservicesResource, "status", c.ns, kubervisorService), &v1alpha1.KubervisorService{})
+
+	if obj == nil {
+		return nil, err
+	}
+	return obj.(*v1alpha1.KubervisorService), err
 }
 
 // Delete takes name of the kubervisorService and deletes it. Returns an error if one occurs.
 func (c *FakeKubervisorServices) Delete(name string, options *v1.DeleteOptions) error {
 	_, err := c.Fake.
-		Invokes(testing.NewDeleteAction(kubervisorservicesResource, c.ns, name), &kubervisor_v1.KubervisorService{})
+		Invokes(testing.NewDeleteAction(kubervisorservicesResource, c.ns, name), &v1alpha1.KubervisorService{})
 
 	return err
 }
@@ -120,17 +132,17 @@ func (c *FakeKubervisorServices) Delete(name string, options *v1.DeleteOptions) 
 func (c *FakeKubervisorServices) DeleteCollection(options *v1.DeleteOptions, listOptions v1.ListOptions) error {
 	action := testing.NewDeleteCollectionAction(kubervisorservicesResource, c.ns, listOptions)
 
-	_, err := c.Fake.Invokes(action, &kubervisor_v1.KubervisorServiceList{})
+	_, err := c.Fake.Invokes(action, &v1alpha1.KubervisorServiceList{})
 	return err
 }
 
 // Patch applies the patch and returns the patched kubervisorService.
-func (c *FakeKubervisorServices) Patch(name string, pt types.PatchType, data []byte, subresources ...string) (result *kubervisor_v1.KubervisorService, err error) {
+func (c *FakeKubervisorServices) Patch(name string, pt types.PatchType, data []byte, subresources ...string) (result *v1alpha1.KubervisorService, err error) {
 	obj, err := c.Fake.
-		Invokes(testing.NewPatchSubresourceAction(kubervisorservicesResource, c.ns, name, data, subresources...), &kubervisor_v1.KubervisorService{})
+		Invokes(testing.NewPatchSubresourceAction(kubervisorservicesResource, c.ns, name, data, subresources...), &v1alpha1.KubervisorService{})
 
 	if obj == nil {
 		return nil, err
 	}
-	return obj.(*kubervisor_v1.KubervisorService), err
+	return obj.(*v1alpha1.KubervisorService), err
 }

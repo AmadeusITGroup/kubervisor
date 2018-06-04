@@ -12,7 +12,7 @@ import (
 	kv1 "k8s.io/client-go/listers/core/v1"
 
 	"github.com/amadeusitgroup/kubervisor/pkg/anomalydetector"
-	"github.com/amadeusitgroup/kubervisor/pkg/api/kubervisor/v1"
+	api "github.com/amadeusitgroup/kubervisor/pkg/api/kubervisor/v1alpha1"
 	"github.com/amadeusitgroup/kubervisor/pkg/labeling"
 	"github.com/amadeusitgroup/kubervisor/pkg/pod"
 	test "github.com/amadeusitgroup/kubervisor/test"
@@ -20,7 +20,7 @@ import (
 
 func TestBreakerImpl_computeMinAvailablePods(t *testing.T) {
 	type fields struct {
-		breakerStrategyConfig v1.BreakerStrategy
+		breakerStrategyConfig api.BreakerStrategy
 	}
 	type args struct {
 		podUnderSelectorCount int
@@ -34,7 +34,7 @@ func TestBreakerImpl_computeMinAvailablePods(t *testing.T) {
 		{
 			name: "zero",
 			fields: fields{
-				breakerStrategyConfig: v1.BreakerStrategy{},
+				breakerStrategyConfig: api.BreakerStrategy{},
 			},
 			podUnderSelectorCount: 10,
 			want: 0,
@@ -42,8 +42,8 @@ func TestBreakerImpl_computeMinAvailablePods(t *testing.T) {
 		{
 			name: "count3",
 			fields: fields{
-				breakerStrategyConfig: v1.BreakerStrategy{
-					MinPodsAvailableCount: v1.NewUInt(3),
+				breakerStrategyConfig: api.BreakerStrategy{
+					MinPodsAvailableCount: api.NewUInt(3),
 				},
 			},
 			podUnderSelectorCount: 10,
@@ -52,8 +52,8 @@ func TestBreakerImpl_computeMinAvailablePods(t *testing.T) {
 		{
 			name: "ratio5",
 			fields: fields{
-				breakerStrategyConfig: v1.BreakerStrategy{
-					MinPodsAvailableRatio: v1.NewUInt(50),
+				breakerStrategyConfig: api.BreakerStrategy{
+					MinPodsAvailableRatio: api.NewUInt(50),
 				},
 			},
 			podUnderSelectorCount: 10,
@@ -62,9 +62,9 @@ func TestBreakerImpl_computeMinAvailablePods(t *testing.T) {
 		{
 			name: "ratio5count3",
 			fields: fields{
-				breakerStrategyConfig: v1.BreakerStrategy{
-					MinPodsAvailableCount: v1.NewUInt(3),
-					MinPodsAvailableRatio: v1.NewUInt(50),
+				breakerStrategyConfig: api.BreakerStrategy{
+					MinPodsAvailableCount: api.NewUInt(3),
+					MinPodsAvailableRatio: api.NewUInt(50),
 				},
 			},
 			podUnderSelectorCount: 10,
@@ -73,9 +73,9 @@ func TestBreakerImpl_computeMinAvailablePods(t *testing.T) {
 		{
 			name: "ratio5count8",
 			fields: fields{
-				breakerStrategyConfig: v1.BreakerStrategy{
-					MinPodsAvailableCount: v1.NewUInt(8),
-					MinPodsAvailableRatio: v1.NewUInt(50),
+				breakerStrategyConfig: api.BreakerStrategy{
+					MinPodsAvailableCount: api.NewUInt(8),
+					MinPodsAvailableRatio: api.NewUInt(50),
 				},
 			},
 			podUnderSelectorCount: 10,
@@ -109,7 +109,7 @@ func TestBreakerImpl_Run(t *testing.T) {
 
 	type fields struct {
 		breakerConfigName     string
-		breakerStrategyConfig v1.BreakerStrategy
+		breakerStrategyConfig api.BreakerStrategy
 		selector              labels.Selector
 		podLister             kv1.PodNamespaceLister
 		podControl            pod.ControlInterface
@@ -127,9 +127,9 @@ func TestBreakerImpl_Run(t *testing.T) {
 		{
 			name: "ok",
 			fields: fields{
-				breakerStrategyConfig: v1.BreakerStrategy{
-					EvaluationPeriod:      v1.NewFloat64(0.05),
-					MinPodsAvailableCount: v1.NewUInt(1),
+				breakerStrategyConfig: api.BreakerStrategy{
+					EvaluationPeriod:      api.NewFloat64(0.05),
+					MinPodsAvailableCount: api.NewUInt(1),
 				},
 				selector: labels.SelectorFromSet(map[string]string{"app": "foo"}),
 				podLister: test.NewTestPodNamespaceLister(
@@ -165,10 +165,10 @@ func TestBreakerImpl_Run(t *testing.T) {
 		{
 			name: "cutall",
 			fields: fields{
-				breakerStrategyConfig: v1.BreakerStrategy{
-					EvaluationPeriod:      v1.NewFloat64(0.05),
-					MinPodsAvailableCount: v1.NewUInt(0),
-					MinPodsAvailableRatio: v1.NewUInt(0),
+				breakerStrategyConfig: api.BreakerStrategy{
+					EvaluationPeriod:      api.NewFloat64(0.05),
+					MinPodsAvailableCount: api.NewUInt(0),
+					MinPodsAvailableRatio: api.NewUInt(0),
 				},
 				selector: labels.SelectorFromSet(map[string]string{"app": "foo"}),
 				podLister: test.NewTestPodNamespaceLister(
@@ -207,10 +207,10 @@ func TestBreakerImpl_Run(t *testing.T) {
 		{
 			name: "bigCount",
 			fields: fields{
-				breakerStrategyConfig: v1.BreakerStrategy{
-					EvaluationPeriod:      v1.NewFloat64(0.05),
-					MinPodsAvailableCount: v1.NewUInt(10),
-					MinPodsAvailableRatio: v1.NewUInt(0),
+				breakerStrategyConfig: api.BreakerStrategy{
+					EvaluationPeriod:      api.NewFloat64(0.05),
+					MinPodsAvailableCount: api.NewUInt(10),
+					MinPodsAvailableRatio: api.NewUInt(0),
 				},
 				selector: labels.SelectorFromSet(map[string]string{"app": "foo"}),
 				podLister: test.NewTestPodNamespaceLister(
@@ -242,10 +242,10 @@ func TestBreakerImpl_Run(t *testing.T) {
 		{
 			name: "0quota1cut2running",
 			fields: fields{
-				breakerStrategyConfig: v1.BreakerStrategy{
-					EvaluationPeriod:      v1.NewFloat64(0.05),
-					MinPodsAvailableCount: v1.NewUInt(0),
-					MinPodsAvailableRatio: v1.NewUInt(0),
+				breakerStrategyConfig: api.BreakerStrategy{
+					EvaluationPeriod:      api.NewFloat64(0.05),
+					MinPodsAvailableCount: api.NewUInt(0),
+					MinPodsAvailableRatio: api.NewUInt(0),
 				},
 				selector: labels.SelectorFromSet(map[string]string{"app": "foo"}),
 				podLister: test.NewTestPodNamespaceLister(
@@ -282,10 +282,10 @@ func TestBreakerImpl_Run(t *testing.T) {
 		{
 			name: "only1",
 			fields: fields{
-				breakerStrategyConfig: v1.BreakerStrategy{
-					EvaluationPeriod:      v1.NewFloat64(0.05),
-					MinPodsAvailableCount: v1.NewUInt(1),
-					MinPodsAvailableRatio: v1.NewUInt(0),
+				breakerStrategyConfig: api.BreakerStrategy{
+					EvaluationPeriod:      api.NewFloat64(0.05),
+					MinPodsAvailableCount: api.NewUInt(1),
+					MinPodsAvailableRatio: api.NewUInt(0),
 				},
 				selector: labels.SelectorFromSet(map[string]string{"app": "foo"}),
 				podLister: test.NewTestPodNamespaceLister(
@@ -372,7 +372,7 @@ func (t *testAnomalyDetector) GetPodsOutOfBounds() ([]*kapiv1.Pod, error) {
 func TestBreakerImpl_CompareConfig(t *testing.T) {
 	type fields struct {
 		breakerName           string
-		breakerStrategyConfig v1.BreakerStrategy
+		breakerStrategyConfig api.BreakerStrategy
 		selector              labels.Selector
 		podLister             kv1.PodNamespaceLister
 		podControl            pod.ControlInterface
@@ -380,7 +380,7 @@ func TestBreakerImpl_CompareConfig(t *testing.T) {
 		anomalyDetector       anomalydetector.AnomalyDetector
 	}
 	type args struct {
-		specConfig   *v1.BreakerStrategy
+		specConfig   *api.BreakerStrategy
 		specSelector labels.Selector
 	}
 	tests := []struct {
@@ -393,12 +393,12 @@ func TestBreakerImpl_CompareConfig(t *testing.T) {
 		{
 			name: "similar",
 			fields: fields{
-				breakerStrategyConfig: *v1.DefaultBreakerStrategy(&v1.BreakerStrategy{}),
+				breakerStrategyConfig: *api.DefaultBreakerStrategy(&api.BreakerStrategy{}),
 				breakerName:           "b1",
 				selector:              labels.Set{"app": "test1", labeling.LabelBreakerNameKey: "b1"}.AsSelectorPreValidated(),
 			},
 			args: args{
-				specConfig:   v1.DefaultBreakerStrategy(&v1.BreakerStrategy{}),
+				specConfig:   api.DefaultBreakerStrategy(&api.BreakerStrategy{}),
 				specSelector: labels.Set{"app": "test1"}.AsSelectorPreValidated(),
 			},
 			want: true,
@@ -406,12 +406,12 @@ func TestBreakerImpl_CompareConfig(t *testing.T) {
 		{
 			name: "different",
 			fields: fields{
-				breakerStrategyConfig: *v1.DefaultBreakerStrategy(&v1.BreakerStrategy{}),
+				breakerStrategyConfig: *api.DefaultBreakerStrategy(&api.BreakerStrategy{}),
 				breakerName:           "b1",
 				selector:              labels.Set{"app": "test1", labeling.LabelBreakerNameKey: "b1"}.AsSelectorPreValidated(),
 			},
 			args: args{
-				specConfig:   v1.DefaultBreakerStrategy(&v1.BreakerStrategy{EvaluationPeriod: v1.NewFloat64(42)}),
+				specConfig:   api.DefaultBreakerStrategy(&api.BreakerStrategy{EvaluationPeriod: api.NewFloat64(42)}),
 				specSelector: labels.Set{"app": "test1"}.AsSelectorPreValidated(),
 			},
 			want: false,
@@ -419,12 +419,12 @@ func TestBreakerImpl_CompareConfig(t *testing.T) {
 		{
 			name: "different labels",
 			fields: fields{
-				breakerStrategyConfig: *v1.DefaultBreakerStrategy(&v1.BreakerStrategy{}),
+				breakerStrategyConfig: *api.DefaultBreakerStrategy(&api.BreakerStrategy{}),
 				breakerName:           "b1",
 				selector:              labels.Set{"app": "test1", labeling.LabelBreakerNameKey: "b1"}.AsSelectorPreValidated(),
 			},
 			args: args{
-				specConfig:   v1.DefaultBreakerStrategy(&v1.BreakerStrategy{}),
+				specConfig:   api.DefaultBreakerStrategy(&api.BreakerStrategy{}),
 				specSelector: labels.Set{"app": "test2"}.AsSelectorPreValidated(),
 			},
 			want: false,

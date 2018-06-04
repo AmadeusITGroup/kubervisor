@@ -9,7 +9,7 @@ import (
 	"k8s.io/apimachinery/pkg/labels"
 	kv1 "k8s.io/client-go/listers/core/v1"
 
-	"github.com/amadeusitgroup/kubervisor/pkg/api/kubervisor/v1"
+	api "github.com/amadeusitgroup/kubervisor/pkg/api/kubervisor/v1alpha1"
 	"github.com/amadeusitgroup/kubervisor/pkg/labeling"
 	"github.com/amadeusitgroup/kubervisor/pkg/pod"
 )
@@ -24,7 +24,7 @@ type continuousValueAnalyser interface {
 
 //ContinuousValueDeviationAnalyser anomalyDetector that check the deviation of a continous value compare to average
 type ContinuousValueDeviationAnalyser struct {
-	v1.ContinuousValueDeviation
+	api.ContinuousValueDeviation
 	selector  labels.Selector
 	analyser  continuousValueAnalyser
 	podLister kv1.PodNamespaceLister

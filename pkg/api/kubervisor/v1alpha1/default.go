@@ -1,4 +1,4 @@
-package v1
+package v1alpha1
 
 // DefaultKubervisorService injecting default values for the struct
 func DefaultKubervisorService(item *KubervisorService) *KubervisorService {

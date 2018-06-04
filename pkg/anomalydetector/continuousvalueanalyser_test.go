@@ -10,7 +10,7 @@ import (
 	"k8s.io/apimachinery/pkg/labels"
 	kv1 "k8s.io/client-go/listers/core/v1"
 
-	"github.com/amadeusitgroup/kubervisor/pkg/api/kubervisor/v1"
+	api "github.com/amadeusitgroup/kubervisor/pkg/api/kubervisor/v1alpha1"
 	"github.com/amadeusitgroup/kubervisor/pkg/labeling"
 	test "github.com/amadeusitgroup/kubervisor/test"
 )
@@ -19,7 +19,7 @@ func TestContinuousValueDeviationAnalyser_GetPodsOutOfBounds(t *testing.T) {
 	devlogger, _ := zap.NewDevelopment()
 
 	type fields struct {
-		ContinuousValueDeviation v1.ContinuousValueDeviation
+		ContinuousValueDeviation api.ContinuousValueDeviation
 		selector                 labels.Selector
 		analyser                 continuousValueAnalyser
 		podLister                kv1.PodNamespaceLister
@@ -33,7 +33,7 @@ func TestContinuousValueDeviationAnalyser_GetPodsOutOfBounds(t *testing.T) {
 		{
 			name: "analysis error",
 			fields: fields{
-				ContinuousValueDeviation: *v1.DefaultContinuousValueDeviation(&v1.ContinuousValueDeviation{}),
+				ContinuousValueDeviation: *api.DefaultContinuousValueDeviation(&api.ContinuousValueDeviation{}),
 				selector:                 nil,
 				analyser:                 &testErrorContinuousValueAnalyser{},
 				podLister:                test.NewTestPodNamespaceLister(nil, "test-ns"),
@@ -44,7 +44,7 @@ func TestContinuousValueDeviationAnalyser_GetPodsOutOfBounds(t *testing.T) {
 		{
 			name: "no pod, no error",
 			fields: fields{
-				ContinuousValueDeviation: *v1.DefaultContinuousValueDeviation(&v1.ContinuousValueDeviation{}),
+				ContinuousValueDeviation: *api.DefaultContinuousValueDeviation(&api.ContinuousValueDeviation{}),
 				selector:                 labels.Everything(),
 				analyser: &testContinuousValueAnalyser{
 					deviationByPodName: deviationByPodName{},
@@ -57,7 +57,7 @@ func TestContinuousValueDeviationAnalyser_GetPodsOutOfBounds(t *testing.T) {
 		{
 			name: "bad selector",
 			fields: fields{
-				ContinuousValueDeviation: *v1.DefaultContinuousValueDeviation(&v1.ContinuousValueDeviation{}),
+				ContinuousValueDeviation: *api.DefaultContinuousValueDeviation(&api.ContinuousValueDeviation{}),
 				selector:                 labels.Nothing(),
 				analyser: &testContinuousValueAnalyser{
 					deviationByPodName: deviationByPodName{
@@ -80,7 +80,7 @@ func TestContinuousValueDeviationAnalyser_GetPodsOutOfBounds(t *testing.T) {
 		{
 			name: "no traffic label",
 			fields: fields{
-				ContinuousValueDeviation: *v1.DefaultContinuousValueDeviation(&v1.ContinuousValueDeviation{}),
+				ContinuousValueDeviation: *api.DefaultContinuousValueDeviation(&api.ContinuousValueDeviation{}),
 				selector:                 labels.Everything(),
 				analyser: &testContinuousValueAnalyser{
 					deviationByPodName: deviationByPodName{
@@ -102,7 +102,7 @@ func TestContinuousValueDeviationAnalyser_GetPodsOutOfBounds(t *testing.T) {
 		{
 			name: "deviation by 70%",
 			fields: fields{
-				ContinuousValueDeviation: *v1.DefaultContinuousValueDeviation(&v1.ContinuousValueDeviation{MaxDeviationPercent: v1.NewFloat64(50.0)}),
+				ContinuousValueDeviation: *api.DefaultContinuousValueDeviation(&api.ContinuousValueDeviation{MaxDeviationPercent: api.NewFloat64(50.0)}),
 				selector:                 labels.Everything(),
 				analyser: &testContinuousValueAnalyser{
 					deviationByPodName: deviationByPodName{

@@ -6,7 +6,7 @@ import (
 	promClient "github.com/prometheus/client_golang/api"
 	promApi "github.com/prometheus/client_golang/api/prometheus/v1"
 
-	"github.com/amadeusitgroup/kubervisor/pkg/api/kubervisor/v1"
+	api "github.com/amadeusitgroup/kubervisor/pkg/api/kubervisor/v1alpha1"
 )
 
 //FactoryConfig parameters extended with factory features
@@ -49,7 +49,7 @@ func newCustomAnalyser(cfg Config) (*CustomAnomalyDetector, error) {
 func newDiscreteValueOutOfListAnalyser(cfg Config) (*DiscreteValueOutOfListAnalyser, error) {
 	analyserCfg := *cfg.BreakerStrategyConfig.DiscreteValueOutOfList
 
-	if err := v1.ValidateDiscreteValueOutOfList(analyserCfg); err != nil {
+	if err := api.ValidateDiscreteValueOutOfList(analyserCfg); err != nil {
 		return nil, err
 	}
 
@@ -82,7 +82,7 @@ func newDiscreteValueOutOfListAnalyser(cfg Config) (*DiscreteValueOutOfListAnaly
 func newContinuousValueDeviation(cfg Config) (*ContinuousValueDeviationAnalyser, error) {
 	analyserCfg := *cfg.BreakerStrategyConfig.ContinuousValueDeviation
 
-	if err := v1.ValidateContinuousValueDeviation(analyserCfg); err != nil {
+	if err := api.ValidateContinuousValueDeviation(analyserCfg); err != nil {
 		return nil, err
 	}
 	a := &ContinuousValueDeviationAnalyser{ContinuousValueDeviation: analyserCfg, selector: cfg.Selector, podLister: cfg.PodLister, logger: cfg.Logger}

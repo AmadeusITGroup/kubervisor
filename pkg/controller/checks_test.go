@@ -4,7 +4,7 @@ import (
 	"context"
 	"testing"
 
-	kubervisorapi "github.com/amadeusitgroup/kubervisor/pkg/api/kubervisor/v1"
+	api "github.com/amadeusitgroup/kubervisor/pkg/api/kubervisor/v1alpha1"
 	"github.com/amadeusitgroup/kubervisor/pkg/controller/item"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -16,8 +16,8 @@ type testInterface struct {
 	namespace           string
 	StartFunc           func(ctx context.Context)
 	StopFunc            func() error
-	CompareWithSpecFunc func(spec *kubervisorapi.KubervisorServiceSpec, selector labels.Selector) bool
-	GetStatusFunc       func() kubervisorapi.PodCountStatus
+	CompareWithSpecFunc func(spec *api.KubervisorServiceSpec, selector labels.Selector) bool
+	GetStatusFunc       func() api.PodCountStatus
 }
 
 func (ei *testInterface) Name() string {
@@ -38,22 +38,22 @@ func (ei *testInterface) Stop() error {
 	}
 	return nil
 }
-func (ei *testInterface) CompareWithSpec(spec *kubervisorapi.KubervisorServiceSpec, selector labels.Selector) bool {
+func (ei *testInterface) CompareWithSpec(spec *api.KubervisorServiceSpec, selector labels.Selector) bool {
 	if ei.CompareWithSpecFunc != nil {
 		return ei.CompareWithSpecFunc(spec, selector)
 	}
 	return true
 }
-func (ei *testInterface) GetStatus() kubervisorapi.PodCountStatus {
+func (ei *testInterface) GetStatus() api.PodCountStatus {
 	if ei.GetStatusFunc != nil {
 		return ei.GetStatusFunc()
 	}
-	return kubervisorapi.PodCountStatus{}
+	return api.PodCountStatus{}
 }
 
 func TestIsSpecUpdated(t *testing.T) {
 	type args struct {
-		bc  *kubervisorapi.KubervisorService
+		bc  *api.KubervisorService
 		svc *corev1.Service
 		bci item.Interface
 	}
@@ -65,9 +65,9 @@ func TestIsSpecUpdated(t *testing.T) {
 		{
 			name: "ok",
 			args: args{
-				bc: &kubervisorapi.KubervisorService{
+				bc: &api.KubervisorService{
 					ObjectMeta: metav1.ObjectMeta{Name: "test-bc", Namespace: "test-ns"},
-					Spec:       kubervisorapi.KubervisorServiceSpec{},
+					Spec:       api.KubervisorServiceSpec{},
 				},
 				svc: &corev1.Service{
 					ObjectMeta: metav1.ObjectMeta{Name: "test-svc", Namespace: "test-ns"},
@@ -76,7 +76,7 @@ func TestIsSpecUpdated(t *testing.T) {
 					},
 				},
 				bci: &testInterface{
-					CompareWithSpecFunc: func(spec *kubervisorapi.KubervisorServiceSpec, selector labels.Selector) bool { return true },
+					CompareWithSpecFunc: func(spec *api.KubervisorServiceSpec, selector labels.Selector) bool { return true },
 				},
 			},
 			want: true,

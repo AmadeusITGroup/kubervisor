@@ -3,7 +3,7 @@ package item
 import (
 	"testing"
 
-	apiv1 "github.com/amadeusitgroup/kubervisor/pkg/api/kubervisor/v1"
+	api "github.com/amadeusitgroup/kubervisor/pkg/api/kubervisor/v1alpha1"
 	test "github.com/amadeusitgroup/kubervisor/test"
 	kapiv1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -11,11 +11,11 @@ import (
 )
 
 func TestNew(t *testing.T) {
-	activatorStrategyConfig := apiv1.DefaultActivatorStrategy(&apiv1.ActivatorStrategy{})
-	breakerStrategyConfig := apiv1.DefaultBreakerStrategy(&apiv1.BreakerStrategy{
+	activatorStrategyConfig := api.DefaultActivatorStrategy(&api.ActivatorStrategy{})
+	breakerStrategyConfig := api.DefaultBreakerStrategy(&api.BreakerStrategy{
 		Name:      "aname",
 		Activator: activatorStrategyConfig,
-		DiscreteValueOutOfList: &apiv1.DiscreteValueOutOfList{
+		DiscreteValueOutOfList: &api.DiscreteValueOutOfList{
 			PromQL:            "query",
 			PrometheusService: "Service",
 			GoodValues:        []string{"ok"},
@@ -23,10 +23,10 @@ func TestNew(t *testing.T) {
 			PodNameKey:        "podname",
 		},
 	})
-	emptyBreakerStrategyConfig := apiv1.DefaultBreakerStrategy(&apiv1.BreakerStrategy{})
+	emptyBreakerStrategyConfig := api.DefaultBreakerStrategy(&api.BreakerStrategy{})
 
 	type args struct {
-		bc  *apiv1.KubervisorService
+		bc  *api.KubervisorService
 		cfg *Config
 	}
 	tests := []struct {
@@ -38,7 +38,7 @@ func TestNew(t *testing.T) {
 			name: "custom",
 			args: args{
 				cfg: &Config{
-					customFactory: func(bc *apiv1.KubervisorService, cfg *Config) (Interface, error) {
+					customFactory: func(bc *api.KubervisorService, cfg *Config) (Interface, error) {
 						return nil, nil
 					},
 				},
@@ -47,11 +47,11 @@ func TestNew(t *testing.T) {
 		{
 			name: "create simple KubervisorServiceItem",
 			args: args{
-				bc: &apiv1.KubervisorService{
+				bc: &api.KubervisorService{
 					ObjectMeta: metav1.ObjectMeta{Name: "test-bc", Namespace: "test-ns"},
-					Spec: apiv1.KubervisorServiceSpec{
+					Spec: api.KubervisorServiceSpec{
 						DefaultActivator: *activatorStrategyConfig,
-						Breakers:         []apiv1.BreakerStrategy{*breakerStrategyConfig},
+						Breakers:         []api.BreakerStrategy{*breakerStrategyConfig},
 					},
 				},
 				cfg: &Config{
@@ -64,11 +64,11 @@ func TestNew(t *testing.T) {
 		{
 			name: "error with activator factory",
 			args: args{
-				bc: &apiv1.KubervisorService{
+				bc: &api.KubervisorService{
 					ObjectMeta: metav1.ObjectMeta{Name: "test-!@#$%^&*()\nbc", Namespace: "test-ns"},
-					Spec: apiv1.KubervisorServiceSpec{
+					Spec: api.KubervisorServiceSpec{
 						DefaultActivator: *activatorStrategyConfig,
-						Breakers:         []apiv1.BreakerStrategy{*breakerStrategyConfig},
+						Breakers:         []api.BreakerStrategy{*breakerStrategyConfig},
 					},
 				},
 				cfg: &Config{
@@ -81,11 +81,11 @@ func TestNew(t *testing.T) {
 		{
 			name: "error with breaker factory",
 			args: args{
-				bc: &apiv1.KubervisorService{
+				bc: &api.KubervisorService{
 					ObjectMeta: metav1.ObjectMeta{Name: "test-bc", Namespace: "test-ns"},
-					Spec: apiv1.KubervisorServiceSpec{
+					Spec: api.KubervisorServiceSpec{
 						DefaultActivator: *activatorStrategyConfig,
-						Breakers:         []apiv1.BreakerStrategy{*emptyBreakerStrategyConfig},
+						Breakers:         []api.BreakerStrategy{*emptyBreakerStrategyConfig},
 					},
 				},
 				cfg: &Config{
