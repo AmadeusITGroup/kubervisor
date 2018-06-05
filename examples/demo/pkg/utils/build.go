@@ -5,20 +5,19 @@ import (
 	"time"
 )
 
-
-//BUILDTIME should be populated by at build time: -ldflags "-w -X github.com/amadeusitgroup/redis-operator/pkg/utils.BUILDTIME=${DATE}
+//BUILDTIME should be populated by at build time: -ldflags "-w -X github.com/amadeusitgroup/kubervisor/pkg/utils.BUILDTIME=${DATE}
 //with for example DATE=$(shell date +%Y-%m-%d/%H:%M:%S )   (pay attention not to use space!)
 var BUILDTIME string
 
-//TAG should be populated by at build time: -ldflags "-w -X github.com/amadeusitgroup/redis-operator/pkg/utils.TAG=${TAG}
+//TAG should be populated by at build time: -ldflags "-w -X github.com/amadeusitgroup/kubervisor/pkg/utils.TAG=${TAG}
 //with for example TAG=$(shell git tag|tail -1)
 var TAG string
 
-//COMMIT should be populated by at build time: -ldflags "-w -X github.com/amadeusitgroup/redis-operator/pkg/utils.COMMIT=${COMMIT}
+//COMMIT should be populated by at build time: -ldflags "-w -X github.com/amadeusitgroup/kubervisor/pkg/utils.COMMIT=${COMMIT}
 //with for example COMMIT=$(shell git rev-parse HEAD)
 var COMMIT string
 
-//BRANCH should be populated by at build time: -ldflags "-w -X github.com/amadeusitgroup/redis-operator/pkg/utils.BRANCH=${BRANCH}
+//BRANCH should be populated by at build time: -ldflags "-w -X github.com/amadeusitgroup/kubervisor/pkg/utils.BRANCH=${BRANCH}
 //with for example BRANCH=$(shell git rev-parse --abbrev-ref HEAD)
 var BRANCH string
 

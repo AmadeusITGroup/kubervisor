@@ -5,15 +5,15 @@ if [ -n "$1" ]
 then KUBE_CONFIG_PATH=$1
 fi
 
-REDIS_PLUGIN_BIN_NAME="kubectl-plugin"
-REDIS_PLUGIN_PATH=$KUBE_CONFIG_PATH/plugins/kubervisor
+KUBERVISOR_PLUGIN_BIN_NAME="kubectl-plugin"
+KUBERVISOR_PLUGIN_PATH=$KUBE_CONFIG_PATH/plugins/kubervisor
 
-mkdir -p $REDIS_PLUGIN_PATH
+mkdir -p $KUBERVISOR_PLUGIN_PATH
 
 GIT_ROOT=$(git rev-parse --show-toplevel)
-cp $GIT_ROOT/bin/$REDIS_PLUGIN_BIN_NAME $REDIS_PLUGIN_PATH/$REDIS_PLUGIN_BIN_NAME
+cp $GIT_ROOT/bin/$KUBERVISOR_PLUGIN_BIN_NAME $KUBERVISOR_PLUGIN_PATH/$KUBERVISOR_PLUGIN_BIN_NAME
 
-cat > $REDIS_PLUGIN_PATH/plugin.yaml << EOF1
+cat > $KUBERVISOR_PLUGIN_PATH/plugin.yaml << EOF1
 name: "kubervisor"
 shortDesc: "kubervisor shows kubervisor custom resources"
 longDesc: >

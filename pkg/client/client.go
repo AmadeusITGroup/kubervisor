@@ -75,7 +75,7 @@ func DefineKubervisorResources(clientset apiextensionsclient.Interface) (*apiext
 	return crd, nil
 }
 
-// NewClient builds and initializes a Client and a Scheme for RedisCluster CR
+// NewClient builds and initializes a Client and a Scheme for Kubervisor CR
 func NewClient(cfg *rest.Config) (versioned.Interface, error) {
 	scheme := runtime.NewScheme()
 	if err := api.AddToScheme(scheme); err != nil {

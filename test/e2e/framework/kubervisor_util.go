@@ -20,7 +20,7 @@ import (
 	"github.com/amadeusitgroup/kubervisor/pkg/client/clientset/versioned"
 )
 
-// BuildAndSetClients builds and initilize rediscluster and kube client
+// BuildAndSetClients builds and initilize Kubervisor and kube client
 func BuildAndSetClients() (versioned.Interface, clientset.Interface) {
 	f, err := NewFramework()
 	Ω(err).ShouldNot(HaveOccurred())
@@ -29,7 +29,7 @@ func BuildAndSetClients() (versioned.Interface, clientset.Interface) {
 	kubeClient, err := f.kubeClient()
 	Ω(err).ShouldNot(HaveOccurred())
 	Ω(kubeClient).ShouldNot(BeNil())
-	Logf("Check whether RedisCluster resource is registered...")
+	Logf("Check whether Kubervisor resource is registered...")
 
 	kubervisorClient, err := f.kubervisorClient()
 	Ω(err).ShouldNot(HaveOccurred())
