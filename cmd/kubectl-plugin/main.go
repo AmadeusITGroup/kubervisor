@@ -2,10 +2,10 @@ package main
 
 import (
 	"fmt"
-	"io/ioutil"
 	"log"
 	"os"
-	"os/exec"
+	"path/filepath"
+	"runtime"
 	"strings"
 
 	"github.com/golang/glog"
@@ -14,54 +14,44 @@ import (
 	kapiv1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	_ "k8s.io/client-go/plugin/pkg/client/auth"
+	_ "k8s.io/client-go/plugin/pkg/client/auth/gcp"
 	"k8s.io/client-go/tools/clientcmd"
+	clientcmdapi "k8s.io/client-go/tools/clientcmd/api"
 
 	api "github.com/amadeusitgroup/kubervisor/pkg/api/kubervisor/v1alpha1"
 	kvclient "github.com/amadeusitgroup/kubervisor/pkg/client"
 )
 
 func main() {
-	cmdBin := "kubectl"
-	if val := os.Getenv("KUBECTL_PLUGINS_CALLER"); val != "" {
-		cmdBin = val
-	}
-
-	namespace := "default"
-	if val := os.Getenv("KUBECTL_PLUGINS_CURRENT_NAMESPACE"); val != "" {
-		namespace = val
-	}
+	namespace := os.Getenv("KUBECTL_PLUGINS_CURRENT_NAMESPACE")
 
 	kubervisorServicesName := ""
 	if val := os.Getenv("KUBECTL_PLUGINS_LOCAL_FLAG_KS"); val != "" {
 		kubervisorServicesName = val
 	}
 
-	kubeConfigBytes, err := exec.Command(cmdBin, "config", "view").Output()
-	if err != nil {
-		log.Fatal(err)
+	kubeconfigFilePath := getKubeConfigDefaultPath(getHomePath())
+	if len(kubeconfigFilePath) == 0 {
+		log.Fatal("error initializing config. The KUBECONFIG environment variable must be defined.")
 	}
 
-	tmpConf, err := ioutil.TempFile("", "example")
+	config, err := configFromPath(kubeconfigFilePath)
 	if err != nil {
-		log.Fatal(err)
+		log.Fatalf("error obtaining kubectl config: %v", err)
 	}
 
-	defer os.Remove(tmpConf.Name()) // clean up
-	if _, err = tmpConf.Write(kubeConfigBytes); err != nil {
-		log.Fatal(err)
-	}
-	// use the current context in kubeconfig
-	kubeConfig, err := clientcmd.BuildConfigFromFlags("", tmpConf.Name())
+	rest, err := config.ClientConfig()
 	if err != nil {
-		panic(err.Error())
+		log.Fatalf(err.Error())
 	}
 
-	kubervisorClient, err := kvclient.NewClient(kubeConfig)
+	kubervisorClient, err := kvclient.NewClient(rest)
 	if err != nil {
 		glog.Fatalf("Unable to init kubervisor.clientset from kubeconfig:%v", err)
 	}
 
-	var kvs *api.KubervisorServiceList
+	kvs := &api.KubervisorServiceList{}
 	if kubervisorServicesName == "" {
 		kvs, err = kubervisorClient.KubervisorV1alpha1().KubervisorServices(namespace).List(meta_v1.ListOptions{})
 		if err != nil {
@@ -69,15 +59,13 @@ func main() {
 			return
 		}
 	} else {
-		kvs = &api.KubervisorServiceList{}
 		ks, err := kubervisorClient.KubervisorV1alpha1().KubervisorServices(namespace).Get(kubervisorServicesName, meta_v1.GetOptions{})
-		if err != nil {
-			if !apierrors.IsNotFound(err) {
-				fmt.Printf("unable to get kubervisorservice err:%v\n", err)
-				os.Exit(1)
-			}
-		} else {
+		if err == nil && ks != nil {
 			kvs.Items = append(kvs.Items, *ks)
+		}
+		if err != nil && !apierrors.IsNotFound(err) {
+			fmt.Printf("unable to get kubervisorservice err:%v\n", err)
+			os.Exit(1)
 		}
 	}
 
@@ -154,4 +142,56 @@ func newTable() *tablewriter.Table {
 	table.SetHeaderLine(false)
 
 	return table
+}
+
+func configFromPath(path string) (clientcmd.ClientConfig, error) {
+	rules := &clientcmd.ClientConfigLoadingRules{ExplicitPath: path}
+	credentials, err := rules.Load()
+	if err != nil {
+		return nil, fmt.Errorf("the provided credentials %q could not be loaded: %v", path, err)
+	}
+
+	overrides := &clientcmd.ConfigOverrides{
+		Context: clientcmdapi.Context{
+			Namespace: os.Getenv("KUBECTL_PLUGINS_GLOBAL_FLAG_NAMESPACE"),
+		},
+	}
+
+	context := os.Getenv("KUBECTL_PLUGINS_GLOBAL_FLAG_CONTEXT")
+	if len(context) > 0 {
+		rules := clientcmd.NewDefaultClientConfigLoadingRules()
+		return clientcmd.NewNonInteractiveClientConfig(*credentials, context, overrides, rules), nil
+	}
+	return clientcmd.NewDefaultClientConfig(*credentials, overrides), nil
+}
+
+func getHomePath() string {
+	home := os.Getenv("HOME")
+	if runtime.GOOS == "windows" {
+		home = os.Getenv("HOMEDRIVE") + os.Getenv("HOMEPATH")
+		if home == "" {
+			home = os.Getenv("USERPROFILE")
+		}
+	}
+
+	return home
+}
+
+func getKubeConfigDefaultPath(home string) string {
+	kubeconfig := filepath.Join(home, ".kube", "config")
+
+	kubeconfigEnv := os.Getenv("KUBECONFIG")
+	if len(kubeconfigEnv) > 0 {
+		kubeconfig = kubeconfigEnv
+	}
+
+	configFile := os.Getenv("KUBECTL_PLUGINS_GLOBAL_FLAG_CONFIG")
+	kubeConfigFile := os.Getenv("KUBECTL_PLUGINS_GLOBAL_FLAG_KUBECONFIG")
+	if len(configFile) > 0 {
+		kubeconfig = configFile
+	} else if len(kubeConfigFile) > 0 {
+		kubeconfig = kubeConfigFile
+	}
+
+	return kubeconfig
 }

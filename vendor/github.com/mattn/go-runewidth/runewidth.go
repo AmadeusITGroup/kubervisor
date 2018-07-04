@@ -1,23 +1,12 @@
 package runewidth
 
-import "os"
-
 var (
 	// EastAsianWidth will be set true if the current locale is CJK
-	EastAsianWidth bool
+	EastAsianWidth = IsEastAsian()
 
 	// DefaultCondition is a condition in current locale
 	DefaultCondition = &Condition{EastAsianWidth}
 )
-
-func init() {
-	env := os.Getenv("RUNEWIDTH_EASTASIAN")
-	if env == "" {
-		EastAsianWidth = IsEastAsian()
-	} else {
-		EastAsianWidth = env == "1"
-	}
-}
 
 type interval struct {
 	first rune
