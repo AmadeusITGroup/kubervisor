@@ -18,6 +18,7 @@ import (
 	"k8s.io/apimachinery/pkg/util/errors"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
 	"k8s.io/apimachinery/pkg/util/wait"
+
 	kubeinformers "k8s.io/client-go/informers"
 	clientset "k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/kubernetes/scheme"
@@ -26,7 +27,6 @@ import (
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/cache"
 	"k8s.io/client-go/tools/clientcmd"
-
 	"k8s.io/client-go/tools/leaderelection/resourcelock"
 	"k8s.io/client-go/tools/record"
 	"k8s.io/client-go/util/workqueue"
@@ -44,6 +44,7 @@ import (
 
 func init() {
 	prometheus.MustRegister(kubervisorGauges)
+	prometheus.MustRegister(itemGauges)
 }
 
 var (
@@ -59,7 +60,15 @@ var (
 			Name: "kubervisor_breaker_gauge",
 			Help: "Display Pod under kubervisor management",
 		},
-		[]string{"name", "type"}, // type={managed,breaked,paused,unknown}
+		[]string{"name", "namespace", "type"}, // type={managed,breaked,paused,unknown}
+	)
+
+	itemGauges = prometheus.NewGaugeVec(
+		prometheus.GaugeOpts{
+			Name: "kubervisor_item_gauge",
+			Help: "Display the number of KubervisorServices under kubervisor management",
+		},
+		[]string{"namespace"},
 	)
 )
 
@@ -308,6 +317,10 @@ func (ctrl *Controller) sync(key string) (bool, error) {
 	sharedKubervisorService, err := ctrl.breakerLister.KubervisorServices(namespace).Get(name)
 	if err != nil {
 		ctrl.Logger.Sugar().Errorf("unable to get KubervisorService %s/%s: %v. Maybe deleted", namespace, name, err)
+		// if the object has been deleted, clear prometheus Gauges
+		if apierrors.IsNotFound(err) {
+			ctrl.clearItem(name, namespace)
+		}
 		return false, nil
 	}
 
@@ -340,7 +353,7 @@ func (ctrl *Controller) sync(key string) (bool, error) {
 }
 
 func (ctrl *Controller) syncKubervisorService(bc *api.KubervisorService) (bool, error) {
-	key := fmt.Sprintf("%s/%s", bc.Namespace, bc.Name)
+	key := item.GetKey(bc.Namespace, bc.Name)
 	ctrl.Logger.Sugar().Debugf("syncKubervisorService %s", key)
 	now := metav1.Now()
 	// Init status.StartTime
@@ -376,7 +389,7 @@ func (ctrl *Controller) syncKubervisorService(bc *api.KubervisorService) (bool, 
 		var msg string
 		if exist {
 			bci.Stop()
-			if err2 := ctrl.items.Delete(bci); err != nil {
+			if err2 := ctrl.deleteItem(bci); err != nil {
 				return false, err2
 			}
 			msg = fmt.Sprintf("associated service %s/%s was deleted", bc.Namespace, bc.Spec.Service)
@@ -402,10 +415,10 @@ func (ctrl *Controller) syncKubervisorService(bc *api.KubervisorService) (bool, 
 	} else {
 		if IsSpecUpdated(bc, associatedSvc, bci) {
 			bci.Stop()
+			ctrl.deleteItem(bci)
 			if bci, err = ctrl.createItem(bc, associatedSvc, now); err != nil {
 				return false, err
 			}
-			ctrl.items.Update(bci)
 			bci.Start(ctrl.rootContext)
 		}
 	}
@@ -424,7 +437,7 @@ func (ctrl *Controller) syncKubervisorService(bc *api.KubervisorService) (bool, 
 	}
 
 	newStatus := bci.GetStatus()
-	updateGauge(bci.Name(), newStatus)
+	updateGauge(bci.Name(), bci.Namespace(), newStatus)
 	if bc.Status.PodCounts == nil || !equalPodCountStatus(newStatus, *bc.Status.PodCounts) {
 		bc.Status.PodCounts = &newStatus
 		//update status to running
@@ -433,11 +446,18 @@ func (ctrl *Controller) syncKubervisorService(bc *api.KubervisorService) (bool, 
 	return false, nil
 }
 
-func updateGauge(name string, status api.PodCountStatus) {
-	kubervisorGauges.WithLabelValues(name, "managed").Set(float64(status.NbPodsManaged))
-	kubervisorGauges.WithLabelValues(name, "breaked").Set(float64(status.NbPodsBreaked))
-	kubervisorGauges.WithLabelValues(name, "paused").Set(float64(status.NbPodsPaused))
-	kubervisorGauges.WithLabelValues(name, "unknown").Set(float64(status.NbPodsUnknown))
+func updateGauge(name string, namespace string, status api.PodCountStatus) {
+	kubervisorGauges.WithLabelValues(name, namespace, "managed").Set(float64(status.NbPodsManaged))
+	kubervisorGauges.WithLabelValues(name, namespace, "breaked").Set(float64(status.NbPodsBreaked))
+	kubervisorGauges.WithLabelValues(name, namespace, "paused").Set(float64(status.NbPodsPaused))
+	kubervisorGauges.WithLabelValues(name, namespace, "unknown").Set(float64(status.NbPodsUnknown))
+}
+
+func deleteGauge(name, namespace string) {
+	kubervisorGauges.DeleteLabelValues(name, namespace, "managed")
+	kubervisorGauges.DeleteLabelValues(name, namespace, "breaked")
+	kubervisorGauges.DeleteLabelValues(name, namespace, "paused")
+	kubervisorGauges.DeleteLabelValues(name, namespace, "unknown")
 }
 
 // Used to select all currently associated to the KubervisorService and check if it is still the case
@@ -531,11 +551,27 @@ func (ctrl *Controller) createItem(bc *api.KubervisorService, associatedSvc *api
 		ctrl.updateStatusCondition(bc, UpdateStatusConditionInitFailure, fmt.Sprintf("unable to create KubervisorServiceItem, err:%v", err), now)
 		return nil, err
 	}
-
 	//update status to running
 	ctrl.updateStatusCondition(bc, UpdateStatusConditionRunning, "", now)
-
+	itemGauges.WithLabelValues(bc.Namespace).Inc()
+	ctrl.items.Update(bci)
 	return bci, nil
+}
+
+func (ctrl *Controller) deleteItem(bci item.Interface) error {
+	itemGauges.WithLabelValues(bci.Namespace()).Dec()
+	deleteGauge(bci.Name(), bci.Namespace())
+	return ctrl.items.Delete(bci)
+}
+
+func (ctrl *Controller) clearItem(name, namespace string) {
+	obj, exist, err := ctrl.items.GetByKey(item.GetKey(namespace, name))
+	if err == nil && exist {
+		bci, ok := obj.(item.Interface)
+		if ok {
+			ctrl.deleteItem(bci)
+		}
+	}
 }
 
 func (ctrl *Controller) newKubervisorServiceItem(bc *api.KubervisorService, svc *apiv1.Service) (item.Interface, error) {
