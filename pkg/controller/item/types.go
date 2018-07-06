@@ -32,7 +32,12 @@ func KubervisorServiceItemKeyFunc(obj interface{}) (string, error) {
 		return "", fmt.Errorf("unable to return the key from obj: %v", obj)
 	}
 
-	return fmt.Sprintf("%s/%s", bci.Namespace(), bci.Name()), nil
+	return GetKey(bci.Namespace(), bci.Name()), nil
+}
+
+// GetKey return Item key from namespace name association
+func GetKey(namespace, name string) string {
+	return fmt.Sprintf("%s/%s", namespace, name)
 }
 
 // Interface item interface

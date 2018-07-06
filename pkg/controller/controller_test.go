@@ -1,6 +1,7 @@
 package controller
 
 import (
+	"context"
 	"fmt"
 	"net"
 	"net/http"
@@ -9,17 +10,19 @@ import (
 	"testing"
 	"time"
 
-	"k8s.io/apimachinery/pkg/labels"
-
 	api "github.com/amadeusitgroup/kubervisor/pkg/api/kubervisor/v1alpha1"
 	bclient "github.com/amadeusitgroup/kubervisor/pkg/client/clientset/versioned"
 	"github.com/amadeusitgroup/kubervisor/pkg/client/clientset/versioned/fake"
+	"github.com/amadeusitgroup/kubervisor/pkg/controller/item"
 	"github.com/amadeusitgroup/kubervisor/pkg/labeling"
 	"github.com/amadeusitgroup/kubervisor/pkg/pod"
 	test "github.com/amadeusitgroup/kubervisor/test"
+	"github.com/prometheus/client_golang/prometheus"
 	"go.uber.org/zap"
 	apiv1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/labels"
+
 	clientset "k8s.io/client-go/kubernetes"
 	kfakeclient "k8s.io/client-go/kubernetes/fake"
 )
@@ -202,7 +205,7 @@ func (i *testInitializer) HTTPServer() *http.Server {
 
 // GetFreePort asks the kernel for a free open port that is ready to use.
 func (i *testInitializer) getFreePort() (string, error) {
-	addr, err := net.ResolveTCPAddr("tcp", "localhost:0")
+	addr, err := net.ResolveTCPAddr("tcp", "0.0.0.0:0")
 	if err != nil {
 		return "", err
 	}
@@ -429,4 +432,111 @@ func TestController_Run(t *testing.T) {
 	if err := ctrl.Run(stop); err != nil {
 		t.Fatalf("Blank run fail with error: %s", err)
 	}
+}
+
+func Test_deleteGauge(t *testing.T) {
+
+	kubervisorGauges = prometheus.NewGaugeVec(
+		prometheus.GaugeOpts{
+			Name: "kubervisor_breaker_gauge",
+			Help: "Display Pod under kubervisor management",
+		},
+		[]string{"name", "namespace", "type"}, // type={managed,breaked,paused,unknown}
+	)
+
+	type args struct {
+		name      string
+		namespace string
+	}
+	tests := []struct {
+		name string
+		args args
+	}{
+		{
+			name: "value is not present",
+			args: args{"foo", "bar"},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			deleteGauge(tt.args.name, tt.args.namespace)
+		})
+	}
+}
+
+func TestController_clearItem(t *testing.T) {
+	type fields struct {
+		items     item.KubervisorServiceItemStore
+		itemsList []item.Interface
+	}
+	type args struct {
+		name      string
+		namespace string
+	}
+	tests := []struct {
+		name          string
+		fields        fields
+		args          args
+		wantItemsSize int
+	}{
+		{
+			name: "item exist",
+			fields: fields{
+				items:     item.NewBreackerConfigItemStore(),
+				itemsList: []item.Interface{&fakeItem{name: "foo", namespace: "bar"}},
+			},
+			args: args{
+				name:      "foo",
+				namespace: "bar",
+			},
+			wantItemsSize: 0,
+		},
+		{
+			name: "item doesnt exist",
+			fields: fields{
+				items:     item.NewBreackerConfigItemStore(),
+				itemsList: []item.Interface{&fakeItem{name: "bob", namespace: "bar"}},
+			},
+			args: args{
+				name:      "foo",
+				namespace: "bar",
+			},
+			wantItemsSize: 1,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			ctrl := &Controller{
+				items: tt.fields.items,
+			}
+			for _, item := range tt.fields.itemsList {
+				ctrl.items.Add(item)
+			}
+
+			ctrl.clearItem(tt.args.name, tt.args.namespace)
+			if size := len(ctrl.items.List()); size != tt.wantItemsSize {
+				t.Errorf("[%s] wrong ctrl.items size: %d, wanted:%d", tt.name, size, tt.wantItemsSize)
+			}
+		})
+	}
+}
+
+type fakeItem struct {
+	name      string
+	namespace string
+}
+
+func (f fakeItem) Name() string {
+	return f.name
+}
+func (f fakeItem) Namespace() string {
+	return f.namespace
+}
+func (f fakeItem) Start(ctx context.Context) {}
+func (f fakeItem) Stop() error               { return nil }
+func (f fakeItem) CompareWithSpec(spec *api.KubervisorServiceSpec, selector labels.Selector) bool {
+	return true
+}
+func (f fakeItem) GetStatus() api.PodCountStatus {
+	return api.PodCountStatus{}
 }
