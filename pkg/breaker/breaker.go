@@ -75,10 +75,26 @@ func (b *breakerImpl) Run(stop <-chan struct{}) {
 				continue
 			}
 
-			allPods, _ := b.podLister.List(b.selector)
-			runningPods := pod.KeepRunningPods(allPods)
-			readyPods := pod.PurgeNotReadyPods(runningPods)
-			withTraffic := pod.KeepWithTrafficYesPods(readyPods)
+			allPods, err := b.podLister.List(b.selector)
+			if err != nil {
+				b.logger.Sugar().Errorf("can't list pods, error: %v ", err)
+				continue
+			}
+			runningPods, err := pod.KeepRunningPods(allPods)
+			if err != nil {
+				b.logger.Sugar().Errorf("can't get running pods, error: %v ", err)
+				continue
+			}
+			readyPods, err := pod.PurgeNotReadyPods(runningPods)
+			if err != nil {
+				b.logger.Sugar().Errorf("can't purge not ready pods, error: %v ", err)
+				continue
+			}
+			withTraffic, err := pod.KeepWithTrafficYesPods(readyPods)
+			if err != nil {
+				b.logger.Sugar().Errorf("can't get pods with traffic, error: %v ", err)
+				continue
+			}
 			removeCount := len(withTraffic) - b.computeMinAvailablePods(len(withTraffic))
 
 			if removeCount > len(podsToCut) {
@@ -105,7 +121,10 @@ func (b *breakerImpl) CompareConfig(specConfig *api.BreakerStrategy, specSelecto
 	if !apiequality.Semantic.DeepEqual(&b.breakerStrategyConfig, specConfig) {
 		return false
 	}
-	s, _ := labeling.SelectorWithBreakerName(specSelector, b.kubervisorName)
+	s, err := labeling.SelectorWithBreakerName(specSelector, b.kubervisorName)
+	if err != nil {
+		b.logger.Sugar().Errorf("unable to create Selector with breaker name %s, error:%v", b.kubervisorName, err)
+	}
 	return reflect.DeepEqual(s, b.selector)
 
 }

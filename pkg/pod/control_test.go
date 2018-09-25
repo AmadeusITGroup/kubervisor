@@ -56,12 +56,12 @@ func TestControl_UpdateBreakerAnnotationAndLabel(t *testing.T) {
 		{
 			name: "update no Label",
 			fields: fields{
-				kubeClient: kfakeclient.NewSimpleClientset(test.PodGen("A", "test-ns", nil, true, true, "")),
+				kubeClient: kfakeclient.NewSimpleClientset(test.PodGen("A", "test-ns", nil, nil, true, true, "")),
 			},
 			args: args{
 				breakerConfigName: "mytestname",
 				breakerStrategy:   "strategy1",
-				inputPod:          test.PodGen("A", "test-ns", nil, true, true, ""),
+				inputPod:          test.PodGen("A", "test-ns", nil, nil, true, true, ""),
 			},
 			checkFunc: checkFunc1,
 			wantErr:   false,
@@ -69,12 +69,12 @@ func TestControl_UpdateBreakerAnnotationAndLabel(t *testing.T) {
 		{
 			name: "update",
 			fields: fields{
-				kubeClient: kfakeclient.NewSimpleClientset(test.PodGen("A", "test-ns", nil, true, true, labeling.LabelTrafficYes)),
+				kubeClient: kfakeclient.NewSimpleClientset(test.PodGen("A", "test-ns", nil, nil, true, true, labeling.LabelTrafficYes)),
 			},
 			args: args{
 				breakerConfigName: "mytestname",
 				breakerStrategy:   "strategy1",
-				inputPod:          test.PodGen("A", "test-ns", nil, true, true, labeling.LabelTrafficYes),
+				inputPod:          test.PodGen("A", "test-ns", nil, nil, true, true, labeling.LabelTrafficYes),
 			},
 			checkFunc: checkFunc1,
 			wantErr:   false,
@@ -124,10 +124,10 @@ func TestControl_UpdateActivationLabelsAndAnnotations(t *testing.T) {
 		{
 			name: "update no Label",
 			fields: fields{
-				kubeClient: kfakeclient.NewSimpleClientset(test.PodGen("A", "test-ns", nil, true, true, "")),
+				kubeClient: kfakeclient.NewSimpleClientset(test.PodGen("A", "test-ns", nil, nil, true, true, "")),
 			},
 			args: args{
-				inputPod: test.PodGen("A", "test-ns", nil, true, true, ""),
+				inputPod: test.PodGen("A", "test-ns", nil, nil, true, true, ""),
 			},
 			checkFunc: checkFunc1,
 			wantErr:   false,
@@ -135,10 +135,10 @@ func TestControl_UpdateActivationLabelsAndAnnotations(t *testing.T) {
 		{
 			name: "update",
 			fields: fields{
-				kubeClient: kfakeclient.NewSimpleClientset(test.PodGen("A", "test-ns", nil, true, true, labeling.LabelTrafficNo)),
+				kubeClient: kfakeclient.NewSimpleClientset(test.PodGen("A", "test-ns", nil, nil, true, true, labeling.LabelTrafficNo)),
 			},
 			args: args{
-				inputPod: test.PodGen("A", "test-ns", nil, true, true, labeling.LabelTrafficNo),
+				inputPod: test.PodGen("A", "test-ns", nil, nil, true, true, labeling.LabelTrafficNo),
 			},
 			checkFunc: checkFunc1,
 			wantErr:   false,
@@ -188,10 +188,10 @@ func TestControl_UpdatePauseLabelsAndAnnotations(t *testing.T) {
 		{
 			name: "update no Label",
 			fields: fields{
-				kubeClient: kfakeclient.NewSimpleClientset(test.PodGen("A", "test-ns", nil, true, true, "")),
+				kubeClient: kfakeclient.NewSimpleClientset(test.PodGen("A", "test-ns", nil, nil, true, true, "")),
 			},
 			args: args{
-				inputPod: test.PodGen("A", "test-ns", nil, true, true, ""),
+				inputPod: test.PodGen("A", "test-ns", nil, nil, true, true, ""),
 			},
 			checkFunc: checkFunc1,
 			wantErr:   false,
@@ -199,10 +199,10 @@ func TestControl_UpdatePauseLabelsAndAnnotations(t *testing.T) {
 		{
 			name: "update",
 			fields: fields{
-				kubeClient: kfakeclient.NewSimpleClientset(test.PodGen("A", "test-ns", nil, true, true, labeling.LabelTrafficNo)),
+				kubeClient: kfakeclient.NewSimpleClientset(test.PodGen("A", "test-ns", nil, nil, true, true, labeling.LabelTrafficNo)),
 			},
 			args: args{
-				inputPod: test.PodGen("A", "test-ns", nil, true, true, labeling.LabelTrafficNo),
+				inputPod: test.PodGen("A", "test-ns", nil, nil, true, true, labeling.LabelTrafficNo),
 			},
 			checkFunc: checkFunc1,
 			wantErr:   false,
@@ -252,10 +252,10 @@ func TestControl_KillPod(t *testing.T) {
 		{
 			name: "update no Label",
 			fields: fields{
-				kubeClient: kfakeclient.NewSimpleClientset(test.PodGen("A", "test-ns", nil, true, true, "")),
+				kubeClient: kfakeclient.NewSimpleClientset(test.PodGen("A", "test-ns", nil, nil, true, true, "")),
 			},
 			args: args{
-				inputPod: test.PodGen("A", "test-ns", nil, true, true, ""),
+				inputPod: test.PodGen("A", "test-ns", nil, nil, true, true, ""),
 			},
 			checkFunc: checkFunc1,
 			wantErr:   false,
@@ -313,10 +313,10 @@ func TestControl_RemoveBreakerAnnotationAndLabel(t *testing.T) {
 		{
 			name: "not initialy present",
 			fields: fields{
-				kubeClient: kfakeclient.NewSimpleClientset(test.PodGen("A", "test-ns", nil, true, true, "")),
+				kubeClient: kfakeclient.NewSimpleClientset(test.PodGen("A", "test-ns", nil, nil, true, true, "")),
 			},
 			args: args{
-				inputPod: test.PodGen("A", "test-ns", nil, true, true, ""),
+				inputPod: test.PodGen("A", "test-ns", nil, nil, true, true, ""),
 			},
 			checkFunc: checkFunc1,
 			wantErr:   false,
@@ -324,10 +324,10 @@ func TestControl_RemoveBreakerAnnotationAndLabel(t *testing.T) {
 		{
 			name: "remove labels and annotation",
 			fields: fields{
-				kubeClient: kfakeclient.NewSimpleClientset(test.PodGen("A", "test-ns", map[string]string{labeling.LabelTrafficKey: "yes", labeling.LabelBreakerNameKey: "foo"}, true, true, "")),
+				kubeClient: kfakeclient.NewSimpleClientset(test.PodGen("A", "test-ns", map[string]string{labeling.LabelTrafficKey: "yes", labeling.LabelBreakerNameKey: "foo"}, nil, true, true, "")),
 			},
 			args: args{
-				inputPod: test.PodGen("A", "test-ns", nil, true, true, ""),
+				inputPod: test.PodGen("A", "test-ns", nil, nil, true, true, ""),
 			},
 			checkFunc: checkFunc1,
 			wantErr:   false,

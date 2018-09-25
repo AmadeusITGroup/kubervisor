@@ -101,7 +101,7 @@ func TestGetRetryCount(t *testing.T) {
 				},
 			},
 			want:    0,
-			wantErr: true,
+			wantErr: false,
 		},
 		{
 			name: "nil",
@@ -109,7 +109,7 @@ func TestGetRetryCount(t *testing.T) {
 				pod: &kv1.Pod{},
 			},
 			want:    0,
-			wantErr: true,
+			wantErr: false,
 		},
 		{
 			name: "ok",

@@ -17,7 +17,7 @@ type testInterface struct {
 	StartFunc           func(ctx context.Context)
 	StopFunc            func() error
 	CompareWithSpecFunc func(spec *api.KubervisorServiceSpec, selector labels.Selector) bool
-	GetStatusFunc       func() api.PodCountStatus
+	GetStatusFunc       func() (api.PodCountStatus, error)
 }
 
 func (ei *testInterface) Name() string {
@@ -44,11 +44,11 @@ func (ei *testInterface) CompareWithSpec(spec *api.KubervisorServiceSpec, select
 	}
 	return true
 }
-func (ei *testInterface) GetStatus() api.PodCountStatus {
+func (ei *testInterface) GetStatus() (api.PodCountStatus, error) {
 	if ei.GetStatusFunc != nil {
 		return ei.GetStatusFunc()
 	}
-	return api.PodCountStatus{}
+	return api.PodCountStatus{}, nil
 }
 
 func TestIsSpecUpdated(t *testing.T) {

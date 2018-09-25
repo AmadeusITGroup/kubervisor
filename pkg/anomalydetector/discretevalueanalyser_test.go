@@ -63,9 +63,9 @@ func TestDiscreteValueOutOfListAnalyser_GetPodsOutOfBounds(t *testing.T) {
 				analyser:               &testDiscreateValueAnalyser{okkoByPodName: okkoByPodName{"A": {10, 0}, "B": {10, 8}, "C": {0, 10}}},
 				podLister: test.NewTestPodNamespaceLister(
 					[]*kapiv1.Pod{
-						test.PodGen("A", "test-ns", map[string]string{"app": "foo", "phase": "prd"}, true, true, labeling.LabelTrafficYes),
-						test.PodGen("B", "test-ns", map[string]string{"app": "bar", "phase": "prd"}, true, true, labeling.LabelTrafficYes),
-						test.PodGen("C", "test-ns", map[string]string{"app": "bar", "phase": "pdt"}, true, true, labeling.LabelTrafficYes),
+						test.PodGen("A", "test-ns", map[string]string{"app": "foo", "phase": "prd"}, nil, true, true, labeling.LabelTrafficYes),
+						test.PodGen("B", "test-ns", map[string]string{"app": "bar", "phase": "prd"}, nil, true, true, labeling.LabelTrafficYes),
+						test.PodGen("C", "test-ns", map[string]string{"app": "bar", "phase": "pdt"}, nil, true, true, labeling.LabelTrafficYes),
 					}, "test-ns"),
 			},
 			want:    []*kapiv1.Pod{},
@@ -79,13 +79,13 @@ func TestDiscreteValueOutOfListAnalyser_GetPodsOutOfBounds(t *testing.T) {
 				analyser:               &testDiscreateValueAnalyser{okkoByPodName: okkoByPodName{"A": {10, 0}, "B": {10, 8}, "C": {0, 10}}},
 				podLister: test.NewTestPodNamespaceLister(
 					[]*kapiv1.Pod{
-						test.PodGen("A", "test-ns", map[string]string{"app": "foo", "phase": "prd"}, true, true, ""),
-						test.PodGen("B", "test-ns", map[string]string{"app": "bar", "phase": "prd"}, true, true, ""),
-						test.PodGen("C", "test-ns", map[string]string{"app": "bar", "phase": "pdt"}, true, true, ""),
+						test.PodGen("A", "test-ns", map[string]string{"app": "foo", "phase": "prd"}, nil, true, true, ""),
+						test.PodGen("B", "test-ns", map[string]string{"app": "bar", "phase": "prd"}, nil, true, true, ""),
+						test.PodGen("C", "test-ns", map[string]string{"app": "bar", "phase": "pdt"}, nil, true, true, ""),
 					}, "test-ns"),
 			},
-			want:    []*kapiv1.Pod{},
-			wantErr: false,
+			want:    nil,
+			wantErr: true,
 		},
 		{
 			name: "50%",
@@ -95,12 +95,12 @@ func TestDiscreteValueOutOfListAnalyser_GetPodsOutOfBounds(t *testing.T) {
 				analyser:               &testDiscreateValueAnalyser{okkoByPodName: okkoByPodName{"A": {10, 0}, "B": {10, 8}, "C": {0, 10}}},
 				podLister: test.NewTestPodNamespaceLister(
 					[]*kapiv1.Pod{
-						test.PodGen("A", "test-ns", map[string]string{"app": "foo", "phase": "prd"}, true, true, labeling.LabelTrafficYes),
-						test.PodGen("B", "test-ns", map[string]string{"app": "bar", "phase": "prd"}, true, true, labeling.LabelTrafficYes),
-						test.PodGen("C", "test-ns", map[string]string{"app": "bar", "phase": "pdt"}, true, true, labeling.LabelTrafficYes),
+						test.PodGen("A", "test-ns", map[string]string{"app": "foo", "phase": "prd"}, nil, true, true, labeling.LabelTrafficYes),
+						test.PodGen("B", "test-ns", map[string]string{"app": "bar", "phase": "prd"}, nil, true, true, labeling.LabelTrafficYes),
+						test.PodGen("C", "test-ns", map[string]string{"app": "bar", "phase": "pdt"}, nil, true, true, labeling.LabelTrafficYes),
 					}, "test-ns"),
 			},
-			want:    []*kapiv1.Pod{test.PodGen("C", "test-ns", map[string]string{"app": "bar", "phase": "pdt"}, true, true, labeling.LabelTrafficYes)},
+			want:    []*kapiv1.Pod{test.PodGen("C", "test-ns", map[string]string{"app": "bar", "phase": "pdt"}, nil, true, true, labeling.LabelTrafficYes)},
 			wantErr: false,
 		},
 		{
@@ -111,14 +111,14 @@ func TestDiscreteValueOutOfListAnalyser_GetPodsOutOfBounds(t *testing.T) {
 				analyser:               &testDiscreateValueAnalyser{okkoByPodName: okkoByPodName{"A": {10, 0}, "B": {10, 8}, "C": {0, 10}}},
 				podLister: test.NewTestPodNamespaceLister(
 					[]*kapiv1.Pod{
-						test.PodGen("A", "test-ns", map[string]string{"app": "foo", "phase": "prd"}, true, true, labeling.LabelTrafficYes),
-						test.PodGen("B", "test-ns", map[string]string{"app": "bar", "phase": "prd"}, true, true, labeling.LabelTrafficYes),
-						test.PodGen("C", "test-ns", map[string]string{"app": "bar", "phase": "pdt"}, true, true, labeling.LabelTrafficYes),
+						test.PodGen("A", "test-ns", map[string]string{"app": "foo", "phase": "prd"}, nil, true, true, labeling.LabelTrafficYes),
+						test.PodGen("B", "test-ns", map[string]string{"app": "bar", "phase": "prd"}, nil, true, true, labeling.LabelTrafficYes),
+						test.PodGen("C", "test-ns", map[string]string{"app": "bar", "phase": "pdt"}, nil, true, true, labeling.LabelTrafficYes),
 					}, "test-ns"),
 			},
 			want: []*kapiv1.Pod{
-				test.PodGen("B", "test-ns", map[string]string{"app": "bar", "phase": "prd"}, true, true, labeling.LabelTrafficYes),
-				test.PodGen("C", "test-ns", map[string]string{"app": "bar", "phase": "pdt"}, true, true, labeling.LabelTrafficYes)},
+				test.PodGen("B", "test-ns", map[string]string{"app": "bar", "phase": "prd"}, nil, true, true, labeling.LabelTrafficYes),
+				test.PodGen("C", "test-ns", map[string]string{"app": "bar", "phase": "pdt"}, nil, true, true, labeling.LabelTrafficYes)},
 			wantErr: false,
 		},
 		{
@@ -129,12 +129,12 @@ func TestDiscreteValueOutOfListAnalyser_GetPodsOutOfBounds(t *testing.T) {
 				analyser:               &testDiscreateValueAnalyser{okkoByPodName: okkoByPodName{"A": {10, 0}, "B": {10, 8}, "C": {0, 10}}},
 				podLister: test.NewTestPodNamespaceLister(
 					[]*kapiv1.Pod{
-						test.PodGen("A", "test-ns", map[string]string{"app": "foo", "phase": "prd"}, true, true, labeling.LabelTrafficYes),
-						test.PodGen("B", "test-ns", map[string]string{"app": "bar", "phase": "prd"}, true, true, labeling.LabelTrafficYes),
-						test.PodGen("C", "test-ns", map[string]string{"app": "bar", "phase": "pdt"}, true, true, labeling.LabelTrafficYes),
+						test.PodGen("A", "test-ns", map[string]string{"app": "foo", "phase": "prd"}, nil, true, true, labeling.LabelTrafficYes),
+						test.PodGen("B", "test-ns", map[string]string{"app": "bar", "phase": "prd"}, nil, true, true, labeling.LabelTrafficYes),
+						test.PodGen("C", "test-ns", map[string]string{"app": "bar", "phase": "pdt"}, nil, true, true, labeling.LabelTrafficYes),
 					}, "test-ns"),
 			},
-			want:    []*kapiv1.Pod{test.PodGen("B", "test-ns", map[string]string{"app": "bar", "phase": "prd"}, true, true, labeling.LabelTrafficYes)},
+			want:    []*kapiv1.Pod{test.PodGen("B", "test-ns", map[string]string{"app": "bar", "phase": "prd"}, nil, true, true, labeling.LabelTrafficYes)},
 			wantErr: false,
 		},
 		{
@@ -145,13 +145,13 @@ func TestDiscreteValueOutOfListAnalyser_GetPodsOutOfBounds(t *testing.T) {
 				analyser:               &testDiscreateValueAnalyser{okkoByPodName: okkoByPodName{"A": {10, 0}, "B": {10, 8}, "C": {0, 10}}},
 				podLister: test.NewTestPodNamespaceLister(
 					[]*kapiv1.Pod{
-						test.PodGen("A", "test-ns", map[string]string{"app": "foo", "phase": "prd"}, true, true, labeling.LabelTrafficYes),
-						test.PodGen("B", "test-ns", map[string]string{"app": "bar", "phase": "prd"}, true, true, labeling.LabelTrafficYes),
-						test.PodGen("C", "test-ns", map[string]string{"app": "bar", "phase": "pdt"}, true, false, labeling.LabelTrafficYes),
+						test.PodGen("A", "test-ns", map[string]string{"app": "foo", "phase": "prd"}, nil, true, true, labeling.LabelTrafficYes),
+						test.PodGen("B", "test-ns", map[string]string{"app": "bar", "phase": "prd"}, nil, true, true, labeling.LabelTrafficYes),
+						test.PodGen("C", "test-ns", map[string]string{"app": "bar", "phase": "pdt"}, nil, true, false, labeling.LabelTrafficYes),
 					}, "test-ns"),
 			},
 			want: []*kapiv1.Pod{
-				test.PodGen("B", "test-ns", map[string]string{"app": "bar", "phase": "prd"}, true, true, labeling.LabelTrafficYes)},
+				test.PodGen("B", "test-ns", map[string]string{"app": "bar", "phase": "prd"}, nil, true, true, labeling.LabelTrafficYes)},
 			wantErr: false,
 		},
 		{
@@ -162,13 +162,13 @@ func TestDiscreteValueOutOfListAnalyser_GetPodsOutOfBounds(t *testing.T) {
 				analyser:               &testDiscreateValueAnalyser{okkoByPodName: okkoByPodName{"A": {10, 0}, "B": {10, 8}, "C": {0, 10}}},
 				podLister: test.NewTestPodNamespaceLister(
 					[]*kapiv1.Pod{
-						test.PodGen("A", "test-ns", map[string]string{"app": "foo", "phase": "prd"}, true, true, labeling.LabelTrafficYes),
-						test.PodGen("B", "test-ns", map[string]string{"app": "bar", "phase": "prd"}, true, true, labeling.LabelTrafficYes),
-						test.PodGen("C", "test-ns", map[string]string{"app": "bar", "phase": "pdt"}, true, false, labeling.LabelTrafficYes),
+						test.PodGen("A", "test-ns", map[string]string{"app": "foo", "phase": "prd"}, nil, true, true, labeling.LabelTrafficYes),
+						test.PodGen("B", "test-ns", map[string]string{"app": "bar", "phase": "prd"}, nil, true, true, labeling.LabelTrafficYes),
+						test.PodGen("C", "test-ns", map[string]string{"app": "bar", "phase": "pdt"}, nil, true, false, labeling.LabelTrafficYes),
 					}, "test-ns"),
 			},
 			want: []*kapiv1.Pod{
-				test.PodGen("B", "test-ns", map[string]string{"app": "bar", "phase": "prd"}, true, true, labeling.LabelTrafficYes)},
+				test.PodGen("B", "test-ns", map[string]string{"app": "bar", "phase": "prd"}, nil, true, true, labeling.LabelTrafficYes)},
 			wantErr: false,
 		},
 	}

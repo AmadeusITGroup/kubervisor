@@ -29,9 +29,9 @@ import (
 
 func TestController_searchNewPods(t *testing.T) {
 	devlogger, _ := zap.NewDevelopment()
-	newPod := test.PodGen("newPod", "test-ns", map[string]string{"app": "test-app"}, true, true, "")
-	pod1 := test.PodGen("pod1", "test-ns", map[string]string{"app": "test-app", labeling.LabelTrafficKey: "yes", labeling.LabelBreakerNameKey: "foo"}, true, true, "")
-	pod2 := test.PodGen("pod2", "test-ns", map[string]string{"app": "test-app", labeling.LabelTrafficKey: "yes", labeling.LabelBreakerNameKey: "foo"}, true, true, "")
+	newPod := test.PodGen("newPod", "test-ns", map[string]string{"app": "test-app"}, nil, true, true, "")
+	pod1 := test.PodGen("pod1", "test-ns", map[string]string{"app": "test-app", labeling.LabelTrafficKey: "yes", labeling.LabelBreakerNameKey: "foo"}, nil, true, true, "")
+	pod2 := test.PodGen("pod2", "test-ns", map[string]string{"app": "test-app", labeling.LabelTrafficKey: "yes", labeling.LabelBreakerNameKey: "foo"}, nil, true, true, "")
 	svc1 := &apiv1.Service{
 		ObjectMeta: metav1.ObjectMeta{
 			Namespace: "test-ns",
@@ -95,9 +95,9 @@ func TestController_searchNewPods(t *testing.T) {
 
 func TestController_initializePods(t *testing.T) {
 	devlogger, _ := zap.NewDevelopment()
-	newPod := test.PodGen("newPod", "test-ns", map[string]string{"app": "test-app"}, true, true, "")
-	pod1 := test.PodGen("pod1", "test-ns", map[string]string{"app": "test-app", labeling.LabelTrafficKey: "yes", labeling.LabelBreakerNameKey: "foo"}, true, true, "")
-	pod2 := test.PodGen("pod2", "test-ns", map[string]string{"app": "test-app", labeling.LabelTrafficKey: "yes", labeling.LabelBreakerNameKey: "foo"}, true, true, "")
+	newPod := test.PodGen("newPod", "test-ns", map[string]string{"app": "test-app"}, nil, true, true, "")
+	pod1 := test.PodGen("pod1", "test-ns", map[string]string{"app": "test-app", labeling.LabelTrafficKey: "yes", labeling.LabelBreakerNameKey: "foo"}, nil, true, true, "")
+	pod2 := test.PodGen("pod2", "test-ns", map[string]string{"app": "test-app", labeling.LabelTrafficKey: "yes", labeling.LabelBreakerNameKey: "foo"}, nil, true, true, "")
 	svc1 := &apiv1.Service{
 		ObjectMeta: metav1.ObjectMeta{
 			Namespace: "test-ns",
@@ -296,7 +296,7 @@ func TestController_Run(t *testing.T) {
 	stop := make(chan struct{})
 	go func() {
 		defer close(stop)
-		pod1 := test.PodGen("pod1", "test-ns", map[string]string{"app": "test-app", labeling.LabelTrafficKey: "yes", labeling.LabelBreakerNameKey: "foo"}, true, true, "")
+		pod1 := test.PodGen("pod1", "test-ns", map[string]string{"app": "test-app", labeling.LabelTrafficKey: "yes", labeling.LabelBreakerNameKey: "foo"}, nil, true, true, "")
 		svc1 := &apiv1.Service{
 			ObjectMeta: metav1.ObjectMeta{
 				Namespace: "test-ns",
@@ -537,6 +537,6 @@ func (f fakeItem) Stop() error               { return nil }
 func (f fakeItem) CompareWithSpec(spec *api.KubervisorServiceSpec, selector labels.Selector) bool {
 	return true
 }
-func (f fakeItem) GetStatus() api.PodCountStatus {
-	return api.PodCountStatus{}
+func (f fakeItem) GetStatus() (api.PodCountStatus, error) {
+	return api.PodCountStatus{}, nil
 }

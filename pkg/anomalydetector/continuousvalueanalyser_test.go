@@ -69,9 +69,9 @@ func TestContinuousValueDeviationAnalyser_GetPodsOutOfBounds(t *testing.T) {
 
 				podLister: test.NewTestPodNamespaceLister(
 					[]*kapiv1.Pod{
-						test.PodGen("A", "test-ns", map[string]string{"app": "foo", "phase": "prd"}, true, true, labeling.LabelTrafficYes),
-						test.PodGen("B", "test-ns", map[string]string{"app": "bar", "phase": "prd"}, true, true, labeling.LabelTrafficYes),
-						test.PodGen("C", "test-ns", map[string]string{"app": "bar", "phase": "pdt"}, true, true, labeling.LabelTrafficYes),
+						test.PodGen("A", "test-ns", map[string]string{"app": "foo", "phase": "prd"}, nil, true, true, labeling.LabelTrafficYes),
+						test.PodGen("B", "test-ns", map[string]string{"app": "bar", "phase": "prd"}, nil, true, true, labeling.LabelTrafficYes),
+						test.PodGen("C", "test-ns", map[string]string{"app": "bar", "phase": "pdt"}, nil, true, true, labeling.LabelTrafficYes),
 					}, "test-ns"),
 			},
 			want:    []*kapiv1.Pod{},
@@ -91,13 +91,13 @@ func TestContinuousValueDeviationAnalyser_GetPodsOutOfBounds(t *testing.T) {
 				},
 				podLister: test.NewTestPodNamespaceLister(
 					[]*kapiv1.Pod{
-						test.PodGen("A", "test-ns", map[string]string{"app": "foo", "phase": "prd"}, true, true, ""),
-						test.PodGen("B", "test-ns", map[string]string{"app": "bar", "phase": "prd"}, true, true, ""),
-						test.PodGen("C", "test-ns", map[string]string{"app": "bar", "phase": "pdt"}, true, true, ""),
+						test.PodGen("A", "test-ns", map[string]string{"app": "foo", "phase": "prd"}, nil, true, true, ""),
+						test.PodGen("B", "test-ns", map[string]string{"app": "bar", "phase": "prd"}, nil, true, true, ""),
+						test.PodGen("C", "test-ns", map[string]string{"app": "bar", "phase": "pdt"}, nil, true, true, ""),
 					}, "test-ns"),
 			},
-			want:    []*kapiv1.Pod{},
-			wantErr: false,
+			want:    nil,
+			wantErr: true,
 		},
 		{
 			name: "deviation by 70%",
@@ -113,11 +113,11 @@ func TestContinuousValueDeviationAnalyser_GetPodsOutOfBounds(t *testing.T) {
 				},
 				podLister: test.NewTestPodNamespaceLister(
 					[]*kapiv1.Pod{
-						test.PodGen("A", "test-ns", map[string]string{"app": "foo", "phase": "prd"}, true, true, labeling.LabelTrafficYes),
-						test.PodGen("B", "test-ns", map[string]string{"app": "bar", "phase": "prd"}, true, true, labeling.LabelTrafficYes),
-						test.PodGen("C", "test-ns", map[string]string{"app": "bar", "phase": "pdt"}, true, true, labeling.LabelTrafficYes)}, "test-ns"),
+						test.PodGen("A", "test-ns", map[string]string{"app": "foo", "phase": "prd"}, nil, true, true, labeling.LabelTrafficYes),
+						test.PodGen("B", "test-ns", map[string]string{"app": "bar", "phase": "prd"}, nil, true, true, labeling.LabelTrafficYes),
+						test.PodGen("C", "test-ns", map[string]string{"app": "bar", "phase": "pdt"}, nil, true, true, labeling.LabelTrafficYes)}, "test-ns"),
 			},
-			want:    []*kapiv1.Pod{test.PodGen("C", "test-ns", map[string]string{"app": "bar", "phase": "pdt"}, true, true, labeling.LabelTrafficYes)},
+			want:    []*kapiv1.Pod{test.PodGen("C", "test-ns", map[string]string{"app": "bar", "phase": "pdt"}, nil, true, true, labeling.LabelTrafficYes)},
 			wantErr: false,
 		},
 	}

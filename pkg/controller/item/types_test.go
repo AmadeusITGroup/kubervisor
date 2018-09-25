@@ -334,23 +334,24 @@ func TestStartCancel(t *testing.T) {
 }
 
 func Test_GetStatus(t *testing.T) {
-	ARunningReadyTraffic := test.PodGen("A", "test-ns", map[string]string{"app": "foo"}, true, true, labeling.LabelTrafficYes)
-	BRunningReadyTraffic := test.PodGen("B", "test-ns", map[string]string{"app": "foo"}, true, true, labeling.LabelTrafficYes)
-	CNotRunningReadyTraffic := test.PodGen("C", "test-ns", map[string]string{"app": "foo"}, false, true, labeling.LabelTrafficYes)
-	DRunningNotReadyPauseTraffic := test.PodGen("D", "test-ns", map[string]string{"app": "foo"}, true, false, labeling.LabelTrafficPause)
-	ERunningReadyNoTraffic := test.PodGen("E", "test-ns", map[string]string{"app": "foo"}, true, true, labeling.LabelTrafficNo)
-	PRunningReadyPauseTraffic := test.PodGen("P", "test-ns", map[string]string{"app": "foo"}, true, true, labeling.LabelTrafficPause)
-	BadAppRunningReadyTraffic := test.PodGen("BadApp", "test-ns", map[string]string{"app": "bar"}, true, true, labeling.LabelTrafficYes)
-	UnknowLabelTraffic := test.PodGen("A", "test-ns", map[string]string{"app": "foo"}, true, true, "")
+	ARunningReadyTraffic := test.PodGen("A", "test-ns", map[string]string{"app": "foo"}, nil, true, true, labeling.LabelTrafficYes)
+	BRunningReadyTraffic := test.PodGen("B", "test-ns", map[string]string{"app": "foo"}, nil, true, true, labeling.LabelTrafficYes)
+	CNotRunningReadyTraffic := test.PodGen("C", "test-ns", map[string]string{"app": "foo"}, nil, false, true, labeling.LabelTrafficYes)
+	DRunningNotReadyPauseTraffic := test.PodGen("D", "test-ns", map[string]string{"app": "foo"}, nil, true, false, labeling.LabelTrafficPause)
+	ERunningReadyNoTraffic := test.PodGen("E", "test-ns", map[string]string{"app": "foo"}, nil, true, true, labeling.LabelTrafficNo)
+	PRunningReadyPauseTraffic := test.PodGen("P", "test-ns", map[string]string{"app": "foo"}, nil, true, true, labeling.LabelTrafficPause)
+	BadAppRunningReadyTraffic := test.PodGen("BadApp", "test-ns", map[string]string{"app": "bar"}, nil, true, true, labeling.LabelTrafficYes)
+	UnknowLabelTraffic := test.PodGen("A", "test-ns", map[string]string{"app": "foo"}, nil, true, true, "")
 	type fields struct {
 		selector  labels.Selector
 		podLister kv1.PodNamespaceLister
 		logger    *zap.Logger
 	}
 	tests := []struct {
-		name   string
-		fields fields
-		want   api.PodCountStatus
+		name    string
+		fields  fields
+		want    api.PodCountStatus
+		wantErr error
 	}{
 		{
 			name: "no pods",
@@ -395,7 +396,11 @@ func Test_GetStatus(t *testing.T) {
 				selector:  tt.fields.selector,
 				podLister: tt.fields.podLister,
 			}
-			if got := b.GetStatus(); !reflect.DeepEqual(got, tt.want) {
+			got, gotErr := b.GetStatus()
+			if tt.wantErr != gotErr {
+				t.Errorf("GetStatus().error = %v, want %v", gotErr, tt.wantErr)
+			}
+			if !reflect.DeepEqual(got, tt.want) {
 				t.Errorf("GetStatus() = %v, want %v", got, tt.want)
 			}
 		})

@@ -38,16 +38,23 @@ type DiscreteValueOutOfListAnalyser struct {
 func (d *DiscreteValueOutOfListAnalyser) GetPodsOutOfBounds() ([]*kapiv1.Pod, error) {
 	listOfPods, err := d.podLister.List(d.selector)
 	if err != nil {
-		return nil, fmt.Errorf("can't list pods")
+		return nil, fmt.Errorf("can't list pods, error:%v", err)
 	}
 
-	listOfPods = pod.PurgeNotReadyPods(listOfPods)
+	listOfPods, err = pod.PurgeNotReadyPods(listOfPods)
+	if err != nil {
+		return nil, fmt.Errorf("can't purge not ready pods, error:%v", err)
+	}
 	podByName := map[string]*kapiv1.Pod{}
 	podWithNoTraffic := map[string]*kapiv1.Pod{}
 
 	for _, p := range listOfPods {
 		podByName[p.Name] = p
-		if traffic, _, _ := labeling.IsPodTrafficLabelOkOrPause(p); !traffic {
+		traffic, _, err2 := labeling.IsPodTrafficLabelOkOrPause(p)
+		if err2 != nil {
+			return nil, err2
+		}
+		if !traffic {
 			podWithNoTraffic[p.Name] = p
 		}
 	}

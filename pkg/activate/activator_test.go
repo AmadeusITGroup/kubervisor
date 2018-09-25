@@ -62,12 +62,12 @@ func TestActivatorImpl_Run(t *testing.T) {
 				selector: labels.SelectorFromSet(map[string]string{"app": "foo"}),
 				podLister: test.NewTestPodNamespaceLister(
 					[]*kapiv1.Pod{
-						test.PodGen("A", "test-ns", map[string]string{"app": "foo"}, true, true, labeling.LabelTrafficNo),
-						test.PodGen("AA", "test-ns", map[string]string{"app": "foo"}, true, true, labeling.LabelTrafficNo),
-						test.PodGen("B", "test-ns", map[string]string{"app": "foo"}, true, true, labeling.LabelTrafficYes),
-						test.PodGen("C", "test-ns", map[string]string{"app": "foo"}, true, true, labeling.LabelTrafficPause),
-						test.PodGen("D", "test-ns", map[string]string{"app": "foo"}, true, true, ""),
-						test.PodGen("E", "test-ns", map[string]string{"app": "other"}, true, true, labeling.LabelTrafficNo),
+						test.PodGen("A", "test-ns", map[string]string{"app": "foo"}, nil, true, true, labeling.LabelTrafficNo),
+						test.PodGen("AA", "test-ns", map[string]string{"app": "foo"}, nil, true, true, labeling.LabelTrafficNo),
+						test.PodGen("B", "test-ns", map[string]string{"app": "foo"}, nil, true, true, labeling.LabelTrafficYes),
+						test.PodGen("C", "test-ns", map[string]string{"app": "foo"}, nil, true, true, labeling.LabelTrafficPause),
+						test.PodGen("D", "test-ns", map[string]string{"app": "foo"}, nil, true, true, ""),
+						test.PodGen("E", "test-ns", map[string]string{"app": "other"}, nil, true, true, labeling.LabelTrafficNo),
 					}, "test-ns"),
 				breakerName: "2pods",
 				logger:      devlogger,
@@ -139,13 +139,13 @@ func TestActivatorImpl_applyActivatorStrategy(t *testing.T) {
 	}{
 		{
 			name:     "missingBreatAtAnnotation",
-			inputPod: func() *kapiv1.Pod { return test.PodGen("A", "test-ns", nil, true, true, "") },
+			inputPod: func() *kapiv1.Pod { return test.PodGen("A", "test-ns", nil, nil, true, true, "") },
 			wantErr:  true,
 		},
 		{
 			name: "missingRetryCountAnnotation",
 			inputPod: func() *kapiv1.Pod {
-				p := test.PodGen("A", "test-ns", nil, true, true, "")
+				p := test.PodGen("A", "test-ns", nil, nil, true, true, "")
 				p.Annotations = map[string]string{labeling.AnnotationBreakAtKey: string("1978-12-04T22:11:00+00:00")}
 				return p
 			},
@@ -164,7 +164,7 @@ func TestActivatorImpl_applyActivatorStrategy(t *testing.T) {
 				},
 			},
 			inputPod: func() *kapiv1.Pod {
-				p := test.PodGen("A", "test-ns", nil, true, true, "")
+				p := test.PodGen("A", "test-ns", nil, nil, true, true, "")
 				p.Annotations = map[string]string{
 					labeling.AnnotationBreakAtKey:    string("2078-12-04T22:11:00+00:00"),
 					labeling.AnnotationRetryCountKey: "1",
@@ -189,7 +189,7 @@ func TestActivatorImpl_applyActivatorStrategy(t *testing.T) {
 				},
 			},
 			inputPod: func() *kapiv1.Pod {
-				p := test.PodGen("A", "test-ns", nil, true, true, "")
+				p := test.PodGen("A", "test-ns", nil, nil, true, true, "")
 				p.Annotations = map[string]string{
 					labeling.AnnotationBreakAtKey:    string("1978-12-04T22:11:00+00:00"),
 					labeling.AnnotationRetryCountKey: "1",
@@ -216,7 +216,7 @@ func TestActivatorImpl_applyActivatorStrategy(t *testing.T) {
 				},
 			},
 			inputPod: func() *kapiv1.Pod {
-				p := test.PodGen("A", "test-ns", nil, true, true, "")
+				p := test.PodGen("A", "test-ns", nil, nil, true, true, "")
 				p.Annotations = map[string]string{
 					labeling.AnnotationBreakAtKey:    string("1978-12-04T22:11:00+00:00"),
 					labeling.AnnotationRetryCountKey: "1",
@@ -242,7 +242,7 @@ func TestActivatorImpl_applyActivatorStrategy(t *testing.T) {
 				},
 			},
 			inputPod: func() *kapiv1.Pod {
-				p := test.PodGen("A", "test-ns", nil, true, true, "")
+				p := test.PodGen("A", "test-ns", nil, nil, true, true, "")
 				p.Annotations = map[string]string{
 					labeling.AnnotationBreakAtKey:    string("1978-12-04T22:11:00+00:00"),
 					labeling.AnnotationRetryCountKey: "4",
@@ -270,7 +270,7 @@ func TestActivatorImpl_applyActivatorStrategy(t *testing.T) {
 				},
 			},
 			inputPod: func() *kapiv1.Pod {
-				p := test.PodGen("A", "test-ns", nil, true, true, "")
+				p := test.PodGen("A", "test-ns", nil, nil, true, true, "")
 				p.Annotations = map[string]string{
 					labeling.AnnotationBreakAtKey:    string("1978-12-04T22:11:00+00:00"),
 					labeling.AnnotationRetryCountKey: "4",
@@ -296,7 +296,7 @@ func TestActivatorImpl_applyActivatorStrategy(t *testing.T) {
 				},
 			},
 			inputPod: func() *kapiv1.Pod {
-				p := test.PodGen("A", "test-ns", nil, true, true, "")
+				p := test.PodGen("A", "test-ns", nil, nil, true, true, "")
 				p.Annotations = map[string]string{
 					labeling.AnnotationBreakAtKey:    string("1978-12-04T22:11:00+00:00"),
 					labeling.AnnotationRetryCountKey: "2",
@@ -324,7 +324,7 @@ func TestActivatorImpl_applyActivatorStrategy(t *testing.T) {
 				},
 			},
 			inputPod: func() *kapiv1.Pod {
-				p := test.PodGen("A", "test-ns", nil, true, true, "")
+				p := test.PodGen("A", "test-ns", nil, nil, true, true, "")
 				p.Annotations = map[string]string{
 					labeling.AnnotationBreakAtKey:    string("1978-12-04T22:11:00+00:00"),
 					labeling.AnnotationRetryCountKey: "2",
@@ -352,7 +352,7 @@ func TestActivatorImpl_applyActivatorStrategy(t *testing.T) {
 				},
 			},
 			inputPod: func() *kapiv1.Pod {
-				p := test.PodGen("A", "test-ns", nil, true, true, "")
+				p := test.PodGen("A", "test-ns", nil, nil, true, true, "")
 				p.Annotations = map[string]string{
 					labeling.AnnotationBreakAtKey:    string("1978-12-04T22:11:00+00:00"),
 					labeling.AnnotationRetryCountKey: "2",
@@ -380,7 +380,7 @@ func TestActivatorImpl_applyActivatorStrategy(t *testing.T) {
 				},
 			},
 			inputPod: func() *kapiv1.Pod {
-				p := test.PodGen("A", "test-ns", nil, true, true, "")
+				p := test.PodGen("A", "test-ns", nil, nil, true, true, "")
 				p.Annotations = map[string]string{
 					labeling.AnnotationBreakAtKey:    string("1978-12-04T22:11:00+00:00"),
 					labeling.AnnotationRetryCountKey: "2",
@@ -411,7 +411,7 @@ func TestActivatorImpl_applyActivatorStrategy(t *testing.T) {
 				podLister: test.NewTestPodNamespaceLister([]*kapiv1.Pod{}, "test-ns"),
 			},
 			inputPod: func() *kapiv1.Pod {
-				p := test.PodGen("A", "test-ns", map[string]string{"app": "foo"}, true, true, "")
+				p := test.PodGen("A", "test-ns", map[string]string{"app": "foo"}, nil, true, true, "")
 				p.Annotations = map[string]string{
 					labeling.AnnotationBreakAtKey:    string("1978-12-04T22:11:00+00:00"),
 					labeling.AnnotationRetryCountKey: "4",
@@ -442,7 +442,7 @@ func TestActivatorImpl_applyActivatorStrategy(t *testing.T) {
 				podLister: test.NewTestPodNamespaceLister([]*kapiv1.Pod{}, "test-ns"),
 			},
 			inputPod: func() *kapiv1.Pod {
-				p := test.PodGen("A", "test-ns", map[string]string{"app": "foo"}, true, true, "")
+				p := test.PodGen("A", "test-ns", map[string]string{"app": "foo"}, nil, true, true, "")
 				p.Annotations = map[string]string{
 					labeling.AnnotationBreakAtKey:    string("1978-12-04T22:11:00+00:00"),
 					labeling.AnnotationRetryCountKey: "4",
@@ -473,7 +473,7 @@ func TestActivatorImpl_applyActivatorStrategy(t *testing.T) {
 				podLister: test.NewTestPodNamespaceLister([]*kapiv1.Pod{}, "test-ns"),
 			},
 			inputPod: func() *kapiv1.Pod {
-				p := test.PodGen("A", "test-ns", map[string]string{"app": "foo"}, true, true, "")
+				p := test.PodGen("A", "test-ns", map[string]string{"app": "foo"}, nil, true, true, "")
 				p.Annotations = map[string]string{
 					labeling.AnnotationBreakAtKey:    string("1978-12-04T22:11:00+00:00"),
 					labeling.AnnotationRetryCountKey: "4",

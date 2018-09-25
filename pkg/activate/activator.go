@@ -60,7 +60,11 @@ type strategyApplier interface {
 
 //Run implements Activator run loop ( to launch as goroutine: go Run())}
 func (b *ActivatorImpl) Run(stop <-chan struct{}) {
-	rqTrafficNo, _ := labels.NewRequirement(labeling.LabelTrafficKey, selection.Equals, []string{string(labeling.LabelTrafficNo)})
+	rqTrafficNo, err := labels.NewRequirement(labeling.LabelTrafficKey, selection.Equals, []string{string(labeling.LabelTrafficNo)})
+	if err != nil {
+		b.logger.Sugar().Errorf("unable to create labels.Requirement, error:%s", err)
+		return
+	}
 	withTrafficNoSelector := b.selector.Add(*rqTrafficNo)
 
 	ticker := time.NewTicker(b.evaluationPeriod)
@@ -76,7 +80,8 @@ func (b *ActivatorImpl) Run(stop <-chan struct{}) {
 
 			for _, p := range pods {
 				if err = b.strategyApplier.applyActivatorStrategy(p); err != nil {
-					b.logger.Sugar().Errorf("can't apply activator '%s' strategy on pod '%s' :%s", b.kubervisorName, p.Name, err)
+					b.logger.Sugar().Errorf("can't apply activator '%s' strategy on pod '%s' :%v", b.kubervisorName, p.Name, err)
+					continue
 				}
 			}
 		case <-stop:
@@ -90,7 +95,10 @@ func (b *ActivatorImpl) CompareConfig(specStrategy *api.ActivatorStrategy, specS
 	if !apiequality.Semantic.DeepEqual(&b.activatorStrategyConfig, specStrategy) {
 		return false
 	}
-	s, _ := labeling.SelectorWithBreakerName(specSelector, b.kubervisorName)
+	s, err := labeling.SelectorWithBreakerName(specSelector, b.kubervisorName)
+	if err != nil {
+		b.logger.Sugar().Errorf("unable to create selector from kubervisorName, error:%s", err)
+	}
 	return reflect.DeepEqual(s, b.selector)
 }
 
@@ -104,6 +112,9 @@ func (b *ActivatorImpl) applyActivatorStrategy(p *kapiv1.Pod) error {
 		return err
 	}
 
+	if b.activatorStrategyConfig.Period == nil {
+		return fmt.Errorf("b.activatorStrategyConfig.Period is nil")
+	}
 	retryPeriod := time.Duration(*b.activatorStrategyConfig.Period*1000) * time.Millisecond
 	now := time.Now()
 
@@ -128,7 +139,10 @@ func (b *ActivatorImpl) applyActivatorStrategy(p *kapiv1.Pod) error {
 		}
 	case api.ActivatorStrategyModeRetryAndPause:
 		if retryCount > int(*b.activatorStrategyConfig.MaxRetryCount) {
-			rqTrafficPause, _ := labels.NewRequirement(labeling.LabelTrafficKey, selection.Equals, []string{string(labeling.LabelTrafficPause)})
+			rqTrafficPause, err := labels.NewRequirement(labeling.LabelTrafficKey, selection.Equals, []string{string(labeling.LabelTrafficPause)})
+			if err != nil {
+				return fmt.Errorf("unable to create labels.Requirement, error:%s", err)
+			}
 			withTrafficPauseSelector := b.selector.Add(*rqTrafficPause)
 			list, err := b.podLister.List(withTrafficPauseSelector)
 			if err != nil {

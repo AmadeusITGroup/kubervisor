@@ -76,8 +76,8 @@ func (h *testHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 func TestCustomAnomalyDetector_GetPodsOutOfBounds(t *testing.T) {
 	devLogger, _ := zap.NewDevelopment()
 	pods := []*kapiv1.Pod{
-		test.PodGen("A", "test-ns", map[string]string{"app": "foo", "phase": "prd"}, true, true, labeling.LabelTrafficYes),
-		test.PodGen("B", "test-ns", map[string]string{"app": "bar", "phase": "prd"}, true, true, labeling.LabelTrafficYes),
+		test.PodGen("A", "test-ns", map[string]string{"app": "foo", "phase": "prd"}, nil, true, true, labeling.LabelTrafficYes),
+		test.PodGen("B", "test-ns", map[string]string{"app": "bar", "phase": "prd"}, nil, true, true, labeling.LabelTrafficYes),
 	}
 
 	handler := &testHandler{

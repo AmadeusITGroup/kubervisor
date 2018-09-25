@@ -27,7 +27,7 @@ type CustomAnomalyDetector struct {
 func (c *CustomAnomalyDetector) init() {
 	transport := new(http.Transport)
 	setDefaults(transport, http.DefaultTransport)
-	transport.TLSClientConfig = &tls.Config{InsecureSkipVerify: true}
+	transport.TLSClientConfig = &tls.Config{InsecureSkipVerify: false}
 	c.client = &http.Client{
 		Timeout:   time.Second,
 		Transport: transport,

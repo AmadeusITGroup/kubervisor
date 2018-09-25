@@ -142,9 +142,11 @@ type LeaderElector struct {
 }
 
 // Run starts the leader election loop
-func (le *LeaderElector) Run(stop <-chan struct{}) error {
+func (le *LeaderElector) Run(stop <-chan struct{}) (err error) {
 	defer func() {
-		le.config.Callbacks.OnStoppedLeading()
+		if err = le.config.Callbacks.OnStoppedLeading(); err != nil {
+			err = fmt.Errorf("unable to stop properly leading, error:%v", err)
+		}
 	}()
 
 	le.acquire(stop)
