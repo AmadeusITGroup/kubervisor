@@ -7,19 +7,23 @@ import (
 )
 
 //FilterOut remove from the slice pods for which exclude function return true
-func FilterOut(slice []*kapiv1.Pod, exclude func(*kapiv1.Pod) bool) []*kapiv1.Pod {
+func FilterOut(slice []*kapiv1.Pod, exclude func(*kapiv1.Pod) (bool, error)) ([]*kapiv1.Pod, error) {
 	b := []*kapiv1.Pod{}
 	for _, x := range slice {
-		if !exclude(x) {
+		ok, err := exclude(x)
+		if err != nil {
+			return b, err
+		}
+		if !ok {
 			b = append(b, x)
 		}
 	}
-	return b
+	return b, nil
 }
 
 //PurgeNotReadyPods keep only pods that are ready inside the slice
-func PurgeNotReadyPods(pods []*kapiv1.Pod) []*kapiv1.Pod {
-	return FilterOut(pods, func(a *kapiv1.Pod) bool { return !IsReady(a) })
+func PurgeNotReadyPods(pods []*kapiv1.Pod) ([]*kapiv1.Pod, error) {
+	return FilterOut(pods, func(a *kapiv1.Pod) (bool, error) { return !IsReady(a), nil })
 }
 
 //IsReady check if the pod is Ready
@@ -35,17 +39,18 @@ func IsReady(p *kapiv1.Pod) bool {
 }
 
 //KeepRunningPods check if the pod is Ready
-func KeepRunningPods(pods []*kapiv1.Pod) []*kapiv1.Pod {
-	return FilterOut(pods, func(a *kapiv1.Pod) bool { return a.Status.Phase != kapiv1.PodRunning })
+func KeepRunningPods(pods []*kapiv1.Pod) ([]*kapiv1.Pod, error) {
+	return FilterOut(pods, func(a *kapiv1.Pod) (bool, error) { return a.Status.Phase != kapiv1.PodRunning, nil })
 }
 
 //KeepWithTrafficYesPods only keep pods marked to receive traffic. Does not mean that they actually receive any... just they are eligible. Does not mean either that the pod is Ready (probes to be checked)
-func KeepWithTrafficYesPods(pods []*kapiv1.Pod) []*kapiv1.Pod {
-	return FilterOut(pods, func(p *kapiv1.Pod) bool {
-		if yes, _, _ := labeling.IsPodTrafficLabelOkOrPause(p); !yes {
-			return true
+func KeepWithTrafficYesPods(pods []*kapiv1.Pod) ([]*kapiv1.Pod, error) {
+	return FilterOut(pods, func(p *kapiv1.Pod) (bool, error) {
+		yes, _, err := labeling.IsPodTrafficLabelOkOrPause(p)
+		if !yes {
+			return true, err
 		}
-		return false
+		return false, err
 	})
 }
 

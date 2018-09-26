@@ -232,11 +232,12 @@ func NewTestPodNamespaceLister(pods []*kapiv1.Pod, namespace string) kv1.PodName
 
 //PodGen generate a pod with some label and status
 // FOR TEST PURPOSE ONLY
-func PodGen(name, namespace string, labels map[string]string, running, ready bool, trafficLabel labeling.LabelTraffic) *kapiv1.Pod {
+func PodGen(name, namespace string, labels, annotations map[string]string, running, ready bool, trafficLabel labeling.LabelTraffic) *kapiv1.Pod {
 	p := kapiv1.Pod{}
 	p.Name = name
 	p.Namespace = namespace
 	p.SetLabels(labels)
+	p.SetAnnotations(annotations)
 	if trafficLabel != "" {
 		if labels == nil {
 			labels = map[string]string{}

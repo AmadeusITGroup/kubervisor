@@ -33,7 +33,7 @@ func SetTrafficLabel(pod *kv1.Pod, val LabelTraffic) {
 func IsPodTrafficLabelOkOrPause(pod *kv1.Pod) (bool, bool, error) {
 	trafficLabel, ok := pod.Labels[LabelTrafficKey]
 	if !ok {
-		return false, false, fmt.Errorf("No traffic label ")
+		return false, false, fmt.Errorf("no traffic label")
 	}
 	l, err := ToLabelTraffic(trafficLabel)
 	if err != nil {

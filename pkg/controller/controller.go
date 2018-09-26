@@ -388,8 +388,10 @@ func (ctrl *Controller) syncKubervisorService(bc *api.KubervisorService) (bool, 
 		}
 		var msg string
 		if exist {
-			bci.Stop()
-			if err2 := ctrl.deleteItem(bci); err != nil {
+			if err2 := bci.Stop(); err2 != nil {
+				return false, err2
+			}
+			if err2 := ctrl.deleteItem(bci); err2 != nil {
 				return false, err2
 			}
 			msg = fmt.Sprintf("associated service %s/%s was deleted", bc.Namespace, bc.Spec.Service)
@@ -410,12 +412,18 @@ func (ctrl *Controller) syncKubervisorService(bc *api.KubervisorService) (bool, 
 		if bci, err = ctrl.createItem(bc, associatedSvc, now); err != nil {
 			return false, err
 		}
-		ctrl.items.Add(bci)
+		if err = ctrl.items.Add(bci); err != nil {
+			return false, err
+		}
 		bci.Start(ctrl.rootContext)
 	} else {
 		if IsSpecUpdated(bc, associatedSvc, bci) {
-			bci.Stop()
-			ctrl.deleteItem(bci)
+			if err = bci.Stop(); err != nil {
+				return false, err
+			}
+			if err = ctrl.deleteItem(bci); err != nil {
+				return false, err
+			}
 			if bci, err = ctrl.createItem(bc, associatedSvc, now); err != nil {
 				return false, err
 			}
@@ -436,12 +444,17 @@ func (ctrl *Controller) syncKubervisorService(bc *api.KubervisorService) (bool, 
 		return false, err
 	}
 
-	newStatus := bci.GetStatus()
+	newStatus, err := bci.GetStatus()
+	if err != nil {
+		return false, err
+	}
 	updateGauge(bci.Name(), bci.Namespace(), newStatus)
 	if bc.Status.PodCounts == nil || !equalPodCountStatus(newStatus, *bc.Status.PodCounts) {
 		bc.Status.PodCounts = &newStatus
 		//update status to running
-		ctrl.updateStatusCondition(bc, UpdateStatusConditionRunning, "", now)
+		if err := ctrl.updateStatusCondition(bc, UpdateStatusConditionRunning, "", now); err != nil {
+			return false, err
+		}
 	}
 	return false, nil
 }
@@ -548,13 +561,20 @@ func (ctrl *Controller) updateStatusCondition(bc *api.KubervisorService, statusU
 func (ctrl *Controller) createItem(bc *api.KubervisorService, associatedSvc *apiv1.Service, now metav1.Time) (item.Interface, error) {
 	bci, err := ctrl.newKubervisorServiceItem(bc, associatedSvc)
 	if err != nil {
-		ctrl.updateStatusCondition(bc, UpdateStatusConditionInitFailure, fmt.Sprintf("unable to create KubervisorServiceItem, err:%v", err), now)
+		if err2 := ctrl.updateStatusCondition(bc, UpdateStatusConditionInitFailure, fmt.Sprintf("unable to create KubervisorServiceItem, err:%v", err), now); err2 != nil {
+			return nil, fmt.Errorf("unable to update status condition, error: %v", err2)
+		}
 		return nil, err
 	}
 	//update status to running
-	ctrl.updateStatusCondition(bc, UpdateStatusConditionRunning, "", now)
+	if err := ctrl.updateStatusCondition(bc, UpdateStatusConditionRunning, "", now); err != nil {
+		return nil, fmt.Errorf("unable to update status condition, error: %v", err)
+	}
 	itemGauges.WithLabelValues(bc.Namespace).Inc()
-	ctrl.items.Update(bci)
+	if err := ctrl.items.Update(bci); err != nil {
+		return nil, fmt.Errorf("unable to update the KubervisorServiceItem, error: %s", err)
+	}
+
 	return bci, nil
 }
 
@@ -569,7 +589,9 @@ func (ctrl *Controller) clearItem(name, namespace string) {
 	if err == nil && exist {
 		bci, ok := obj.(item.Interface)
 		if ok {
-			ctrl.deleteItem(bci)
+			if err2 := ctrl.deleteItem(bci); err2 != nil {
+				ctrl.Logger.Sugar().Errorf("unable to delete Item: %s/%s, error:%v", bci.Namespace, bci.Name, err2)
+			}
 		}
 	}
 }

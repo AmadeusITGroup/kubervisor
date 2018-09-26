@@ -94,10 +94,10 @@ func Test_garbageCollector_updateCounters(t *testing.T) {
 	cache.WaitForCacheSync(stCh, informer.Informer().HasSynced)
 	defer close(stCh)
 
-	A := test.PodGen("A", "test-ns-other", map[string]string{"app": "foo", labeling.LabelBreakerNameKey: "kkk"}, true, true, labeling.LabelTrafficYes)
-	B := test.PodGen("B", "test-ns", map[string]string{"app": "foo", labeling.LabelBreakerNameKey: "kkk"}, true, false, labeling.LabelTrafficYes)
-	C := test.PodGen("C", "test-ns", map[string]string{"app": "foo", labeling.LabelBreakerNameKey: "jjj"}, false, true, labeling.LabelTrafficYes)
-	D := test.PodGen("D", "test-ns", nil, false, true, labeling.LabelTrafficYes)
+	A := test.PodGen("A", "test-ns-other", map[string]string{"app": "foo", labeling.LabelBreakerNameKey: "kkk"}, nil, true, true, labeling.LabelTrafficYes)
+	B := test.PodGen("B", "test-ns", map[string]string{"app": "foo", labeling.LabelBreakerNameKey: "kkk"}, nil, true, false, labeling.LabelTrafficYes)
+	C := test.PodGen("C", "test-ns", map[string]string{"app": "foo", labeling.LabelBreakerNameKey: "jjj"}, nil, false, true, labeling.LabelTrafficYes)
+	D := test.PodGen("D", "test-ns", nil, nil, false, true, labeling.LabelTrafficYes)
 
 	type fields struct {
 		podLister     corev1listers.PodLister
@@ -144,10 +144,10 @@ func Test_garbageCollector_updateCounters(t *testing.T) {
 func Test_garbageCollector_cleanPods(t *testing.T) {
 	devlogger, _ := zap.NewDevelopment()
 	testprefix := t.Name()
-	A := test.PodGen("A", "test-ns-other", map[string]string{"app": "foo", labeling.LabelBreakerNameKey: "kkk"}, true, true, labeling.LabelTrafficYes)
-	B := test.PodGen("B", "test-ns", map[string]string{"app": "foo", labeling.LabelBreakerNameKey: "kkk"}, true, false, labeling.LabelTrafficYes)
-	C := test.PodGen("C", "test-ns", map[string]string{"app": "foo", labeling.LabelBreakerNameKey: "jjj"}, false, true, labeling.LabelTrafficYes)
-	D := test.PodGen("D", "test-ns", map[string]string{"app": "foo", labeling.LabelBreakerNameKey: "error"}, false, true, labeling.LabelTrafficYes)
+	A := test.PodGen("A", "test-ns-other", map[string]string{"app": "foo", labeling.LabelBreakerNameKey: "kkk"}, nil, true, true, labeling.LabelTrafficYes)
+	B := test.PodGen("B", "test-ns", map[string]string{"app": "foo", labeling.LabelBreakerNameKey: "kkk"}, nil, true, false, labeling.LabelTrafficYes)
+	C := test.PodGen("C", "test-ns", map[string]string{"app": "foo", labeling.LabelBreakerNameKey: "jjj"}, nil, false, true, labeling.LabelTrafficYes)
+	D := test.PodGen("D", "test-ns", map[string]string{"app": "foo", labeling.LabelBreakerNameKey: "error"}, nil, false, true, labeling.LabelTrafficYes)
 
 	type fields struct {
 		podLister         corev1listers.PodLister

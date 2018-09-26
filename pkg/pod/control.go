@@ -77,7 +77,10 @@ func (c *Control) UpdateBreakerAnnotationAndLabel(breakConfigName string, breakS
 	p.Labels[labeling.LabelBreakerStrategyKey] = breakStrategy
 	p.Labels[labeling.LabelTrafficKey] = string(labeling.LabelTrafficNo)
 
-	retryCount, _ := labeling.GetRetryCount(p)
+	retryCount, err := labeling.GetRetryCount(p)
+	if err != nil {
+		return nil, err
+	}
 	retryCount++
 
 	p.Annotations[labeling.AnnotationBreakAtKey] = time.Now().Format(time.RFC3339)

@@ -99,13 +99,13 @@ func TestBreakerImpl_Run(t *testing.T) {
 	testprefix := t.Name()
 	devlogger, _ := zap.NewDevelopment()
 
-	ARunningReadyTraffic := test.PodGen("A", "test-ns", map[string]string{"app": "foo"}, true, true, labeling.LabelTrafficYes)
-	BRunningReadyTraffic := test.PodGen("B", "test-ns", map[string]string{"app": "foo"}, true, true, labeling.LabelTrafficYes)
-	CNotRunningReadyTraffic := test.PodGen("C", "test-ns", map[string]string{"app": "foo"}, false, true, labeling.LabelTrafficYes)
-	DRunningNotReadyTraffic := test.PodGen("D", "test-ns", map[string]string{"app": "foo"}, true, false, labeling.LabelTrafficYes)
-	ERunningNotReadyNoTraffic := test.PodGen("E", "test-ns", map[string]string{"app": "foo"}, true, false, labeling.LabelTrafficNo)
-	NRunningReadyNoTraffic := test.PodGen("N", "test-ns", map[string]string{"app": "foo"}, true, true, labeling.LabelTrafficNo)
-	BadAppRunningReadyTraffic := test.PodGen("BadApp", "test-ns", map[string]string{"app": "bar"}, true, true, labeling.LabelTrafficYes)
+	ARunningReadyTraffic := test.PodGen("A", "test-ns", map[string]string{"app": "foo"}, nil, true, true, labeling.LabelTrafficYes)
+	BRunningReadyTraffic := test.PodGen("B", "test-ns", map[string]string{"app": "foo"}, nil, true, true, labeling.LabelTrafficYes)
+	CNotRunningReadyTraffic := test.PodGen("C", "test-ns", map[string]string{"app": "foo"}, nil, false, true, labeling.LabelTrafficYes)
+	DRunningNotReadyTraffic := test.PodGen("D", "test-ns", map[string]string{"app": "foo"}, nil, true, false, labeling.LabelTrafficYes)
+	ERunningNotReadyNoTraffic := test.PodGen("E", "test-ns", map[string]string{"app": "foo"}, nil, true, false, labeling.LabelTrafficNo)
+	NRunningReadyNoTraffic := test.PodGen("N", "test-ns", map[string]string{"app": "foo"}, nil, true, true, labeling.LabelTrafficNo)
+	BadAppRunningReadyTraffic := test.PodGen("BadApp", "test-ns", map[string]string{"app": "bar"}, nil, true, true, labeling.LabelTrafficYes)
 
 	type fields struct {
 		breakerConfigName     string

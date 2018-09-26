@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	goflag "flag"
+	"fmt"
 	"os"
 	"runtime"
 
@@ -18,23 +19,32 @@ func main() {
 	utils.BuildInfos()
 	runtime.GOMAXPROCS(runtime.NumCPU())
 
-	logger, _ := zap.NewProduction()
+	logger, err := zap.NewProduction()
+	if err != nil {
+		fmt.Fprintln(os.Stderr, err)
+		os.Exit(1)
+	}
 	config := controller.NewConfig(logger)
 	config.AddFlags(pflag.CommandLine)
 
 	pflag.CommandLine.AddGoFlagSet(goflag.CommandLine)
 	pflag.Parse()
 	if err := goflag.CommandLine.Parse([]string{}); err != nil {
+		logger.Sugar().Errorf("unable to Parse command line: %s", err)
 		os.Exit(1)
 	}
 
 	if config.Debug {
-		l, _ := zap.NewDevelopment()
+		l, err := zap.NewDevelopment()
+		if err != nil {
+			logger.Sugar().Errorf("unable Development zap logger, error: %s", err)
+		}
 		config.SetLogger(l)
 	}
 	ctrl := controller.New(config)
 
 	if err := run(ctrl); err != nil {
+		logger.Sugar().Errorf("run function return an error: %s", err)
 		os.Exit(1)
 	}
 	os.Exit(0)

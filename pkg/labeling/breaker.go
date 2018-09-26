@@ -33,11 +33,11 @@ func GetBreakAt(pod *kv1.Pod) (time.Time, error) {
 //GetRetryCount read the retry count from Pod annotations
 func GetRetryCount(pod *kv1.Pod) (int, error) {
 	if pod.Annotations == nil {
-		return 0, fmt.Errorf("No retryCount annotation")
+		return 0, nil
 	}
 	retryCount, ok := pod.Annotations[AnnotationRetryCountKey]
 	if !ok {
-		return 0, fmt.Errorf("No retryCount annotation")
+		return 0, nil
 	}
 	return strconv.Atoi(retryCount)
 }
