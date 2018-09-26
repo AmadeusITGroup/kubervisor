@@ -23,6 +23,8 @@ Kubervisor comes with its own resource (CRD) to configure the system:
 - activation/deactivation/dryrun operation
 - display the current health check of the service
 
+Presentation done during the KubeCon Europe 2018: https://youtu.be/HIB_haT1z5M
+
 
 ## architecture
 
