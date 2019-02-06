@@ -8,7 +8,7 @@ cd $DEMO_ROOT
 export GOPATH=$GIT_ROOT/../../../..
 
 export DEMO_NS=demo
-minikube start --extra-config=apiserver.Authorization.Mode=RBAC --memory=4096 --kubernetes-version=v1.9.4
+minikube start --memory=4096 --kubernetes-version=v1.9.4
 minikube update-context
 JSONPATH='{range .items[*]}{@.metadata.name}:{range @.status.conditions[*]}{@.type}={@.status};{end}{end}'; until kubectl get nodes -o jsonpath="$JSONPATH" 2>&1 | grep -q "Ready=True"; do sleep 1; done
 echo "[ minikube status ]"
