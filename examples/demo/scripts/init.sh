@@ -16,7 +16,6 @@ minikube status
 # add missing role for the dashboard
 kubectl create clusterrolebinding add-on-cluster-admin --clusterrole=cluster-admin --serviceaccount=kube-system:default
 minikube addons enable ingress
-minikube dashboard
 
 kubectl create -f scripts/tiller-rbac.yaml
 helm init --wait --service-account tiller
