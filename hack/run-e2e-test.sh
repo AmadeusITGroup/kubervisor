@@ -7,11 +7,8 @@ export GOPATH=$GIT_ROOT/../../../../
 if [[ $SKIPINIT != 1 ]]; then
 
     echo "Start minikube with RBAC option"
-    minikube start --extra-config=apiserver.Authorization.Mode=RBAC
-
-    printf "Waiting for minikube node to be ready."
-    until [ $(kubectl get nodes -ojsonpath="{.items[*].metadata.name}") == "minikube" ] > /dev/null 2>&1; do sleep 1; printf "."; done
-    echo
+    kind create cluster --config $GIT_ROOT/hack/kind_config.yaml --wait 3m
+    export KUBECONFIG="$(kind get kubeconfig-path)"
 
     echo "Create the missing rolebinding for k8s dashboard"
     kubectl create clusterrolebinding add-on-cluster-admin --clusterrole=cluster-admin --serviceaccount=kube-system:default
@@ -26,8 +23,6 @@ if [[ $SKIPINIT != 1 ]]; then
     until [ $(kubectl get deployment -n kube-system tiller-deploy -ojsonpath="{.status.conditions[?(@.type=='Available')].status}") == "True" ] > /dev/null 2>&1; do sleep 1; printf "."; done
     echo
 fi
-
-eval $(minikube docker-env)
 
 if [[ $SKIPMOCK != 1 ]]; then
     cd $GIT_ROOT/test/e2e
@@ -45,7 +40,7 @@ until helm install -n kubervisor charts/kubervisor --wait; do sleep 1; printf ".
 echo
 
 echo "[[[ Run End2end test ]]] "
-cd ./test/e2e && go test -c && ./e2e.test --kubeconfig=$HOME/.kube/config --ginkgo.slowSpecThreshold 260
+cd ./test/e2e && go test -c && ./e2e.test --kubeconfig=$KUBECONFIG --ginkgo.slowSpecThreshold 260
 
 echo "[[[ Cleaning ]]]"
 

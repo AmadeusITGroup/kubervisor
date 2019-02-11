@@ -1,4 +1,5 @@
-PREFIX=kubervisor/
+REGISTRY=""
+PREFIX=${REGISTRY}kubervisor/
 
 SOURCES := $(shell find $(SOURCEDIR) ! -name "*_test.go" -name '*.go')
 
@@ -27,6 +28,11 @@ build: $(addprefix build-,$(CMDBINS))
 buildlinux: $(addprefix buildlinux-,$(CMDBINS))
 
 container: $(addprefix container-,$(CMDBINS))
+
+push: $(addprefix push-,$(CMDBINS))
+
+push-%: container-%
+	@cd docker/$* && docker push $(PREFIX)$*:$(TAG)
 
 # Install all the build and lint dependencies
 setup:

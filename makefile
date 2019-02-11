@@ -1,7 +1,8 @@
 ARTIFACT_CONTROLLER=kubervisor
 
 # 0.0 shouldn't clobber any released builds
-PREFIX=kubervisor/
+REGISTRY=""
+PREFIX=${REGISTRY}kubervisor/
 #PREFIX = gcr.io/google_containers/
 
 SOURCES := $(shell find $(SOURCEDIR) ! -name "*_test.go" -name '*.go')
@@ -40,8 +41,10 @@ container: $(addprefix container-,$(CMDBINS))
 test:
 	./go.test.sh
 
-push: container
-	@cd docker/${ARTIFACT_CONTROLLER} && docker push $(PREFIX)$(ARTIFACT_CONTROLLER):$(TAG)
+push: $(addprefix push-,$(CMDBINS))
+
+push-%: container-%
+	@cd docker/$* && docker push $(PREFIX)$*:$(TAG)
 
 clean:
 	rm -f ${ARTIFACT_CONTROLLER}

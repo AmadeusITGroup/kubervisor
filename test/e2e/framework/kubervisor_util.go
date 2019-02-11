@@ -268,7 +268,7 @@ func CreateCustomAnamalyDetector(client clientset.Interface, namespace, targetNa
 						Containers: []kv1.Container{
 							{
 								Name:            "customanomalydetector",
-								Image:           "kubervisor/customanomalydetector",
+								Image:           FrameworkContext.ContainerRegistryHost + "kubervisor/customanomalydetector",
 								Args:            []string{"--namespace=" + targetNamespace, "--selector=" + selector.String()},
 								ImagePullPolicy: "IfNotPresent",
 							},

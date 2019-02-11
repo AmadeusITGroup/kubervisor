@@ -5,6 +5,7 @@
 replicaCount: 3
 
 image:
+  registry:
   repository: kubervisor/kubervisor
   tag: latest
   pullPolicy: IfNotPresent
