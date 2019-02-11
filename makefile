@@ -24,10 +24,10 @@ install-plugin:
 	./hack/install-plugin.sh
 
 build-%:
-	CGO_ENABLED=0 go build -i -installsuffix cgo ${LDFLAGS} -o bin/$* ./cmd/$*
+	CGO_ENABLED=0 go build -mod=vendor -i -installsuffix cgo ${LDFLAGS} -o bin/$* ./cmd/$*
 
 buildlinux-%: ${SOURCES}
-	CGO_ENABLED=0 GOOS=linux go build -i -installsuffix cgo ${LDFLAGS} -o docker/$*/$* ./cmd/$*/main.go
+	CGO_ENABLED=0 GOOS=linux go build -mod=vendor -i -installsuffix cgo ${LDFLAGS} -o docker/$*/$* ./cmd/$*/main.go
 
 container-%: buildlinux-%
 	@cd docker/$* && docker build -t $(PREFIX)$*:$(TAG) .
@@ -64,7 +64,7 @@ fmt:
 
 # Run all the linters
 lint:
-	gometalinter --fast --vendor ./... -e pkg/client -e examples -e _generated -e test --deadline 9m -D gocyclo
+	GO111MODULE=off gometalinter --fast --vendor ./... -e pkg/client -e examples -e _generated -e test --deadline 9m -D gocyclo
 .PHONY: lint
 
 .PHONY: build push clean test

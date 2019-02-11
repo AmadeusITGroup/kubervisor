@@ -3,6 +3,7 @@ dist: xenial
 sudo: required
 go:
 - 1.11.x
+go_import_path: github.com/amadeusitgroup/kubervisor
 os: linux
 services:
 - docker
@@ -12,7 +13,8 @@ env:
   - GH_URL=https://amadeusitgroup.github.io/kubervisor
   - IMAGE_NAME=traviscontroller
   - CONTAINER_REGISTRY_HOST="172.17.0.1:5000"
-go_import_path: github.com/amadeusitgroup/kubervisor
+  - TOOLS_PATH="/tmp/tools"
+  - GO111MODULE=on
 install:
 # Download kubectl, which is a requirement for using minikube.
 - curl -Lo kubectl https://storage.googleapis.com/kubernetes-release/release/v1.9.4/bin/linux/amd64/kubectl && chmod +x kubectl && sudo mv kubectl /usr/local/bin/
@@ -28,7 +30,7 @@ install:
 - kubectl -n kube-system create sa tiller
 - kubectl create clusterrolebinding tiller --clusterrole cluster-admin --serviceaccount=kube-system:tiller
 - helm init --service-account tiller
-- go get -u github.com/alecthomas/gometalinter && gometalinter --install
+- GO111MODULE=off go get -u github.com/alecthomas/gometalinter && GO111MODULE=off gometalinter --install
 stages:
 - name: build
 - name: release
@@ -45,7 +47,7 @@ jobs:
     - cd test/e2e && make TAG=latest REGISTRY=${CONTAINER_REGISTRY_HOST}/ push; cd -
     - cd test/e2e && make TAG=latest container && cd -
     - helm install --wait --version latest --set image.registry=${CONTAINER_REGISTRY_HOST}/ --set image.tag=latest -n end2end-test charts/kubervisor
-    - cd ./test/e2e && go test -c && ./e2e.test --kubeconfig=$(kind get kubeconfig-path) --registry=${CONTAINER_REGISTRY_HOST}/ --ginkgo.slowSpecThreshold 200
+    - cd ./test/e2e && go test -mod=vendor -c && ./e2e.test --kubeconfig=$(kind get kubeconfig-path) --registry=${CONTAINER_REGISTRY_HOST}/ --ginkgo.slowSpecThreshold 200
     - helm delete end2end-test
   - stage: release
     script:
