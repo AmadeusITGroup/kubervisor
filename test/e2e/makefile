@@ -15,10 +15,10 @@ LDFLAGS = -ldflags "-w -X ${BUILDINFOPKG}.TAG=${TAG} -X ${BUILDINFOPKG}.COMMIT=$
 all: build
 
 build-%:
-	CGO_ENABLED=0 go build -i -installsuffix cgo ${LDFLAGS} -o bin/$* ./cmd/$*
+	CGO_ENABLED=0 go build -mod=vendor  -i -installsuffix cgo ${LDFLAGS} -o bin/$* ./cmd/$*
 
 buildlinux-%: ${SOURCES}
-	CGO_ENABLED=0 GOOS=linux go build -i -installsuffix cgo ${LDFLAGS} -o docker/$*/$* ./cmd/$*/*.go
+	CGO_ENABLED=0 GOOS=linux go build -mod=vendor -i -installsuffix cgo ${LDFLAGS} -o docker/$*/$* ./cmd/$*/*.go
 
 container-%: buildlinux-%
 	@cd docker/$* && docker build -t $(PREFIX)$*:$(TAG) .

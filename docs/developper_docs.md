@@ -1,12 +1,15 @@
 # Developper documentation
 
+## dependencies
+
+- Golang >= 1.11.x
+- Kubernetes >= 1.7.x
 
 ## architecture
 
 ![architecture diagram][diagram1]
 
 [diagram1]: ./imgs/diagram1.png
-
 
 ## controller syncBreakConfig method
 
